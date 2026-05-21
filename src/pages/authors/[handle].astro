@@ -1,0 +1,110 @@
+---
+import { getCollection, getEntries } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate } from '@/lib/data';
+import { SITE } from '@/lib/site';
+
+export async function getStaticPaths() {
+  const authors = await getCollection('authors');
+  return authors.map((author) => ({
+    params: { handle: author.id },
+    props: { author },
+  }));
+}
+
+interface Props {
+  author: CollectionEntry<'authors'>;
+}
+const { author } = Astro.props;
+
+// All posts by this author (including co-authored)
+const allRaw = await getCollection('posts', ({ data }) => !data.draft);
+const matching = allRaw.filter((p) =>
+  p.data.authors.some((ref) => ref.id === author.id)
+);
+const posts = (await Promise.all(
+  matching.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) }))
+)).sort((a, b) => +b.data.date - +a.data.date);
+
+const initials = author.data.name.split(' ').map((w) => w[0]).join('');
+const canonical = `${SITE.url}/authors/${author.id}`;
+---
+
+<BaseLayout
+  title={`${author.data.name} — author profile`}
+  description={author.data.bio ?? `Articles by ${author.data.name} on ${SITE.name}.`}
+  canonical={canonical}
+>
+  <div class="container blog-shell">
+    <div class="author-profile-head">
+      <a href="/blog" class="article-back">← Back to archive</a>
+
+      <div style="display: flex; align-items: center; gap: 20px; margin-top: 24px;">
+        <div class="comment-avatar" style="width: 72px; height: 72px; font-size: 24px; flex-shrink: 0;">
+          {initials}
+        </div>
+        <div style="min-width: 0;">
+          <div class="eyebrow page-eyebrow" style="margin-bottom: 6px;">{author.data.role}</div>
+          <h1 style="font-family: var(--font-display); font-size: 48px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.05; margin: 0;">
+            {author.data.name}
+          </h1>
+          <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); margin-top: 8px;">
+            @{author.id}
+          </div>
+        </div>
+      </div>
+
+      {author.data.bio && (
+        <p style="font-size: 18px; color: var(--ink-2); line-height: 1.55; margin: 24px 0 0; max-width: 640px;">
+          {author.data.bio}
+        </p>
+      )}
+
+      {(author.data.github || author.data.twitter || author.data.website) && (
+        <div style="display: flex; gap: 16px; margin-top: 20px; font-family: var(--font-mono); font-size: 13px;">
+          {author.data.github && <a href={author.data.github} target="_blank" rel="noreferrer">GitHub</a>}
+          {author.data.twitter && <a href={author.data.twitter} target="_blank" rel="noreferrer">Twitter</a>}
+          {author.data.website && <a href={author.data.website} target="_blank" rel="noreferrer">Website</a>}
+        </div>
+      )}
+    </div>
+
+    <div style="margin-top: 56px;">
+      <div class="eyebrow" style="margin-bottom: 16px;">
+        {posts.length === 1 ? '1 article' : `${posts.length} articles`}
+      </div>
+
+      {posts.length === 0 ? (
+        <p style="color: var(--ink-3); padding: 40px 0;">
+          No published articles yet.
+        </p>
+      ) : (
+        <div class="blog-list">
+          {posts.map((p) => (
+            <a href={`/blog/${p.id}`} class="blog-row" data-topic={p.data.topicId}>
+              <span class="blog-row-id">[{p.data.id}]</span>
+              <div>
+                <h3 class="blog-row-title">{p.data.title}</h3>
+                <p class="blog-row-summary">{p.data.summary}</p>
+              </div>
+              <div class="blog-row-author">
+                <strong>{p.authors.map((au) => au.data.name).join(' · ')}</strong>
+                {p.data.topic}
+              </div>
+              <div class="blog-row-time">{formatDate(p.data.date.toISOString())}<br />{p.data.readMin} min</div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .author-profile-head {
+    padding-top: 32px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+  }
+</style>

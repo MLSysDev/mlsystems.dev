@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discord
+    url: https://discord.gg/pxEvXN28tc
+    about: Chat, ask questions, hang out with the community.
+  - name: 💡 Discussions (ideas, topics, questions)
+    url: https://github.com/orgs/MLSysDev/discussions
+    about: Propose a blog post, suggest topics you'd like to read, or ask the community a question.
+  - name: ✍️ Want to write a post?
+    url: https://github.com/MLSysDev/mlsystems.dev/blob/main/CONTRIBUTING.md
+    about: See the contributing guide. TL;DR — fork, drop an MDX file in src/content/posts/, open a PR.

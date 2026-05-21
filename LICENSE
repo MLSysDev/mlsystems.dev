@@ -1,0 +1,98 @@
+License
+=======
+
+This repository contains two different kinds of work, licensed differently.
+
+================================================================================
+1. CODE
+================================================================================
+
+The source code in this repository (everything outside `src/content/`,
+including all `.astro`, `.ts`, `.tsx`, `.js`, `.css`, and configuration files)
+is licensed under the MIT License:
+
+  MIT License
+
+  Copyright (c) 2026 mlsystems.dev contributors
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+
+================================================================================
+2. CONTENT
+================================================================================
+
+All content in `src/content/` (blog posts, learning materials, diagrams,
+images, and other written work) is © its respective author.
+
+ALL RIGHTS RESERVED.
+
+What this means in practice
+---------------------------
+
+YOU ARE WELCOME TO:
+
+  - Read anything on the site
+  - Link to any URL on mlsystems.dev
+  - Share URLs on social media, Discord, in messages, anywhere
+  - Quote brief excerpts (a sentence or short paragraph) with attribution
+    and a link back to the original, for commentary, criticism, teaching,
+    research, slides, presentations, or news reporting — this is
+    "fair use" / "fair dealing" under copyright law and does not require
+    permission
+  - Cite our posts as references in your own work
+  - Translate a full post into another language, provided you:
+      * Credit the original author by name
+      * Link back to the original post URL
+      * Make the translation freely readable (not paywalled)
+    We encourage translations — please share the translated URL with us
+    so we can link it from the original post.
+
+YOU MAY NOT, WITHOUT WRITTEN PERMISSION FROM THE AUTHOR:
+
+  - Republish a full post (or substantial portions) on another website,
+    blog, newsletter, or publication. Republishing = reposting the
+    content itself, not linking to or citing it.
+  - Create derivative works other than translation (edits, adaptations,
+    "improved" versions, summaries presented as new content)
+  - Use content in commercial products, paid courses, or paid offerings
+  - Train machine learning models on the content for commercial purposes
+  - Republish content WITH attribution (still needs permission — credit
+    alone doesn't grant republishing rights)
+  - Republish content WITHOUT attribution (this is plagiarism and is
+    also a copyright violation regardless of permission)
+
+For permission requests, contact the author or admin@mlsystems.dev.
+
+These rules apply site-wide. Individual posts cannot opt into a different
+license. If you are an author who wants different terms for a specific
+post, contact a maintainer.
+
+Community contributions
+-----------------------
+
+By submitting content (blog posts, edits, images, etc.) to this repository,
+you confirm that:
+
+  - You are the author of the content, OR you have explicit permission
+    from the copyright holder to submit it
+  - You retain copyright on your contribution
+  - You grant mlsystems.dev a non-exclusive, perpetual, worldwide license
+    to publish, display, and distribute your contribution on the site
+    and associated channels (RSS, newsletter, social media previews)
+  - You may republish your own contribution elsewhere — you own it

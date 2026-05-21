@@ -1,0 +1,35 @@
+---
+id: "2026.11.073"
+title: "Continuous batching, revisited"
+summary: "Three years after the original paper, what does state-of-the-art serving actually look like? A field report from a team running 12B tokens a day."
+authors:
+  - priya
+date: "2026-11-06"
+readMin: 19
+topic: "Inference"
+topicId: "inference"
+tags: ["vLLM", "serving", "throughput"]
+featured: true
+---
+
+Continuous batching arrived in 2023 and reshaped how we think about inference. Three years on, the original assumptions hold less cleanly than they used to, and the systems built on top of them have grown a lot of barnacles.
+
+This is a field report from a team that runs about 12 billion tokens of inference a day across mixed open-weight and proprietary models. The goal is to document what we've actually had to change, and where the original mental model breaks down at scale.
+
+## The original picture
+
+The original sin of inference is that requests arrive at unpredictable times, finish at unpredictable times, and have wildly different lengths. Naive batching wastes a huge amount of compute waiting for the slowest request in a batch to finish.
+
+Continuous batching solves this by treating each *step* of decoding as the batchable unit rather than the *request*. New requests can join the batch at any step; finished requests leave; the batch is recomposed every step.
+
+## Where it gets complicated
+
+The complications are all downstream of one fact: a batch composed of requests at different points in their decode means you have to handle very heterogeneous KV cache states efficiently. Paged attention is the standard answer here, and it works — but it adds an indirection layer that interacts badly with several other techniques you might want to apply.
+
+Speculative decoding, for instance, plays poorly with continuous batching at high concurrency. The draft model's acceptance rate is sensitive to the exact shape of the batch, and rejected drafts are pure overhead. We've seen acceptance rates drop by 20 percentage points moving from a fixed batch to a continuous one.
+
+## What we've changed
+
+We now run two tiers: a high-throughput tier with continuous batching and aggressive memory packing, and a low-latency tier with smaller, more static batches and speculative decoding. Requests get routed based on their SLA. It is not elegant, but the numbers are better than any single-tier configuration we've tried.
+
+*More to come on the routing logic in a follow-up post.*

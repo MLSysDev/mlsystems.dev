@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://mlsystems.dev/sitemap-index.xml
+Host: https://mlsystems.dev

@@ -1,0 +1,55 @@
+---
+id: "2026.11.087"
+title: "The arithmetic of attention: why FlashAttention still matters"
+summary: "Memory bandwidth, not FLOPs, is what bounds modern inference. A walk through the numbers behind a kernel that quietly reshaped the field."
+authors:
+  - lchen
+date: "2026-11-12"
+readMin: 14
+topic: "Inference"
+topicId: "inference"
+tags: ["attention", "kernels", "memory-bound"]
+featured: true
+---
+
+For years, the conventional wisdom in serving large transformer models has been to chase FLOPs. New hardware, new kernels, smarter scheduling — anything that extracts more arithmetic per second. This article argues that the conventional wisdom has been quietly wrong for at least two of those years.
+
+The story of modern inference is not a story about **compute**. It is a story about **memory bandwidth**, and the surprisingly small set of techniques that have learned to live inside its constraints. The most famous of those is the kernel that took FlashAttention from a paper to a default — but the reasons it works are worth re-examining, because they keep coming back in disguise.
+
+## The shape of the problem
+
+Consider an attention layer on a single GPU. The naive implementation is almost embarrassingly simple: form Q, K, V; multiply `Q @ K.T`; apply a softmax; multiply by V. Four operations, four reads and writes to HBM.
+
+The arithmetic intensity — the ratio of FLOPs to bytes — is low. On an H100, you have `989 TFLOPS` of bf16 compute and `3.35 TB/s` of memory bandwidth. To stay compute-bound, you need roughly `989 / 3.35 ≈ 295` FLOPs per byte. Standard attention does perhaps 5–10. The kernel is, by a factor of thirty, waiting on memory.
+
+> The point isn't that attention got faster. The point is that the bottleneck moved, and the field hasn't fully metabolized where it moved to.
+
+FlashAttention's trick — and it is, in retrospect, a remarkably simple one — is to *tile* the computation so that intermediate matrices never leave SRAM. Q and K blocks are loaded into shared memory, multiplied, softmax-normalized, and immediately multiplied against V, all without writing the full attention matrix back to HBM. The big quadratic in the middle of the equation never materializes.
+
+<Figure caption="Naive attention sits an order of magnitude below the roofline; FlashAttention moves it within striking distance.">
+  <div style={{ height: 200, background: 'var(--paper-3)', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-3)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+    [ roofline plot — bf16 attention on H100 ]
+  </div>
+</Figure>
+
+## What this means for serving
+
+The second-order effects ripple outward. KV cache size dominates per-request memory, which dominates how many requests you can batch concurrently, which dominates your throughput in any realistic load. Continuous batching — the single biggest serving improvement of the last two years — is itself a memory management story dressed up as a scheduling story.
+
+```python
+# Approximate KV cache, fp16
+# bytes = 2 * n_layers * n_heads * head_dim * seq_len * 2
+def kv_bytes(n_layers, n_heads, head_dim, seq_len):
+    return 4 * n_layers * n_heads * head_dim * seq_len
+
+# Llama-70B @ 8k context
+kv_bytes(80, 64, 128, 8192)  # → 5.4 GB / request
+```
+
+Five gigabytes per request is, for a 70B model, the number that sets the upper bound on how clever your serving stack can possibly be. Everything past it — paged attention, speculative decoding, prefix sharing — is essentially a story about reducing or amortizing this number.
+
+## Where it goes next
+
+The arithmetic intensity argument has not gone away. If anything, it has sharpened: with FP4 weights and FP8 activations, the ratio shifts even further toward memory-bound, and the techniques that exploit that — speculative decoding, sparse attention, MLA — are the techniques that matter. The next generation of serving systems will, I think, look less like inference engines and more like very specific memory hierarchies that happen to do matmuls along the way.
+
+*Thanks to Priya, Hugo, and Naoko for reading drafts.*

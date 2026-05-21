@@ -1,0 +1,27 @@
+---
+id: "2026.11.054"
+title: "What we've been getting wrong about MoE routing"
+summary: "Top-k routing has become a default. It shouldn't be. A look at the tradeoffs nobody's measuring and the experiments that change my mind."
+authors:
+  - hugo
+date: "2026-10-28"
+readMin: 22
+topic: "Architecture"
+topicId: "architecture"
+tags: ["MoE", "routing", "load-balancing"]
+featured: true
+---
+
+Top-k routing has been the default in MoE architectures for years now. It is also, on inspection, a strange default — chosen for tractability rather than principled reasons, and held in place by inertia.
+
+This article walks through three experiments that, taken together, made me much more skeptical of top-k as a baseline. None of them are conclusive. All of them suggest the field is leaving real performance on the table by not testing the alternatives seriously.
+
+## The default everyone uses
+
+Top-k routes each token to the k experts with the highest gating scores. k=1 (switch routing) and k=2 are the common choices. The appeal is computational: you only run the experts that get tokens, and load balancing is a fixable problem.
+
+## What the alternatives look like
+
+Soft routing — where every token contributes to every expert weighted by gating score — is the obvious comparison point and is universally believed to be too expensive. The "universally believed" part is doing more work than the experiments justify.
+
+*Full benchmarks and code in the [GitHub repo](https://github.com/example).*

@@ -1,0 +1,26 @@
+---
+id: "2026.10.022"
+title: "A research-grade trainer in 400 lines"
+summary: "Most training frameworks are 50,000 lines of code in a trench coat. This is what falls out when you start from FSDP and a will to delete."
+authors:
+  - toma
+date: "2026-10-09"
+readMin: 25
+topic: "Training"
+topicId: "training"
+tags: ["FSDP", "PyTorch", "trainer"]
+---
+
+Most training frameworks are 50,000 lines of code in a trench coat. They have to be, because they support every possible combination of parallelism, optimizer, scheduler, dataset, checkpoint format, and callback. That generality has costs.
+
+This is what falls out when you start from PyTorch FSDP and aggressively delete. The result is 400 lines of Python that runs research-grade experiments on up to about 32 GPUs, with no framework magic.
+
+```python
+import torch
+import torch.distributed as dist
+from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
+
+# ...the trainer is here
+```
+
+Full code in the [repo](https://github.com/example).

@@ -1,0 +1,23 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Playground from '@/components/Playground.tsx';
+import { TOOLS } from '@/lib/data';
+---
+
+<BaseLayout
+  title="Playground"
+  description="Working calculators, visualizers, and benchmarks for ML systems work — throughput, attention, cost."
+>
+  <div class="container">
+    <div class="page-head">
+      <div class="eyebrow page-eyebrow">Playground</div>
+      <h1 class="page-h1">Tools.</h1>
+      <p class="page-lede">
+        Working calculators, visualizers, and benchmarks for ML systems work.
+        Open source, no auth, no telemetry. Pick a tool below.
+      </p>
+    </div>
+
+    <Playground tools={TOOLS} client:visible />
+  </div>
+</BaseLayout>
