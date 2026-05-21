@@ -5,35 +5,35 @@ import { SITE } from '@/lib/site';
 const STEPS = [
   {
     n: '01',
-    title: 'Pitch',
-    body: "A two-paragraph pitch is enough. Tell us what you'd write, who it's for, and why now. We respond within 72 hours.",
+    title: 'Share an idea',
+    body: 'Start a GitHub Discussion, drop into Discord, or open a PR. A few sentences is enough.',
   },
   {
     n: '02',
-    title: 'Outline',
-    body: "We'll workshop the outline with you. Most pieces benefit from a sharper thesis and one fewer section than you think.",
+    title: 'Shape it',
+    body: "We'll help you narrow the idea, find the useful angle, and decide what form it should take.",
   },
   {
     n: '03',
     title: 'Draft',
-    body: 'Write in markdown, in your own voice. Code blocks, figures, equations — whatever the piece needs. Length should match the idea.',
+    body: 'Write in markdown, in your own voice. Add code, figures, equations, or links if they help.',
   },
   {
     n: '04',
-    title: 'Edit',
-    body: 'Two rounds of edits, focused on clarity and precision. We do not rewrite your voice. Authors keep all rights.',
+    title: 'Review',
+    body: "We'll review for clarity, correctness, and readability. Nothing fancy, just make the work easier to learn from.",
   },
   {
     n: '05',
     title: 'Publish',
-    body: "We publish, you get a permanent arxiv-style ID, and you're a contributor. Discussions land in your inbox.",
+    body: 'Once it is ready, we publish it and credit you as a contributor. Comments happen in GitHub Discussions.',
   },
 ];
 ---
 
 <BaseLayout
   title="Contribute"
-  description="Pitch an article, field report, primer, or tool to ML Systems. We publish work from engineers working on the hard parts of modern AI."
+  description="Pitch an article, case study, primer, or tool to ML Systems. We publish work from engineers working on the hard parts of modern AI."
   image="/og/page/contribute.png"
 >
   <div class="container">
@@ -41,9 +41,9 @@ const STEPS = [
       <div class="eyebrow page-eyebrow">Write with us</div>
       <h1 class="page-h1">Contribute.</h1>
       <p class="page-lede">
-        We publish articles, field reports, primers, and tools from engineers and researchers
-        working on ML systems. If you've learned something hard the hard way, you should write about
-        it here.
+        We publish articles, case studies, primers, and tools from engineers and researchers working
+        on ML systems. If you've learned something hard the hard way, you should write about it
+        here.
       </p>
     </div>
 
@@ -80,7 +80,7 @@ const STEPS = [
           <div></div>
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
             <a href={`mailto:${SITE.pitchEmail}`} class="btn btn-primary">
-              Pitch an article <span class="btn-arrow">→</span>
+              Share an idea <span class="btn-arrow">→</span>
             </a>
             <a href={SITE.github} target="_blank" rel="noreferrer" class="btn">
               Open a PR on GitHub
@@ -100,7 +100,7 @@ const STEPS = [
               words).
             </li>
             <li>
-              <strong>Field reports</strong> — what happened when you actually shipped the thing.
+              <strong>Case studies</strong> — what happened when you actually shipped the thing.
             </li>
             <li>
               <strong>Primers</strong> — careful explainers of techniques that deserve more careful treatment.

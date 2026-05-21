@@ -72,15 +72,12 @@ export default function AnalyticsConsent({ measurementId }: { measurementId?: st
         x
       </button>
       <div>
-        <div className="analytics-consent-title">Optional analytics</div>
-        <p>
-          We use Google Analytics for richer usage patterns beyond basic traffic counts. It is
-          optional and helps guide what we improve.
-        </p>
+        <div className="analytics-consent-title">Privacy preferences</div>
+        <p>We use optional analytics to understand readership and improve the site.</p>
       </div>
       <div className="analytics-consent-actions">
         <button type="button" className="btn btn-primary" onClick={() => choose('accepted')}>
-          Allow
+          Accept
         </button>
         <button type="button" className="btn" onClick={() => choose('declined')}>
           Decline

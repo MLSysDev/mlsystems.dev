@@ -5,7 +5,6 @@ import { TOPICS, countPostsByTopic } from '@/lib/data';
 
 const posts = await getCollection('posts', ({ data }) => !data.draft);
 const topicCounts = countPostsByTopic(posts);
-const totalAll = posts.length;
 ---
 
 <BaseLayout
@@ -18,8 +17,7 @@ const totalAll = posts.length;
       <div class="eyebrow page-eyebrow">The Index</div>
       <h1 class="page-h1">Topics.</h1>
       <p class="page-lede">
-        The full taxonomy. {TOPICS.length} topics, {totalAll} articles. Pick anywhere to start — they
-        read independently, but cross-reference often.
+        Explore the ideas, systems, and engineering problems behind modern ML infrastructure.
       </p>
     </div>
 

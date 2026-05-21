@@ -102,15 +102,16 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
     });
   });
 
-  // Theme toggle — swaps data-theme on <html> and persists in localStorage.
-  // Initial value is set by an inline script in <head> to avoid FOUC.
   const themeBtn = nav?.querySelector<HTMLButtonElement>('[data-theme-toggle]');
   themeBtn?.addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     try {
-      localStorage.setItem('theme', next);
+      const raw = localStorage.getItem('mls.prefs');
+      const prefs = raw ? JSON.parse(raw) : {};
+      prefs.theme = next;
+      localStorage.setItem('mls.prefs', JSON.stringify(prefs));
     } catch {}
   });
 </script>

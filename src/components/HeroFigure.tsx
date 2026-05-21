@@ -570,9 +570,6 @@ export default function HeroFigure() {
   return (
     <div className="figure">
       <div className="figure-head">
-        <span>
-          <span className="live-dot" /> Figure 1 — live
-        </span>
         <div className="figure-head-tabs">
           {FIGS.map((f, i) => (
             <button key={f.id} className={i === idx ? 'active' : ''} onClick={() => setIdx(i)}>

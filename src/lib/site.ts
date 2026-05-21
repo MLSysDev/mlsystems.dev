@@ -15,6 +15,14 @@ export const SITE = {
   startYear: 2026,
 };
 
+export const APPEARANCE = {
+  theme: 'light',
+  accent: 'oxide',
+  typeset: 'editorial',
+  background: 'plain',
+  density: 'comfortable',
+} as const;
+
 // Social links. Set to null to render as a disabled "coming soon" icon.
 export const SOCIALS: Record<'discord' | 'github' | 'twitter' | 'linkedin', string | null> = {
   discord: 'https://discord.gg/pxEvXN28tc',

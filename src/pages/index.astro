@@ -36,7 +36,17 @@ const topicCount = TOPICS.length;
         <div>
           <h1 class="hero-h1">
             Machine learning,<br />
-            from <em>kernels</em> to clusters.
+            from{' '}
+            <button
+              type="button"
+              class="kernel-toggle"
+              data-accent-cycle
+              aria-label="Cycle site accent color"
+              title="Click to change accent color"
+            >
+              <em>kernels</em>
+            </button>
+            {' '}to clusters.
           </h1>
           <p class="hero-sub">
             An open community for learning, writing, and tinkering on the infrastructure behind
@@ -74,14 +84,6 @@ const topicCount = TOPICS.length;
                 {topicCount}
               </div>
               <div style="margin-top: 6px;">topics</div>
-            </div>
-            <div>
-              <div
-                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
-              >
-                open
-              </div>
-              <div style="margin-top: 6px;">source</div>
             </div>
           </div>
         </div>
@@ -232,11 +234,11 @@ const topicCount = TOPICS.length;
       <div class="cta-banner">
         <div>
           <div class="eyebrow" style="margin-bottom: 14px;">Contribute</div>
-          <h2>Write something we'll all<br />still be reading in five years.</h2>
+          <h2>Share knowledge that<br />moves the field forward.</h2>
           <p>
-            We publish articles, field reports, and primers from engineers working on the hard parts
-            of ML systems. No paywalls, no editorial templates, no SEO games. Just careful writing
-            on work that matters.
+            We publish articles, case studies, and primers from engineers working on the hard parts
+            of ML systems. Built by the community to share practical knowledge, hard-won lessons,
+            and careful writing on work that matters.
           </p>
         </div>
         <div class="cta-actions">
@@ -248,3 +250,50 @@ const topicCount = TOPICS.length;
     </div>
   </section>
 </BaseLayout>
+
+<style>
+  .kernel-toggle {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.2s ease;
+  }
+  .kernel-toggle em {
+    color: var(--accent);
+    transition: color 0.2s ease;
+  }
+  .kernel-toggle:hover em {
+    color: var(--accent-2);
+  }
+  .kernel-toggle:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 4px;
+    border-radius: 2px;
+  }
+</style>
+
+<script>
+  const ACCENTS = ['oxide', 'indigo', 'emerald'] as const;
+  type Accent = (typeof ACCENTS)[number];
+
+  document.querySelectorAll<HTMLButtonElement>('[data-accent-cycle]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const root = document.documentElement;
+      const current = (root.getAttribute('data-accent') as Accent) || 'oxide';
+      const idx = ACCENTS.indexOf(current);
+      const next = ACCENTS[(idx + 1) % ACCENTS.length];
+      root.setAttribute('data-accent', next);
+      try {
+        const raw = localStorage.getItem('mls.prefs');
+        const prefs = raw ? JSON.parse(raw) : {};
+        prefs.accent = next;
+        localStorage.setItem('mls.prefs', JSON.stringify(prefs));
+      } catch {}
+    });
+  });
+</script>
