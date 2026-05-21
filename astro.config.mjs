@@ -7,6 +7,8 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
+import cloudflare from "@astrojs/cloudflare";
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const postLastmod = new Map();
@@ -67,6 +69,7 @@ function changefreqFor(path) {
 export default defineConfig({
   site: 'https://mlsystems.dev',
   trailingSlash: 'ignore',
+
   integrations: [
     react(),
     mdx({
@@ -119,4 +122,6 @@ export default defineConfig({
       exclude: ['@resvg/resvg-js', 'satori'],
     },
   },
+
+  adapter: cloudflare()
 });

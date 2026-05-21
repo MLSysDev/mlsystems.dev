@@ -8,7 +8,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "build": "astro build",
-    "preview": "astro preview",
+    "preview": "npm run build && wrangler dev",
     "astro": "astro",
     "check": "astro check",
     "lint": "eslint . --max-warnings 0",
@@ -16,7 +16,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "verify": "npm run check && npm run lint && npm run format:check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "deploy": "npm run build && wrangler deploy",
+    "cf-typegen": "wrangler types"
   },
   "lint-staged": {
     "*.{js,mjs,cjs,ts,tsx,jsx,astro}": [
@@ -29,6 +31,7 @@
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/cloudflare": "12",
     "@astrojs/mdx": "^4.0.0",
     "@astrojs/react": "^4.1.0",
     "@astrojs/rss": "^4.0.10",
@@ -58,6 +61,7 @@
     "prettier": "^3.8.3",
     "prettier-plugin-astro": "^0.14.1",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.59.4"
+    "typescript-eslint": "^8.59.4",
+    "wrangler": "^4.93.1"
   }
 }
