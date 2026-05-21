@@ -1,0 +1,26 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Not Found"
+  description="The page you're looking for has either moved, been retired, or never existed."
+  noindex
+>
+  <div class="container" style="padding: 120px 0; text-align: center;">
+    <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px;">
+      404 · Not Found
+    </div>
+    <h1 style="font-family: var(--font-display); font-size: 72px; font-weight: 400; letter-spacing: -0.015em; line-height: 1; margin: 0 0 24px;">
+      We couldn't find that page.
+    </h1>
+    <p style="font-size: 17px; color: var(--ink-2); max-width: 520px; margin: 0 auto 40px; line-height: 1.55;">
+      The article or page you're looking for has either moved, been retired,
+      or never existed. From here:
+    </p>
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <a href="/" class="btn btn-primary">Back to home</a>
+      <a href="/blog" class="btn">Browse the archive</a>
+    </div>
+  </div>
+</BaseLayout>

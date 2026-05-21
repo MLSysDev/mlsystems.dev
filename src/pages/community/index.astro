@@ -1,0 +1,56 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CommunityList from '@/components/CommunityList.tsx';
+import { THREADS } from '@/lib/data';
+---
+
+<BaseLayout
+  title="Community"
+  description="Open discussions across every corner of the ML systems stack. Ask hard questions, share benchmarks, debate architectures."
+>
+  <div class="container">
+    <div class="page-head">
+      <div class="eyebrow page-eyebrow">Discourse</div>
+      <h1 class="page-h1">Community.</h1>
+      <p class="page-lede">
+        Open discussions across every corner of the ML systems stack. Ask hard questions,
+        share benchmarks, debate architectures. No karma, no algorithm, no ads.
+      </p>
+    </div>
+
+    <div class="community-page-grid" style="display: grid; grid-template-columns: 1fr 280px; gap: 48px; margin-top: 24px;">
+      <CommunityList threads={THREADS} client:visible />
+
+      <div>
+        <div class="side-panel">
+          <h3 style="font-size: 22px; margin-bottom: 12px;">House rules</h3>
+          <ol style="padding-left: 18px; font-size: 14px; color: var(--ink-2); line-height: 1.7; margin: 0;">
+            <li>Be specific. Vague questions get vague answers.</li>
+            <li>Show your numbers. Benchmarks beat opinions.</li>
+            <li>Cite, don't paraphrase. Link to the paper, the commit, the issue.</li>
+            <li>Disagree on substance, never on identity.</li>
+            <li>Help juniors. We were all juniors yesterday.</li>
+          </ol>
+        </div>
+
+        <div class="side-panel" style="margin-top: 16px;">
+          <h3 style="font-size: 18px; margin-bottom: 12px;">Top contributors</h3>
+          {[
+            { handle: 'lchen', name: 'Liam Chen', posts: 47 },
+            { handle: 'priya', name: 'Priya Raghavan', posts: 38 },
+            { handle: 'hugo', name: 'Hugo Belmar', posts: 31 },
+            { handle: 'ana', name: 'Ana Voinescu', posts: 24 },
+          ].map((u) => (
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px dashed var(--line); font-size: 13px;">
+              <div>
+                <div style="font-weight: 500;">{u.name}</div>
+                <div style="font-family: var(--font-mono); font-size: 11px; color: var(--ink-3);">@{u.handle}</div>
+              </div>
+              <div style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-2);">{u.posts}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

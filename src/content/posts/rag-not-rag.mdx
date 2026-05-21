@@ -1,0 +1,16 @@
+---
+id: "2026.08.207"
+title: "RAG is not retrieval-augmented generation"
+summary: "It is a feedback loop, an index policy, and a re-ranker pretending to be a system. Why most RAG postmortems mistake the symptom for the disease."
+authors:
+  - sasha
+date: "2026-08-28"
+readMin: 18
+topic: "RAG"
+topicId: "rag"
+tags: ["RAG", "retrieval", "systems"]
+---
+
+Retrieval-augmented generation, as a name, has done a lot of damage. It frames the problem as "generation that happens to use retrieval," when in fact almost every interesting failure mode lives in the retrieval, the indexing, or the feedback loop between them.
+
+This article argues that RAG should be thought of as a *systems* problem first and a *generation* problem second, and walks through the postmortems that brought me to that view.

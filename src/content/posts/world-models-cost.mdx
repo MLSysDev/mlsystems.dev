@@ -1,0 +1,16 @@
+---
+id: "2026.09.083"
+title: "World models and the cost of imagination"
+summary: "Latent rollouts are cheap. World rollouts are not. What we learned trying to scale a JEPA-style world model on robotics data."
+authors:
+  - felix
+date: "2026-09-14"
+readMin: 21
+topic: "World Models"
+topicId: "world-models"
+tags: ["JEPA", "world-models", "agents"]
+---
+
+Imagination is cheap, in the human sense. You can imagine a hundred futures in a second. In the machine sense, it is anything but: rolling out a world model to plan an action takes about as much compute as the original forward pass, times the planning horizon.
+
+This is a report on trying to scale a JEPA-style world model on robotics data, and the surprising places the compute budget goes.

@@ -1,0 +1,22 @@
+---
+id: "2026.10.041"
+title: "Quantization-aware training, end-to-end"
+summary: "FP4 is here, and the gap between PTQ and QAT has widened. What's actually working in production today, and why the recipe is messier than it looks."
+authors:
+  - ana
+date: "2026-10-19"
+readMin: 17
+topic: "Quantization"
+topicId: "quantization"
+tags: ["FP4", "QAT", "PTQ"]
+---
+
+Post-training quantization works remarkably well at 8 bits. It works pretty well at 4 bits with care. At FP4, the gap between PTQ and QAT has widened to the point where, for most production workloads, QAT is no longer optional.
+
+This article is the recipe we've converged on, after about six months of trying things that didn't work.
+
+## The recipe
+
+We start from a BF16 checkpoint, apply a short calibration pass, then do 1-3% of the original training compute as QAT with straight-through estimators on the weight quantizers. Activation quantizers are learned.
+
+The order matters more than I expected. Quantizing weights first and activations second gives systematically better recovery than the reverse.

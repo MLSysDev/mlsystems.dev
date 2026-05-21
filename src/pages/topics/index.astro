@@ -1,0 +1,33 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { TOPICS } from '@/lib/data';
+
+const totalAll = TOPICS.reduce((s, t) => s + t.count, 0);
+---
+
+<BaseLayout
+  title="Topics"
+  description="Browse the ML Systems archive by topic — inference, training, architecture, quantization, RAG, and more."
+>
+  <div class="container">
+    <div class="page-head">
+      <div class="eyebrow page-eyebrow">The Index</div>
+      <h1 class="page-h1">Topics.</h1>
+      <p class="page-lede">
+        The full taxonomy. {TOPICS.length} topics, {totalAll} articles. Pick anywhere
+        to start — they read independently, but cross-reference often.
+      </p>
+    </div>
+
+    <div class="topics-list" style="margin-top: 16px;">
+      {TOPICS.map((t, i) => (
+        <a href={`/blog?topic=${t.id}`} class="topic-row">
+          <span class="topic-num">{String(i + 1).padStart(2, '0')}</span>
+          <h3 class="topic-name">{t.name}</h3>
+          <span class="topic-desc">{t.desc}</span>
+          <span class="topic-count">{t.count} articles</span>
+        </a>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

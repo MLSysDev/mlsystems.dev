@@ -1,0 +1,64 @@
+---
+// Top navigation — static markup; mobile menu uses ~30 lines of inline JS.
+
+interface Props {
+  currentPath: string;
+}
+const { currentPath } = Astro.props;
+
+const LINKS = [
+  { id: 'blog',        label: 'Blog',        path: '/blog' },
+  { id: 'topics',      label: 'Topics',      path: '/topics' },
+  { id: 'community',   label: 'Community',   path: '/community' },
+  { id: 'playground',  label: 'Playground',  path: '/playground' },
+  { id: 'contribute',  label: 'Contribute',  path: '/contribute' },
+];
+
+const isActive = (path: string) =>
+  currentPath === path || currentPath.startsWith(path + '/');
+---
+
+<nav class="nav" id="site-nav">
+  <div class="nav-inner">
+    <a href="/" class="brand">
+      <span class="brand-mark"></span>
+      <span>ML Systems</span>
+    </a>
+
+    <button
+      type="button"
+      class="nav-burger"
+      aria-label="Toggle navigation menu"
+      aria-controls="nav-menu"
+      aria-expanded="false"
+      data-nav-toggle
+    >
+      <span class="nav-burger-bar"></span>
+      <span class="nav-burger-bar"></span>
+      <span class="nav-burger-bar"></span>
+    </button>
+
+    <div class="nav-links" id="nav-menu">
+      {LINKS.map((l) => (
+        <a href={l.path} class={isActive(l.path) ? 'active' : ''}>{l.label}</a>
+      ))}
+    </div>
+  </div>
+</nav>
+
+<script>
+  // Mobile hamburger — toggle .nav-open on the <nav>, sync aria-expanded.
+  const nav = document.getElementById('site-nav');
+  const toggle = nav?.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+  toggle?.addEventListener('click', () => {
+    const open = nav!.classList.toggle('nav-open');
+    toggle.setAttribute('aria-expanded', String(open));
+  });
+  // Close menu when a link is clicked (mobile UX)
+  nav?.querySelectorAll('.nav-links a').forEach((a) => {
+    a.addEventListener('click', () => {
+      nav.classList.remove('nav-open');
+      toggle?.setAttribute('aria-expanded', 'false');
+    });
+  });
+</script>

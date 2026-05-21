@@ -1,0 +1,114 @@
+---
+import { getCollection, getEntries } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import BlogFilter from '@/components/BlogFilter.astro';
+import { TOPICS, formatDate, formatMonth } from '@/lib/data';
+
+// Read active topic from ?topic= (querystring filtering is client-side via JS
+// would normally require SSR; for static, this URL param is decorative — Astro's
+// build-time render shows All by default. The BlogFilter component does client-
+// side filtering on the rendered list.)
+const url = new URL(Astro.request.url);
+const activeTopic = url.searchParams.get('topic') || 'all';
+
+const allRaw = (await getCollection('posts', ({ data }) => !data.draft))
+  .sort((a, b) => +b.data.date - +a.data.date);
+
+// Resolve author references for each post so we can render names without async in templates
+const all = await Promise.all(
+  allRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) }))
+);
+
+// Per-topic counts for the filter chips
+const topicCounts: Record<string, number> = {};
+TOPICS.forEach((t) => {
+  topicCounts[t.id] = all.filter((p) => p.data.topicId === t.id).length;
+});
+
+// Group by month for display
+const grouped: Record<string, typeof all> = {};
+all.forEach((a) => {
+  const m = formatMonth(a.data.date.toISOString());
+  if (!grouped[m]) grouped[m] = [];
+  grouped[m].push(a);
+});
+---
+
+<BaseLayout
+  title="All articles"
+  description="The complete archive of ML Systems articles — long-form writing on inference, training, architecture, quantization, RAG, and more."
+>
+  <div class="container blog-shell">
+    <div class="blog-head">
+      <div>
+        <div class="eyebrow page-eyebrow">The Archive</div>
+        <h1 class="blog-h1">All articles.</h1>
+      </div>
+      <p style="font-size: 17px; color: var(--ink-2); max-width: 480px; margin: 0; line-height: 1.55;">
+        {all.length} articles across {TOPICS.length} topics. Filter by area, or just scroll —
+        this index reads top to bottom, newest first.
+      </p>
+    </div>
+
+    <BlogFilter activeTopic={activeTopic} allCount={all.length} topicCounts={topicCounts} />
+
+    {Object.entries(grouped).map(([month, items]) => (
+      <div class="blog-month-group" style="margin-bottom: 40px;">
+        <div class="eyebrow" style="margin-bottom: 4px; color: var(--ink-3);">{month}</div>
+        <div class="blog-list">
+          {items.map((a) => (
+            <a
+              href={`/blog/${a.id}`}
+              class="blog-row"
+              data-topic={a.data.topicId}
+            >
+              <span class="blog-row-id">[{a.data.id}]</span>
+              <div>
+                <h3 class="blog-row-title">{a.data.title}</h3>
+                <p class="blog-row-summary">{a.data.summary}</p>
+              </div>
+              <div class="blog-row-author">
+                <strong>{a.authors.map((au) => au.data.name).join(' · ')}</strong>
+                {a.data.topic}
+              </div>
+              <div class="blog-row-time">{formatDate(a.data.date.toISOString())}<br />{a.data.readMin} min</div>
+            </a>
+          ))}
+        </div>
+      </div>
+    ))}
+
+    <div id="blog-empty" style="display: none; padding: 80px 0; text-align: center; color: var(--ink-3);">
+      No articles in this topic yet. Be the first to{' '}
+      <a href="/contribute" style="color: var(--accent);">write one</a>.
+    </div>
+  </div>
+</BaseLayout>
+
+<!--
+  Client-side filtering: we ship a tiny ~700-byte script that toggles row
+  visibility based on ?topic=. No React, no hydration cost — this is the
+  Astro advantage.
+-->
+<script>
+  function applyFilter() {
+    const params = new URLSearchParams(window.location.search);
+    const topic = params.get('topic') || 'all';
+    const rows = document.querySelectorAll<HTMLElement>('.blog-row');
+    let visibleCount = 0;
+    rows.forEach((r) => {
+      const matches = topic === 'all' || r.dataset.topic === topic;
+      r.style.display = matches ? '' : 'none';
+      if (matches) visibleCount++;
+    });
+    document.querySelectorAll<HTMLElement>('.blog-month-group').forEach((g) => {
+      const anyVisible = g.querySelectorAll<HTMLElement>('.blog-row').length > 0 &&
+        Array.from(g.querySelectorAll<HTMLElement>('.blog-row')).some((r) => r.style.display !== 'none');
+      g.style.display = anyVisible ? '' : 'none';
+    });
+    const empty = document.getElementById('blog-empty');
+    if (empty) empty.style.display = visibleCount === 0 ? '' : 'none';
+  }
+  applyFilter();
+  window.addEventListener('popstate', applyFilter);
+</script>
