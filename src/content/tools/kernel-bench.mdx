@@ -1,0 +1,32 @@
+---
+name: Kernel Benchmark
+summary: Side-by-side timings for Triton, CUDA, and PyTorch implementations of the same kernel — attention, layernorm, GEMM, custom — across shapes and dtypes.
+tag: Soon
+icon: ▥
+authors:
+  - hugo
+topics:
+  - inference
+  - architecture
+tags: [kernels, triton, cuda, benchmarks]
+core: true
+---
+
+## What it does
+
+Runs the same logical kernel — fused attention, layernorm, GEMM, or a user-submitted operator — through Triton, hand-written CUDA, and PyTorch implementations. Plots wall-clock latency across input shapes and dtypes, with bandwidth and FLOPs utilization annotated.
+
+## Why it's useful
+
+Kernel optimization decisions are easy to over-rotate on. A 2× speedup on a tiny shape can disappear or invert at production batch sizes. This tool lets you see the full surface across shapes before committing to a kernel.
+
+## How to use it
+
+1. Pick a kernel from the gallery (or paste your own).
+2. Select shape grid (batch × seq × dim).
+3. Choose dtypes to compare (bf16, fp16, fp8, fp4).
+4. Run. Charts render as data lands.
+
+## Status
+
+Planned. Initial release will ship with attention, layernorm, GEMM, and SiLU + SwiGLU. RFCs for additional kernels welcome.

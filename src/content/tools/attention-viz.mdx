@@ -1,0 +1,35 @@
+---
+name: Attention Visualizer
+summary: Inspect attention patterns layer-by-layer for any Hugging Face model. Click any head to see its causal mask, induction behavior, and sink tokens.
+tag: Live
+icon: ◎
+authors:
+  - lchen
+topics:
+  - inference
+  - architecture
+tags: [attention, interpretability, kernels]
+core: true
+featured: true
+---
+
+## What it does
+
+Loads any model from Hugging Face and renders the attention weights produced for a prompt you control. Built for the moment when you're trying to convince yourself that a specific head is doing what you think it's doing.
+
+## Why it's useful
+
+Reading the attention matrix as raw numbers is hopeless. Reading it as a heatmap with the tokens labeled along both axes makes patterns jump out — causal triangles, sink tokens absorbing residual mass, induction heads aligning along the off-diagonal. A few minutes here often saves hours of grepping through paper figures.
+
+## How to use it
+
+1. Paste a model ID from Hugging Face (e.g. `meta-llama/Llama-3.1-8B`).
+2. Type a prompt — short ones make the visualization legible.
+3. Pick a layer and head from the sidebar.
+4. Watch the matrix render. Hover any cell to see the query/key tokens.
+
+## Limitations
+
+- Currently runs on a backend GPU, so very large models may queue.
+- Multi-query and grouped-query attention are visualized per query head; KV-shared heads appear repeated.
+- This tool is for understanding, not for high-throughput batch analysis.

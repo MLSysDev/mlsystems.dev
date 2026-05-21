@@ -1,0 +1,28 @@
+---
+name: GPU memory planner
+summary: Estimate VRAM for any combination of model size, precision, batch, sequence length, optimizer, and parallelism strategy — for both training and inference.
+tag: Beta
+icon: ▦
+authors:
+  - priya
+topics:
+  - inference
+  - training-systems
+tags: [memory, vram, training, inference]
+featured: true
+---
+
+## What it does
+
+A memory budgeting calculator that goes deeper than the usual back-of-envelope formulas. Plug in your config and see a breakdown of weights, activations, KV cache, optimizer state, and gradient accumulation overhead.
+
+## What you'll see
+
+- Per-component memory breakdown (weights, activations, KV, optimizer, gradients)
+- Sensitivity sliders: change one variable and watch the others react
+- Parallelism comparison: DP vs TP vs PP vs FSDP at the same total budget
+- "Will this fit?" check for popular GPUs (A100 40/80, H100 80/96, B200, MI300X)
+
+## Status
+
+Beta — formulas validated against published benchmarks for Llama, Mistral, and Qwen families. Mixture-of-experts memory accounting is still being refined.

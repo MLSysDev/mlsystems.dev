@@ -1,0 +1,33 @@
+---
+name: Eval Harness Playground
+summary: Run a small set of evaluations against any inference endpoint and get back a structured scorecard — quality, latency, cost, and refusal rate side by side.
+tag: Beta
+icon: ▤
+authors:
+  - lchen
+topics:
+  - evaluation
+tags: [evals, benchmarks, scorecards]
+core: true
+---
+
+## What it does
+
+Points at any inference endpoint (yours or a hosted one), runs a curated set of small but informative evals, and produces a scorecard. The set is small on purpose: you get answers in minutes instead of hours, and the evals are chosen for signal-to-noise rather than headline numbers.
+
+## Why it's useful
+
+Full benchmark suites take hours and cost real money. Most of the time you just want a quick "is this model worth a closer look." This playground gives you a focused first read so you can decide whether to invest in a full eval pass.
+
+## How to use it
+
+1. Provide an endpoint URL and auth header (or pick a hosted preset).
+2. Select an eval pack — reasoning, code, instruction following, refusal behavior.
+3. Run. Results stream in as each prompt completes.
+4. Export the scorecard or share a permalink.
+
+## Limitations
+
+- Beta: the eval set is opinionated and will keep evolving.
+- Not a replacement for full evaluation suites when stakes are high.
+- Caches results by prompt hash, so re-running the same prompts is free.

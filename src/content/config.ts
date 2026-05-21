@@ -1,7 +1,3 @@
-// Content collections — typed schemas for everything we publish.
-// To add a new collection (e.g. courses, podcasts, talks), define another
-// collection here and create a folder under src/content/.
-
 import { defineCollection, reference, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
@@ -21,25 +17,35 @@ const authors = defineCollection({
 const posts = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/posts' }),
   schema: z.object({
-    id: z.string().describe('arxiv-style ID, e.g. "2026.11.087"'),
+    id: z.string(),
     title: z.string(),
-    summary: z
-      .string()
-      .describe('one-sentence pitch — shows up in lists, meta description, OG card'),
-    // Array of author handles (filenames in src/content/authors/). At least one required.
+    summary: z.string(),
     authors: z.array(reference('authors')).min(1),
     date: z.coerce.date(),
     readMin: z.number().int().positive(),
-    topic: z.string().describe('display name of topic, e.g. "Inference"'),
-    topicId: z.string().describe('topic ID from src/lib/data.ts'),
+    topic: z.string(),
+    topicId: z.string(),
     tags: z.array(z.string()).optional(),
     featured: z.boolean().optional().default(false),
     draft: z.boolean().optional().default(false),
   }),
 });
 
-// Reserved for future expansion:
-// const courses = defineCollection({ ... });
-// const newsletters = defineCollection({ ... });
+const tools = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/tools' }),
+  schema: z.object({
+    name: z.string(),
+    summary: z.string(),
+    tag: z.enum(['Live', 'Beta', 'Experimental', 'Soon']),
+    icon: z.string().optional(),
+    authors: z.array(reference('authors')).optional(),
+    topics: z.array(z.string()).optional(),
+    tags: z.array(z.string()).optional(),
+    repo: z.string().url().optional(),
+    core: z.boolean().optional().default(false),
+    featured: z.boolean().optional().default(false),
+    draft: z.boolean().optional().default(false),
+  }),
+});
 
-export const collections = { posts, authors };
+export const collections = { posts, authors, tools };

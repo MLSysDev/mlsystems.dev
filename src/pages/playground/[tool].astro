@@ -1,0 +1,176 @@
+---
+import { getCollection, getEntries, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { mdxComponents } from '@/components/MDXComponents.tsx';
+import { SITE } from '@/lib/site';
+
+export async function getStaticPaths() {
+  const tools = await getCollection('tools', ({ data }) => !data.draft);
+  return tools.map((tool) => ({
+    params: { tool: tool.id },
+    props: { tool },
+  }));
+}
+
+interface Props {
+  tool: CollectionEntry<'tools'>;
+}
+
+const { tool } = Astro.props;
+const { Content } = await render(tool);
+
+const authors = tool.data.authors ? await getEntries(tool.data.authors) : [];
+const canonical = `${SITE.url}/playground/${tool.id}`;
+const ogImage = `/og/tool/${tool.id}.png`;
+---
+
+<BaseLayout
+  title={`${tool.data.name} — Playground`}
+  description={tool.data.summary}
+  canonical={canonical}
+  image={ogImage}
+>
+  <div class="container tool-shell">
+    <a href="/playground" class="article-back">← Back to playground</a>
+
+    <header class="tool-head">
+      <div class="tool-meta">
+        <span class={`tool-tag tool-tag-${tool.data.tag.toLowerCase().replace(/\s+/g, '-')}`}>
+          {tool.data.tag}
+        </span>
+        {tool.data.tags?.map((t) => <span class="tool-hashtag">#{t}</span>)}
+      </div>
+
+      <h1 class="tool-h1">{tool.data.name}</h1>
+
+      <p class="tool-summary">{tool.data.summary}</p>
+
+      {
+        authors.length > 0 && (
+          <div class="tool-byline">
+            <span class="tool-byline-label">By</span>
+            {authors.map((a, i) => (
+              <>
+                {i > 0 && <span class="tool-byline-sep">·</span>}
+                <a href={`/authors/${a.id}`} class="tool-byline-author">
+                  {a.data.name}
+                </a>
+              </>
+            ))}
+            {tool.data.repo && (
+              <>
+                <span class="tool-byline-sep">·</span>
+                <a href={tool.data.repo} target="_blank" rel="noreferrer" class="tool-repo-link">
+                  ↗ source
+                </a>
+              </>
+            )}
+          </div>
+        )
+      }
+    </header>
+
+    <article class="tool-body article-body">
+      <Content components={mdxComponents} />
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .tool-shell {
+    padding: 32px 0 96px;
+    max-width: 880px;
+    margin: 0 auto;
+  }
+  .tool-head {
+    padding: 24px 0 40px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+  .tool-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+  }
+  .tool-tag {
+    padding: 3px 10px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink);
+    border: 1px solid var(--line-2);
+  }
+  .tool-tag-live {
+    color: #fff;
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .tool-tag-beta {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .tool-hashtag {
+    color: var(--ink-3);
+  }
+  .tool-h1 {
+    font-family: var(--font-display);
+    font-size: 64px;
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -1.5px;
+    margin: 0 0 24px;
+    color: var(--ink);
+  }
+  .tool-summary {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 720px;
+  }
+  .tool-byline {
+    margin-top: 28px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .tool-byline-label {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-4);
+    margin-right: 4px;
+  }
+  .tool-byline-author {
+    color: var(--ink-2);
+  }
+  .tool-byline-author:hover {
+    color: var(--accent);
+  }
+  .tool-byline-sep {
+    color: var(--ink-4);
+  }
+  .tool-repo-link {
+    color: var(--accent);
+  }
+  .tool-body {
+    padding: 0 var(--sp-5);
+  }
+  @media (max-width: 720px) {
+    .tool-h1 {
+      font-size: 44px;
+    }
+    .tool-summary {
+      font-size: 18px;
+    }
+  }
+</style>

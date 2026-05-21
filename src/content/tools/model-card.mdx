@@ -1,0 +1,34 @@
+---
+name: Model Card Generator
+summary: Generate a structured model card from a checkpoint and an evaluation log — covers intended use, training data summary, evals, limitations, and ethics.
+tag: Beta
+icon: ▣
+authors:
+  - lchen
+topics:
+  - evaluation
+  - mlops-deployment
+tags: [model-cards, governance, documentation]
+core: true
+---
+
+## What it does
+
+Inspects a model checkpoint and an associated eval log, then produces a structured model card following the Hugging Face / Mitchell et al. template. The card covers intended use, training data summary, eval results, known limitations, and ethical considerations.
+
+## Why it's useful
+
+Model cards are increasingly required by procurement, governance, and downstream consumers. Hand-writing them is tedious and error-prone. This tool extracts what it can automatically and prompts you for the parts that require human judgment.
+
+## How to use it
+
+1. Upload or link a checkpoint (HF Hub, local path, or remote URL).
+2. Attach an eval log in standard JSON format.
+3. Fill in the human-judgment sections (intended use, limitations).
+4. Export as Markdown, HTML, or a Hugging Face Hub model card.
+
+## Limitations
+
+- Beta: schema may shift as Hugging Face's model-card spec evolves.
+- Eval log parsing currently supports lm-eval-harness and OpenCompass formats. Others welcome via PR.
+- Doesn't generate model cards for closed/proprietary models — provenance must be verifiable.

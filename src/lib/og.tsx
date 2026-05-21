@@ -250,6 +250,69 @@ function authorTemplate(name: string, bio?: string, handle?: string): React.Reac
   );
 }
 
+function toolTemplate(name: string, summary: string, tag: string): React.ReactElement {
+  const truncatedSummary = summary.length > 180 ? summary.slice(0, 177) + '…' : summary;
+  return (
+    <div style={SHELL_STYLE}>
+      <div style={BORDER_STYLE} />
+      {brandBar()}
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          marginTop: 28,
+        }}
+      >
+        <div
+          style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 16,
+            letterSpacing: 3,
+            color: C.accent,
+            textTransform: 'uppercase',
+            marginBottom: 14,
+            display: 'flex',
+          }}
+        >
+          Playground · {tag}
+        </div>
+        <div
+          style={{
+            fontFamily: 'Instrument Serif',
+            fontSize: 92,
+            lineHeight: 1.0,
+            color: C.ink,
+            letterSpacing: -1.5,
+            display: 'flex',
+            maxWidth: 1040,
+            marginBottom: 18,
+          }}
+        >
+          {name}
+        </div>
+        <div
+          style={{
+            fontFamily: 'Instrument Serif',
+            fontStyle: 'italic',
+            fontSize: 28,
+            lineHeight: 1.35,
+            color: C.ink2,
+            letterSpacing: -0.3,
+            display: 'flex',
+            maxWidth: 1000,
+          }}
+        >
+          {truncatedSummary}
+        </div>
+      </div>
+      <div style={ACCENT_RULE_STYLE} />
+      <div style={URL_STAMP_STYLE}>{SITE.domain}/playground</div>
+    </div>
+  );
+}
+
 function defaultTemplate(): React.ReactElement {
   return (
     <div style={SHELL_STYLE}>
@@ -321,4 +384,12 @@ export async function generateAuthorOgPng(
   handle?: string,
 ): Promise<Buffer> {
   return renderToPng(authorTemplate(name, bio, handle), `author:${handle ?? name}`);
+}
+
+export async function generateToolOgPng(
+  name: string,
+  summary: string,
+  tag: string,
+): Promise<Buffer> {
+  return renderToPng(toolTemplate(name, summary, tag), `tool:${name}`);
 }

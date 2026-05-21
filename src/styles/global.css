@@ -1243,108 +1243,37 @@ a:hover {
   max-width: var(--text-w);
   margin: 80px auto 0;
   padding: 0 var(--sp-5);
+  border-top: 1px solid var(--line);
+  padding-top: var(--sp-6);
 }
-.comments h3 {
-  font-family: var(--font-display);
-  font-size: 28px;
-  font-weight: 400;
-  margin: 0 0 24px;
+.comments-header {
   display: flex;
   align-items: baseline;
   gap: 12px;
+  margin-bottom: 28px;
 }
-.comments h3 .count {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--ink-3);
+.comments-label {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 400;
+  color: var(--ink);
 }
-.comment {
-  padding: 20px 0;
-  border-top: 1px solid var(--line);
-}
-.comment-head {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-bottom: 8px;
-}
-.comment-avatar {
-  width: 28px;
-  height: 28px;
-  background: var(--paper-3);
-  border-radius: 4px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--ink-2);
-  font-weight: 600;
-}
-.comment-author {
-  font-size: 13px;
-  font-weight: 500;
-}
-.comment-time {
+.comments-meta {
   font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink-3);
+  letter-spacing: 0.02em;
 }
-.comment-body {
+.comments-unconfigured {
   font-size: 14px;
+  color: var(--ink-3);
   line-height: 1.6;
-  color: var(--ink);
+  margin: 0;
 }
-.comment-actions {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
-}
-.comment-actions button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: inherit;
-  padding: 0;
-  font-family: inherit;
-  font-size: inherit;
-}
-.comment-actions button:hover {
+.comments-unconfigured a {
   color: var(--accent);
-}
-.comment-compose {
-  margin-top: 32px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--paper-2);
-  padding: 16px;
-}
-.comment-compose textarea {
-  width: 100%;
-  border: none;
-  background: transparent;
-  resize: vertical;
-  min-height: 60px;
-  font-family: var(--font-sans);
-  font-size: 14px;
-  color: var(--ink);
-  outline: none;
-}
-.comment-compose textarea::placeholder {
-  color: var(--ink-4);
-}
-.comment-compose-foot {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Blog list page */

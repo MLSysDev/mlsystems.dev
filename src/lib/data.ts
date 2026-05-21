@@ -102,6 +102,27 @@ export const TOOLS: Tool[] = [
     tag: 'Live',
     available: true,
   },
+  {
+    id: 'model-card',
+    name: 'Model Card Generator',
+    desc: 'Generate a structured model card from a checkpoint and evaluation log.',
+    tag: 'Beta',
+    available: false,
+  },
+  {
+    id: 'eval-harness',
+    name: 'Eval Harness Playground',
+    desc: 'Run focused evaluations against any inference endpoint and compare quality, latency, and cost.',
+    tag: 'Beta',
+    available: false,
+  },
+  {
+    id: 'kernel-bench',
+    name: 'Kernel Benchmark',
+    desc: 'Compare Triton, CUDA, and PyTorch implementations across shapes and dtypes.',
+    tag: 'Soon',
+    available: false,
+  },
 ];
 
 export function formatDate(iso: string): string {

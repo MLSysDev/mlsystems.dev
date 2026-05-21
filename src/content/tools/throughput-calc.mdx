@@ -1,0 +1,31 @@
+---
+name: Throughput Calculator
+summary: Estimate tokens/sec for any model, precision, batch size, and GPU combination — memory-bound roofline only, no kernel-quality wishful thinking.
+tag: Live
+icon: ◐
+authors:
+  - priya
+topics:
+  - inference
+tags: [throughput, roofline, kv-cache]
+core: true
+featured: true
+---
+
+import ThroughputCalc from '@/components/tools/ThroughputCalc';
+
+<ThroughputCalc client:visible />
+
+## What it does
+
+Back-of-the-envelope throughput estimation that's accurate enough to inform real architecture decisions. Plug in a model, precision, batch size, and GPU. Get tokens/sec, KV-cache size, and a verdict on whether you'll fit on one card.
+
+## Why it's useful
+
+Most "how fast will this run" questions can be answered without standing up infrastructure. This tool encodes the memory-bound roofline that governs LLM inference, so you can compare options at the cost of one keystroke instead of one cluster-hour.
+
+## Limitations
+
+- Memory-bound regime only. Doesn't model the compute-bound prefill ceiling.
+- Doesn't account for continuous batching, speculative decoding, or prefix sharing — those are explicit knobs in real serving stacks.
+- Use the result as a rule of thumb, not a procurement quote.
