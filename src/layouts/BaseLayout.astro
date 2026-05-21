@@ -39,6 +39,8 @@ const {
 const fullTitle = title.includes(SITE.name) ? title : `${title} — ${SITE.name}`;
 const imageUrl = image.startsWith('http') ? image : new URL(image, SITE.url).toString();
 const currentPath = Astro.url.pathname;
+
+const cloudflareAnalyticsToken = import.meta.env.PUBLIC_CLOUDFLARE_ANALYTICS_TOKEN;
 ---
 
 <!doctype html>
@@ -123,9 +125,22 @@ const currentPath = Astro.url.pathname;
   <!-- JSON-LD structured data -->
   {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
+  <!-- Cloudflare Web Analytics (free, no cookies, no consent banner required) -->
+  {
+    cloudflareAnalyticsToken && (
+      <script
+        is:inline
+        defer
+        src="https://static.cloudflareinsights.com/beacon.min.js"
+        data-cf-beacon={`{"token": "${cloudflareAnalyticsToken}"}`}
+      />
+    )
+  }
+
   <body>
+    <a href="#main" class="skip-link">Skip to content</a>
     <Nav currentPath={currentPath} />
-    <main>
+    <main id="main">
       <slot />
     </main>
     <Footer />
