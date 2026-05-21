@@ -1,8 +1,11 @@
 ---
+import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { TOPICS } from '@/lib/data';
+import { TOPICS, countPostsByTopic } from '@/lib/data';
 
-const totalAll = TOPICS.reduce((s, t) => s + t.count, 0);
+const posts = await getCollection('posts', ({ data }) => !data.draft);
+const topicCounts = countPostsByTopic(posts);
+const totalAll = posts.length;
 ---
 
 <BaseLayout
@@ -27,7 +30,7 @@ const totalAll = TOPICS.reduce((s, t) => s + t.count, 0);
             <span class="topic-num">{String(i + 1).padStart(2, '0')}</span>
             <h3 class="topic-name">{t.name}</h3>
             <span class="topic-desc">{t.desc}</span>
-            <span class="topic-count">{t.count} articles</span>
+            <span class="topic-count">{topicCounts[t.id] ?? 0} articles</span>
           </a>
         ))
       }

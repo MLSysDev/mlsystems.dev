@@ -3,7 +3,8 @@ import { getCollection, getEntries } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
-import { TOPICS, THREADS, TOOLS, formatDate } from '@/lib/data';
+import { TOPICS, TOOLS, countPostsByTopic, formatDate } from '@/lib/data';
+import { SITE, SOCIALS } from '@/lib/site';
 
 const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(
   (a, b) => +b.data.date - +a.data.date,
@@ -13,10 +14,15 @@ const allPosts = await Promise.all(
   allPostsRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
 );
 
+const authors = await getCollection('authors');
+
 const featured = allPosts.filter((p) => p.data.featured).slice(0, 3);
 const featuredFinal = featured.length >= 3 ? featured : allPosts.slice(0, 3);
 
-const topThreads = THREADS.slice(0, 5);
+const topicCounts = countPostsByTopic(allPosts);
+const articleCount = allPosts.length;
+const contributorCount = authors.length;
+const topicCount = TOPICS.length;
 ---
 
 <BaseLayout
@@ -49,7 +55,7 @@ const topThreads = THREADS.slice(0, 5);
               <div
                 style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
               >
-                284
+                {articleCount}
               </div>
               <div style="margin-top: 6px;">articles</div>
             </div>
@@ -57,7 +63,7 @@ const topThreads = THREADS.slice(0, 5);
               <div
                 style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
               >
-                47
+                {contributorCount}
               </div>
               <div style="margin-top: 6px;">contributors</div>
             </div>
@@ -65,9 +71,9 @@ const topThreads = THREADS.slice(0, 5);
               <div
                 style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
               >
-                1.2k
+                {topicCount}
               </div>
-              <div style="margin-top: 6px;">discussions</div>
+              <div style="margin-top: 6px;">topics</div>
             </div>
             <div>
               <div
@@ -136,7 +142,7 @@ const topThreads = THREADS.slice(0, 5);
               <span class="topic-num">{String(i + 1).padStart(2, '0')}</span>
               <h3 class="topic-name">{t.name}</h3>
               <span class="topic-desc">{t.desc}</span>
-              <span class="topic-count">{t.count} articles</span>
+              <span class="topic-count">{topicCounts[t.id] ?? 0} articles</span>
             </a>
           ))
         }
@@ -152,46 +158,39 @@ const topThreads = THREADS.slice(0, 5);
           <div class="eyebrow">Discourse</div>
           <h2 class="section-title">The conversation.</h2>
         </div>
-        <a href="/community" class="section-link">All threads →</a>
+        <a href="/community" class="section-link">Where to talk →</a>
       </div>
       <div class="community-grid">
-        <div class="thread-list">
-          {
-            topThreads.map((th) => (
-              <a href="/community" class="thread-row">
-                <div class="thread-icon">{th.author.slice(0, 2).toUpperCase()}</div>
-                <div>
-                  <div class="thread-title">{th.title}</div>
-                  <div class="thread-meta">
-                    @{th.author} · {th.category} · last reply {th.lastReply}
-                  </div>
-                </div>
-                <div class="thread-replies">
-                  {th.replies}
-                  <small>replies</small>
-                </div>
-              </a>
-            ))
-          }
+        <div class="side-panel" style="grid-column: span 1;">
+          <h3>GitHub Discussions</h3>
+          <p>
+            Long-form threads tied to GitHub identities. Best for technical questions, paper
+            discussions, and feature proposals. Searchable, attributed, permanent.
+          </p>
+          <a
+            href="https://github.com/orgs/MLSysDev/discussions"
+            target="_blank"
+            rel="noreferrer"
+            class="btn"
+            style="margin-top: 16px; width: 100%; justify-content: center;"
+          >
+            Open Discussions →
+          </a>
         </div>
         <div class="side-panel">
-          <h3>Open in the open.</h3>
+          <h3>Discord</h3>
           <p>
-            Every thread is public, every contribution is attributed. We're trying to build the
-            comments section the field deserves — technical, kind, signal-rich.
+            Real-time chat for the working day. Quick questions, debugging help, paper club, and the
+            occasional argument about whether MoE is overrated.
           </p>
-          <div class="stat-row"><span>Threads this week</span><span>114</span></div>
-          <div class="stat-row"><span>Avg. response time</span><span>34 min</span></div>
-          <div class="stat-row"><span>Members</span><span>3,840</span></div>
-          <div class="stat-row">
-            <span>Online now</span><span style="color: var(--accent);">312</span>
-          </div>
           <a
-            href="/community"
+            href={SOCIALS.discord ?? '#'}
+            target="_blank"
+            rel="noreferrer"
             class="btn"
-            style="margin-top: 24px; width: 100%; justify-content: center;"
+            style="margin-top: 16px; width: 100%; justify-content: center;"
           >
-            Join the discussion
+            Join the server →
           </a>
         </div>
       </div>
@@ -211,20 +210,13 @@ const topThreads = THREADS.slice(0, 5);
       <div class="tools-grid">
         {
           TOOLS.map((tool) => (
-            <a
-              href={tool.available ? '/playground' : '#'}
-              class={`tool-card ${tool.available ? '' : 'disabled'}`}
-              style={!tool.available ? 'pointer-events: none;' : ''}
-            >
+            <a href="/playground" class="tool-card">
               <div class="tool-visual">
                 <ToolGlyph id={tool.id} />
               </div>
               <h3 class="tool-name">{tool.name}</h3>
               <p class="tool-desc">{tool.desc}</p>
-              <div
-                class="tool-tag"
-                style={tool.available ? 'color: var(--accent);' : 'color: var(--ink-3);'}
-              >
+              <div class="tool-tag" style="color: var(--accent);">
                 · {tool.tag} ·
               </div>
             </a>
@@ -250,9 +242,7 @@ const topThreads = THREADS.slice(0, 5);
         <div class="cta-actions">
           <a href="/contribute" class="btn btn-primary">Pitch an article →</a>
           <a href="/contribute" class="btn">Read the style guide</a>
-          <a href="https://github.com" target="_blank" rel="noreferrer" class="btn"
-            >Browse on GitHub</a
-          >
+          <a href={SITE.github} target="_blank" rel="noreferrer" class="btn">Browse on GitHub</a>
         </div>
       </div>
     </div>
