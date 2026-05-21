@@ -16,6 +16,12 @@ export const mdxComponents = {
   code: (props: ComponentProps<'code'>) => <code {...props} />,
   pre: (props: ComponentProps<'pre'>) => <pre {...props} />,
   blockquote: (props: ComponentProps<'blockquote'>) => <blockquote {...props} />,
+  img: ({ alt, src, ...rest }: ComponentProps<'img'>) => {
+    if (!alt && typeof process !== 'undefined') {
+      console.warn(`[mdx] image missing alt text: ${src}`);
+    }
+    return <img {...rest} src={src} alt={alt ?? ''} loading="lazy" decoding="async" />;
+  },
   // Inline figure helper — usable as <Figure caption="...">...</Figure>
   Figure: ({ caption, children }: { caption: string; children: ReactNode }) => (
     <div className="inline-figure">
