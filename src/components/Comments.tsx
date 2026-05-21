@@ -1,88 +1,91 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-type Comment = {
-  id: string;
-  author: string;
-  time: string;
-  body: string;
-};
-
-const SEED: Comment[] = [
-  {
-    id: 'c1',
-    author: 'priya',
-    time: '3 hr ago',
-    body: 'The flame graph point at the end is underrated. We saw a 2.4x speedup just by moving the projection up out of the inner loop.',
-  },
-  {
-    id: 'c2',
-    author: 'naoko',
-    time: '5 hr ago',
-    body: "Curious if you've run this on H200s — the bandwidth profile is different enough that some of the assumptions about memory-boundedness need to be re-validated.",
-  },
-  {
-    id: 'c3',
-    author: 'hugo',
-    time: '1 day ago',
-    body: 'Beautifully written. The bit about treating it as a scheduling problem first is exactly the framing I wish more vendors would adopt.',
-  },
-];
+// To enable comments:
+//   1. Make the repo public + enable GitHub Discussions.
+//   2. Install the giscus app: https://github.com/apps/giscus
+//   3. Visit https://giscus.app, fill in MLSysDev/mlsystems.dev + the "Comments"
+//      category, and paste the resulting IDs into the two PUBLIC_* env vars.
+// If either ID is missing, this component renders a graceful "not configured"
+// note instead of breaking the page.
+const REPO = 'MLSysDev/mlsystems.dev';
+const REPO_ID = import.meta.env.PUBLIC_GISCUS_REPO_ID as string | undefined;
+const CATEGORY = 'Comments';
+const CATEGORY_ID = import.meta.env.PUBLIC_GISCUS_CATEGORY_ID as string | undefined;
 
 export default function Comments() {
-  const [comments, setComments] = useState<Comment[]>(SEED);
-  const [draft, setDraft] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
 
-  const submit = () => {
-    if (!draft.trim()) return;
-    setComments([
-      { id: `c${Date.now()}`, author: 'you', time: 'just now', body: draft.trim() },
-      ...comments,
-    ]);
-    setDraft('');
-  };
+  useEffect(() => {
+    if (!ref.current || !REPO_ID || !CATEGORY_ID) return;
+    if (ref.current.querySelector('script[data-giscus]')) return;
+
+    const theme =
+      document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark_dimmed' : 'light';
+
+    const s = document.createElement('script');
+    s.src = 'https://giscus.app/client.js';
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    s.dataset.giscus = 'true';
+    s.dataset.repo = REPO;
+    s.dataset.repoId = REPO_ID;
+    s.dataset.category = CATEGORY;
+    s.dataset.categoryId = CATEGORY_ID;
+    s.dataset.mapping = 'pathname';
+    s.dataset.strict = '0';
+    s.dataset.reactionsEnabled = '1';
+    s.dataset.emitMetadata = '0';
+    s.dataset.inputPosition = 'top';
+    s.dataset.theme = theme;
+    s.dataset.lang = 'en';
+    s.dataset.loading = 'lazy';
+    ref.current.appendChild(s);
+  }, []);
+
+  if (!REPO_ID || !CATEGORY_ID) {
+    return (
+      <section className="comments">
+        <h3>Discussion</h3>
+        <div
+          style={{
+            padding: 20,
+            border: '1px dashed var(--line-2)',
+            borderRadius: 8,
+            fontSize: 14,
+            color: 'var(--ink-3)',
+            lineHeight: 1.55,
+          }}
+        >
+          Comments are powered by{' '}
+          <a
+            href="https://giscus.app"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: 'var(--accent)' }}
+          >
+            Giscus
+          </a>{' '}
+          on top of GitHub Discussions. Once configured, every reply lives in the public{' '}
+          <a
+            href="https://github.com/orgs/MLSysDev/discussions"
+            target="_blank"
+            rel="noreferrer"
+            style={{ color: 'var(--accent)' }}
+          >
+            MLSysDev/mlsystems.dev
+          </a>{' '}
+          discussion for this article.
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="comments">
-      <h3>
-        Discussion <span className="count">{comments.length} comments</span>
-      </h3>
-
-      <div className="comment-compose">
-        <textarea
-          placeholder="Add to the discussion — markdown supported, code blocks encouraged."
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-        />
-        <div className="comment-compose-foot">
-          <span>posting as @you · be kind, be specific</span>
-          <button
-            className="btn btn-primary"
-            style={{ padding: '6px 14px', fontSize: 13 }}
-            onClick={submit}
-            disabled={!draft.trim()}
-          >
-            Post
-          </button>
-        </div>
-      </div>
-
-      {comments.map((c) => (
-        <div key={c.id} className="comment">
-          <div className="comment-head">
-            <div className="comment-avatar">{c.author.slice(0, 2).toUpperCase()}</div>
-            <div className="comment-author">@{c.author}</div>
-            <div className="comment-time">· {c.time}</div>
-          </div>
-          <div className="comment-body">{c.body}</div>
-          <div className="comment-actions">
-            <button>♡ reply</button>
-            <button>↗ share</button>
-            <button>⚐ flag</button>
-          </div>
-        </div>
-      ))}
+      <h3>Discussion</h3>
+      <div ref={ref} />
     </section>
   );
 }
