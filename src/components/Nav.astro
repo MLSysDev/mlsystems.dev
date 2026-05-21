@@ -9,6 +9,7 @@ const { currentPath } = Astro.props;
 const LINKS = [
   { id: 'blog', label: 'Blog', path: '/blog' },
   { id: 'topics', label: 'Topics', path: '/topics' },
+  { id: 'authors', label: 'Authors', path: '/authors' },
   { id: 'community', label: 'Community', path: '/community' },
   { id: 'playground', label: 'Playground', path: '/playground' },
   { id: 'contribute', label: 'Contribute', path: '/contribute' },
@@ -34,6 +35,31 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
           ))
         }
       </div>
+
+      <button
+        type="button"
+        class="nav-search"
+        aria-label="Search the archive"
+        title="Search (⌘K)"
+        data-search-trigger
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+        <span class="nav-search-label">Search</span>
+        <kbd class="nav-search-kbd">⌘K</kbd>
+      </button>
 
       <button
         type="button"
@@ -100,6 +126,11 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
       nav.classList.remove('nav-open');
       toggle?.setAttribute('aria-expanded', 'false');
     });
+  });
+
+  const searchBtn = nav?.querySelector<HTMLButtonElement>('[data-search-trigger]');
+  searchBtn?.addEventListener('click', () => {
+    document.dispatchEvent(new CustomEvent('mls:open-search'));
   });
 
   const themeBtn = nav?.querySelector<HTMLButtonElement>('[data-theme-toggle]');

@@ -31,7 +31,11 @@ const ogImage = `/og/tool/${tool.id}.png`;
   canonical={canonical}
   image={ogImage}
 >
-  <div class="container tool-shell">
+  <div
+    class="container tool-shell"
+    data-pagefind-body
+    data-pagefind-meta={`topic:Tool, type:${tool.data.tag}`}
+  >
     <a href="/playground" class="article-back">← Back to playground</a>
 
     <header class="tool-head">

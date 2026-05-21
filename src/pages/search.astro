@@ -1,0 +1,89 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { TOPICS } from '@/lib/data';
+---
+
+<BaseLayout
+  title="Search"
+  description="Search the ML Systems archive — articles, topics, tools, and authors."
+  image="/og/page/search.png"
+>
+  <div class="container search-page">
+    <div class="page-head">
+      <div class="eyebrow page-eyebrow">Search</div>
+      <h1 class="page-h1">Find anything.</h1>
+      <p class="page-lede">
+        Full-text search across every article, tool, and author profile. Try a paper title, a
+        technique, a model family, or just a phrase.
+      </p>
+    </div>
+
+    <div id="search-mount"></div>
+
+    <noscript>
+      <div class="search-noscript">
+        <p>Interactive search needs JavaScript. Browse by topic instead:</p>
+        <div class="search-topic-chips" style="margin-top: 12px;">
+          {TOPICS.map((t) => <a href={`/blog?topic=${t.id}`}>{t.name}</a>)}
+        </div>
+      </div>
+    </noscript>
+  </div>
+</BaseLayout>
+
+<script>
+  const url = `${window.location.origin}/_pagefind/pagefind-ui.js`;
+  import(/* @vite-ignore */ url)
+    .then((mod) => {
+      const PagefindUI = (mod as { PagefindUI: new (opts: unknown) => void }).PagefindUI;
+      new PagefindUI({
+        element: '#search-mount',
+        showSubResults: true,
+        showImages: false,
+        excerptLength: 28,
+        resetStyles: false,
+        autofocus: true,
+      });
+    })
+    .catch(() => {
+      const el = document.getElementById('search-mount');
+      if (el) {
+        el.innerHTML =
+          '<p style="color: var(--ink-3); padding: 24px 0;">Search index is not built yet. Run <code>npm run build</code> to generate it, then reload.</p>';
+      }
+    });
+</script>
+
+<style is:global>
+  .search-page #search-mount {
+    margin-top: 16px;
+  }
+  .pagefind-ui {
+    --pagefind-ui-primary: var(--accent);
+    --pagefind-ui-text: var(--ink);
+    --pagefind-ui-background: var(--paper);
+    --pagefind-ui-border: var(--line);
+    --pagefind-ui-tag: var(--paper-2);
+    --pagefind-ui-border-width: 1px;
+    --pagefind-ui-border-radius: 8px;
+    --pagefind-ui-font: var(--font-sans);
+  }
+  .pagefind-ui__search-input {
+    background: var(--paper-2) !important;
+  }
+  .pagefind-ui__result-title {
+    font-family: var(--font-display);
+    font-weight: 400;
+  }
+  .pagefind-ui__result-excerpt mark {
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0 2px;
+    border-radius: 3px;
+  }
+  .search-noscript {
+    padding: 32px 0;
+    color: var(--ink-3);
+    font-size: 14px;
+  }
+</style>

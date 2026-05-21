@@ -11,6 +11,9 @@ dist/
 .netlify/
 .wrangler/
 
+# Pagefind dev index (built into public/ by `npm run index:dev` for local testing)
+public/_pagefind/
+
 # Astro
 .astro/
 

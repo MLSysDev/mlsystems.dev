@@ -118,5 +118,10 @@ export default defineConfig({
     optimizeDeps: {
       exclude: ['@resvg/resvg-js', 'satori'],
     },
+    build: {
+      rollupOptions: {
+        external: [/^\/_pagefind\//],
+      },
+    },
   },
 });
