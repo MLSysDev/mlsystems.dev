@@ -5,11 +5,12 @@ import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
 import { TOPICS, THREADS, TOOLS, formatDate } from '@/lib/data';
 
-const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft))
-  .sort((a, b) => +b.data.date - +a.data.date);
+const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+  (a, b) => +b.data.date - +a.data.date,
+);
 
 const allPosts = await Promise.all(
-  allPostsRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) }))
+  allPostsRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
 );
 
 const featured = allPosts.filter((p) => p.data.featured).slice(0, 3);
@@ -32,9 +33,8 @@ const topThreads = THREADS.slice(0, 5);
             from <em>kernels</em> to clusters.
           </h1>
           <p class="hero-sub">
-            An open community for learning, writing, and tinkering on the infrastructure behind 
-            modern AI — inference engines, training systems, ml stacks, 
-            and everything in between.
+            An open community for learning, writing, and tinkering on the infrastructure behind
+            modern AI — inference engines, training systems, ml stacks, and everything in between.
           </p>
           <div class="hero-cta">
             <a href="/blog" class="btn btn-primary">
@@ -42,21 +42,39 @@ const topThreads = THREADS.slice(0, 5);
             </a>
             <a href="/contribute" class="btn">Write with us</a>
           </div>
-          <div style="margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);">
+          <div
+            style="margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);"
+          >
             <div>
-              <div style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;">284</div>
+              <div
+                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
+              >
+                284
+              </div>
               <div style="margin-top: 6px;">articles</div>
             </div>
             <div>
-              <div style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;">47</div>
+              <div
+                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
+              >
+                47
+              </div>
               <div style="margin-top: 6px;">contributors</div>
             </div>
             <div>
-              <div style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;">1.2k</div>
+              <div
+                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
+              >
+                1.2k
+              </div>
               <div style="margin-top: 6px;">discussions</div>
             </div>
             <div>
-              <div style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;">open</div>
+              <div
+                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
+              >
+                open
+              </div>
               <div style="margin-top: 6px;">source</div>
             </div>
           </div>
@@ -79,20 +97,24 @@ const topThreads = THREADS.slice(0, 5);
         <a href="/blog" class="section-link">All articles →</a>
       </div>
       <div class="latest-grid">
-        {featuredFinal.map((p) => (
-          <a class="article-card" href={`/blog/${p.id}`}>
-            <div class="article-meta">
-              <span class="article-id">[{p.data.id}]</span>
-              <span class="article-topic">{p.data.topic}</span>
-            </div>
-            <h3 class="article-title">{p.data.title}</h3>
-            <p class="article-summary">{p.data.summary}</p>
-            <div class="article-foot">
-              <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
-              <span>{formatDate(p.data.date.toISOString())} · {p.data.readMin} min</span>
-            </div>
-          </a>
-        ))}
+        {
+          featuredFinal.map((p) => (
+            <a class="article-card" href={`/blog/${p.id}`}>
+              <div class="article-meta">
+                <span class="article-id">[{p.data.id}]</span>
+                <span class="article-topic">{p.data.topic}</span>
+              </div>
+              <h3 class="article-title">{p.data.title}</h3>
+              <p class="article-summary">{p.data.summary}</p>
+              <div class="article-foot">
+                <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
+                <span>
+                  {formatDate(p.data.date.toISOString())} · {p.data.readMin} min
+                </span>
+              </div>
+            </a>
+          ))
+        }
       </div>
     </div>
   </section>
@@ -108,14 +130,16 @@ const topThreads = THREADS.slice(0, 5);
         <a href="/topics" class="section-link">Full index →</a>
       </div>
       <div class="topics-list">
-        {TOPICS.map((t, i) => (
-          <a href={`/blog?topic=${t.id}`} class="topic-row">
-            <span class="topic-num">{String(i + 1).padStart(2, '0')}</span>
-            <h3 class="topic-name">{t.name}</h3>
-            <span class="topic-desc">{t.desc}</span>
-            <span class="topic-count">{t.count} articles</span>
-          </a>
-        ))}
+        {
+          TOPICS.map((t, i) => (
+            <a href={`/blog?topic=${t.id}`} class="topic-row">
+              <span class="topic-num">{String(i + 1).padStart(2, '0')}</span>
+              <h3 class="topic-name">{t.name}</h3>
+              <span class="topic-desc">{t.desc}</span>
+              <span class="topic-count">{t.count} articles</span>
+            </a>
+          ))
+        }
       </div>
     </div>
   </section>
@@ -132,31 +156,41 @@ const topThreads = THREADS.slice(0, 5);
       </div>
       <div class="community-grid">
         <div class="thread-list">
-          {topThreads.map((th) => (
-            <a href="/community" class="thread-row">
-              <div class="thread-icon">{th.author.slice(0, 2).toUpperCase()}</div>
-              <div>
-                <div class="thread-title">{th.title}</div>
-                <div class="thread-meta">@{th.author} · {th.category} · last reply {th.lastReply}</div>
-              </div>
-              <div class="thread-replies">
-                {th.replies}
-                <small>replies</small>
-              </div>
-            </a>
-          ))}
+          {
+            topThreads.map((th) => (
+              <a href="/community" class="thread-row">
+                <div class="thread-icon">{th.author.slice(0, 2).toUpperCase()}</div>
+                <div>
+                  <div class="thread-title">{th.title}</div>
+                  <div class="thread-meta">
+                    @{th.author} · {th.category} · last reply {th.lastReply}
+                  </div>
+                </div>
+                <div class="thread-replies">
+                  {th.replies}
+                  <small>replies</small>
+                </div>
+              </a>
+            ))
+          }
         </div>
         <div class="side-panel">
           <h3>Open in the open.</h3>
           <p>
-            Every thread is public, every contribution is attributed. We're trying to
-            build the comments section the field deserves — technical, kind, signal-rich.
+            Every thread is public, every contribution is attributed. We're trying to build the
+            comments section the field deserves — technical, kind, signal-rich.
           </p>
           <div class="stat-row"><span>Threads this week</span><span>114</span></div>
           <div class="stat-row"><span>Avg. response time</span><span>34 min</span></div>
           <div class="stat-row"><span>Members</span><span>3,840</span></div>
-          <div class="stat-row"><span>Online now</span><span style="color: var(--accent);">312</span></div>
-          <a href="/community" class="btn" style="margin-top: 24px; width: 100%; justify-content: center;">
+          <div class="stat-row">
+            <span>Online now</span><span style="color: var(--accent);">312</span>
+          </div>
+          <a
+            href="/community"
+            class="btn"
+            style="margin-top: 24px; width: 100%; justify-content: center;"
+          >
             Join the discussion
           </a>
         </div>
@@ -175,22 +209,27 @@ const topThreads = THREADS.slice(0, 5);
         <a href="/playground" class="section-link">All tools →</a>
       </div>
       <div class="tools-grid">
-        {TOOLS.map((tool) => (
-          <a
-            href={tool.available ? '/playground' : '#'}
-            class={`tool-card ${tool.available ? '' : 'disabled'}`}
-            style={!tool.available ? 'pointer-events: none;' : ''}
-          >
-            <div class="tool-visual">
-              <ToolGlyph id={tool.id} />
-            </div>
-            <h3 class="tool-name">{tool.name}</h3>
-            <p class="tool-desc">{tool.desc}</p>
-            <div class="tool-tag" style={tool.available ? 'color: var(--accent);' : 'color: var(--ink-3);'}>
-              · {tool.tag} ·
-            </div>
-          </a>
-        ))}
+        {
+          TOOLS.map((tool) => (
+            <a
+              href={tool.available ? '/playground' : '#'}
+              class={`tool-card ${tool.available ? '' : 'disabled'}`}
+              style={!tool.available ? 'pointer-events: none;' : ''}
+            >
+              <div class="tool-visual">
+                <ToolGlyph id={tool.id} />
+              </div>
+              <h3 class="tool-name">{tool.name}</h3>
+              <p class="tool-desc">{tool.desc}</p>
+              <div
+                class="tool-tag"
+                style={tool.available ? 'color: var(--accent);' : 'color: var(--ink-3);'}
+              >
+                · {tool.tag} ·
+              </div>
+            </a>
+          ))
+        }
       </div>
     </div>
   </section>
@@ -203,15 +242,17 @@ const topThreads = THREADS.slice(0, 5);
           <div class="eyebrow" style="margin-bottom: 14px;">Contribute</div>
           <h2>Write something we'll all<br />still be reading in five years.</h2>
           <p>
-            We publish articles, field reports, and primers from engineers working on the
-            hard parts of ML systems. No paywalls, no editorial templates, no SEO games.
-            Just careful writing on work that matters.
+            We publish articles, field reports, and primers from engineers working on the hard parts
+            of ML systems. No paywalls, no editorial templates, no SEO games. Just careful writing
+            on work that matters.
           </p>
         </div>
         <div class="cta-actions">
           <a href="/contribute" class="btn btn-primary">Pitch an article →</a>
           <a href="/contribute" class="btn">Read the style guide</a>
-          <a href="https://github.com" target="_blank" rel="noreferrer" class="btn">Browse on GitHub</a>
+          <a href="https://github.com" target="_blank" rel="noreferrer" class="btn"
+            >Browse on GitHub</a
+          >
         </div>
       </div>
     </div>

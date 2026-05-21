@@ -44,13 +44,13 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Documentation
 
-| Doc | What it covers |
-|---|---|
-| [docs/writing-articles.md](docs/writing-articles.md) | How to write a post — frontmatter, MDX components, examples |
-| [docs/architecture.md](docs/architecture.md) | Project structure, design principles, why files are where they are |
-| [docs/deployment.md](docs/deployment.md) | Deploying to Vercel, Cloudflare Pages, Netlify, or any static host |
-| [docs/seo.md](docs/seo.md) | What SEO is already wired in + pre-launch checklist |
-| [docs/extending.md](docs/extending.md) | Growing the site — auth, courses, comments, search, newsletter |
+| Doc                                                  | What it covers                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------ |
+| [docs/writing-articles.md](docs/writing-articles.md) | How to write a post — frontmatter, MDX components, examples        |
+| [docs/architecture.md](docs/architecture.md)         | Project structure, design principles, why files are where they are |
+| [docs/deployment.md](docs/deployment.md)             | Deploying to Vercel, Cloudflare Pages, Netlify, or any static host |
+| [docs/seo.md](docs/seo.md)                           | What SEO is already wired in + pre-launch checklist                |
+| [docs/extending.md](docs/extending.md)               | Growing the site — auth, courses, comments, search, newsletter     |
 
 ---
 

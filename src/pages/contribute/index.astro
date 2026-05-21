@@ -3,42 +3,80 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { SITE } from '@/lib/site';
 
 const STEPS = [
-  { n: '01', title: 'Pitch', body: "A two-paragraph pitch is enough. Tell us what you'd write, who it's for, and why now. We respond within 72 hours." },
-  { n: '02', title: 'Outline', body: "We'll workshop the outline with you. Most pieces benefit from a sharper thesis and one fewer section than you think." },
-  { n: '03', title: 'Draft', body: 'Write in markdown, in your own voice. Code blocks, figures, equations — whatever the piece needs. Length should match the idea.' },
-  { n: '04', title: 'Edit', body: 'Two rounds of edits, focused on clarity and precision. We do not rewrite your voice. Authors keep all rights.' },
-  { n: '05', title: 'Publish', body: "We publish, you get a permanent arxiv-style ID, and you're a contributor. Discussions land in your inbox." },
+  {
+    n: '01',
+    title: 'Pitch',
+    body: "A two-paragraph pitch is enough. Tell us what you'd write, who it's for, and why now. We respond within 72 hours.",
+  },
+  {
+    n: '02',
+    title: 'Outline',
+    body: "We'll workshop the outline with you. Most pieces benefit from a sharper thesis and one fewer section than you think.",
+  },
+  {
+    n: '03',
+    title: 'Draft',
+    body: 'Write in markdown, in your own voice. Code blocks, figures, equations — whatever the piece needs. Length should match the idea.',
+  },
+  {
+    n: '04',
+    title: 'Edit',
+    body: 'Two rounds of edits, focused on clarity and precision. We do not rewrite your voice. Authors keep all rights.',
+  },
+  {
+    n: '05',
+    title: 'Publish',
+    body: "We publish, you get a permanent arxiv-style ID, and you're a contributor. Discussions land in your inbox.",
+  },
 ];
 ---
 
 <BaseLayout
   title="Contribute"
   description="Pitch an article, field report, primer, or tool to ML Systems. We publish work from engineers working on the hard parts of modern AI."
+  image="/og/page/contribute.png"
 >
   <div class="container">
     <div class="page-head">
       <div class="eyebrow page-eyebrow">Write with us</div>
       <h1 class="page-h1">Contribute.</h1>
       <p class="page-lede">
-        We publish articles, field reports, primers, and tools from engineers and
-        researchers working on ML systems. If you've learned something hard the hard way,
-        you should write about it here.
+        We publish articles, field reports, primers, and tools from engineers and researchers
+        working on ML systems. If you've learned something hard the hard way, you should write about
+        it here.
       </p>
     </div>
 
-    <div class="contribute-grid" style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 64px; margin-top: 32px;">
+    <div
+      class="contribute-grid"
+      style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 64px; margin-top: 32px;"
+    >
       <div>
-        <h2 style="font-family: var(--font-display); font-size: 36px; font-weight: 400; margin: 0 0 32px; letter-spacing: -0.01em;">The process</h2>
-        {STEPS.map((s) => (
-          <div style="display: grid; grid-template-columns: 80px 1fr; gap: 24px; padding: 24px 0; border-top: 1px solid var(--line);">
-            <div style="font-family: var(--font-mono); font-size: 12px; color: var(--accent);">{s.n}</div>
-            <div>
-              <h3 style="font-family: var(--font-display); font-size: 26px; margin: 0 0 8px; font-weight: 400;">{s.title}</h3>
-              <p style="font-size: 15px; color: var(--ink-2); margin: 0; line-height: 1.6;">{s.body}</p>
+        <h2
+          style="font-family: var(--font-display); font-size: 36px; font-weight: 400; margin: 0 0 32px; letter-spacing: -0.01em;"
+        >
+          The process
+        </h2>
+        {
+          STEPS.map((s) => (
+            <div style="display: grid; grid-template-columns: 80px 1fr; gap: 24px; padding: 24px 0; border-top: 1px solid var(--line);">
+              <div style="font-family: var(--font-mono); font-size: 12px; color: var(--accent);">
+                {s.n}
+              </div>
+              <div>
+                <h3 style="font-family: var(--font-display); font-size: 26px; margin: 0 0 8px; font-weight: 400;">
+                  {s.title}
+                </h3>
+                <p style="font-size: 15px; color: var(--ink-2); margin: 0; line-height: 1.6;">
+                  {s.body}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-        <div style="display: grid; grid-template-columns: 80px 1fr; gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);">
+          ))
+        }
+        <div
+          style="display: grid; grid-template-columns: 80px 1fr; gap: 24px; padding: 24px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);"
+        >
           <div></div>
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
             <a href={`mailto:${SITE.pitchEmail}`} class="btn btn-primary">
@@ -54,10 +92,19 @@ const STEPS = [
       <div>
         <div class="side-panel">
           <h3 style="font-size: 22px; margin-bottom: 16px;">What we publish</h3>
-          <ul style="padding-left: 18px; font-size: 14px; color: var(--ink-2); line-height: 1.7; margin: 0;">
-            <li><strong>Articles</strong> — opinionated, well-argued takes on a real problem (~1,500–3,000 words).</li>
-            <li><strong>Field reports</strong> — what happened when you actually shipped the thing.</li>
-            <li><strong>Primers</strong> — careful explainers of techniques that deserve more careful treatment.</li>
+          <ul
+            style="padding-left: 18px; font-size: 14px; color: var(--ink-2); line-height: 1.7; margin: 0;"
+          >
+            <li>
+              <strong>Articles</strong> — opinionated, well-argued takes on a real problem (~1,500–3,000
+              words).
+            </li>
+            <li>
+              <strong>Field reports</strong> — what happened when you actually shipped the thing.
+            </li>
+            <li>
+              <strong>Primers</strong> — careful explainers of techniques that deserve more careful treatment.
+            </li>
             <li><strong>Tools</strong> — working calculators or visualizers, with a writeup.</li>
             <li><strong>Reading lists</strong> — annotated bibliographies on narrow topics.</li>
           </ul>
@@ -65,7 +112,9 @@ const STEPS = [
 
         <div class="side-panel" style="margin-top: 16px;">
           <h3 style="font-size: 18px; margin-bottom: 12px;">What we don't publish</h3>
-          <ul style="padding-left: 18px; font-size: 13px; color: var(--ink-3); line-height: 1.7; margin: 0;">
+          <ul
+            style="padding-left: 18px; font-size: 13px; color: var(--ink-3); line-height: 1.7; margin: 0;"
+          >
             <li>Promotional content for products.</li>
             <li>Recycled paper summaries.</li>
             <li>"X is dead, long live Y" hot takes without evidence.</li>
@@ -76,12 +125,12 @@ const STEPS = [
         <div class="side-panel" style="margin-top: 16px;">
           <h3 style="font-size: 18px; margin-bottom: 12px;">Style</h3>
           <p style="font-size: 13px; color: var(--ink-2); line-height: 1.6; margin: 0 0 12px;">
-            Concrete over abstract. Numbers over adjectives. One idea per paragraph.
-            Show your work, including the parts that didn't.
+            Concrete over abstract. Numbers over adjectives. One idea per paragraph. Show your work,
+            including the parts that didn't.
           </p>
           <p style="font-size: 13px; color: var(--ink-2); line-height: 1.6; margin: 0;">
-            We're trying to make a publication that you'd want to send to your future
-            self. Write accordingly.
+            We're trying to make a publication that you'd want to send to your future self. Write
+            accordingly.
           </p>
         </div>
       </div>

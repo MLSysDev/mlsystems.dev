@@ -23,7 +23,9 @@ const posts = defineCollection({
   schema: z.object({
     id: z.string().describe('arxiv-style ID, e.g. "2026.11.087"'),
     title: z.string(),
-    summary: z.string().describe('one-sentence pitch — shows up in lists, meta description, OG card'),
+    summary: z
+      .string()
+      .describe('one-sentence pitch — shows up in lists, meta description, OG card'),
     // Array of author handles (filenames in src/content/authors/). At least one required.
     authors: z.array(reference('authors')).min(1),
     date: z.coerce.date(),

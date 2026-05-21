@@ -89,11 +89,11 @@ Every file under `src/pages/` becomes a URL. To add `/auth/login`, drop `pages/a
 
 ### Components: `.astro` vs `.tsx`
 
-| `.astro` (server-rendered) | `.tsx` (React island) |
-|---|---|
-| Static UI: nav, footer, cards, lists | Interactive UI: playgrounds, drawers, comments |
-| Zero JS at runtime | Only ships JS when used with `client:*` directive |
-| Faster build, smaller pages | Use only when interactivity is required |
+| `.astro` (server-rendered)           | `.tsx` (React island)                             |
+| ------------------------------------ | ------------------------------------------------- |
+| Static UI: nav, footer, cards, lists | Interactive UI: playgrounds, drawers, comments    |
+| Zero JS at runtime                   | Only ships JS when used with `client:*` directive |
+| Faster build, smaller pages          | Use only when interactivity is required           |
 
 Default to `.astro` unless you need state, effects, or event handlers.
 
@@ -114,6 +114,7 @@ import Playground from '@/components/Playground.tsx';
 The `client:visible` directive tells Astro to hydrate the component only when it scrolls into view — meaning a 5,000-word post with one playground at the bottom doesn't pay any JS cost until the reader scrolls there.
 
 Available client directives:
+
 - `client:load` — hydrate immediately on page load (use sparingly)
 - `client:idle` — hydrate when the browser is idle
 - `client:visible` — hydrate when scrolled into view (recommended for most islands)

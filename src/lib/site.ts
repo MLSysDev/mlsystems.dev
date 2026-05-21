@@ -4,7 +4,8 @@ export const SITE = {
   name: 'ML Systems',
   domain: 'mlsystems.dev',
   url: 'https://mlsystems.dev',
-  description: 'An open archive for the engineers and researchers building modern machine learning systems.',
+  description:
+    'An open archive for the engineers and researchers building modern machine learning systems.',
   tagline: 'Machine learning, from kernels to clusters.',
   author: 'The ML Systems Community',
   twitter: '@MLSystemsDev',

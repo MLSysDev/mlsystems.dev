@@ -31,12 +31,12 @@ This avoids two people writing the same post and lets us give you feedback on sc
 
    ```mdx
    ---
-   title: "Your Post Title"
-   description: "A 1-2 sentence summary that shows up in search and social previews."
+   title: 'Your Post Title'
+   description: 'A 1-2 sentence summary that shows up in search and social previews.'
    pubDate: 2026-05-21
-   author: "your-github-handle"
-   tags: ["inference", "vllm", "kv-cache"]
-   cover: "./cover.png"          # optional, relative to the post file
+   author: 'your-github-handle'
+   tags: ['inference', 'vllm', 'kv-cache']
+   cover: './cover.png' # optional, relative to the post file
    draft: false
    ---
 

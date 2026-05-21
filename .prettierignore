@@ -1,0 +1,14 @@
+dist
+node_modules
+.astro
+.husky
+package-lock.json
+public
+src/content/posts
+*.woff
+*.woff2
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.ico

@@ -2,7 +2,7 @@
 
 Posts on **mlsystems.dev** are MDX files in `src/content/posts/`. This document covers everything you need to write one — frontmatter, MDX components, and the publishing pipeline.
 
-> Looking for the contribution *process* (forking, branching, PR review)? See [CONTRIBUTING.md](../CONTRIBUTING.md). This doc covers the *how-to-write* part.
+> Looking for the contribution _process_ (forking, branching, PR review)? See [CONTRIBUTING.md](../CONTRIBUTING.md). This doc covers the _how-to-write_ part.
 
 ---
 
@@ -22,18 +22,18 @@ Keep slugs short, lowercase, hyphenated, and stable — once published, changing
 
 ```mdx
 ---
-id: "2026.12.001"
-title: "My new article"
-summary: "One-sentence pitch that shows up in the index and on social cards."
-author: "Your Name"
-authorHandle: "yourhandle"
-date: "2026-12-01"
+id: '2026.12.001'
+title: 'My new article'
+summary: 'One-sentence pitch that shows up in the index and on social cards.'
+author: 'Your Name'
+authorHandle: 'yourhandle'
+date: '2026-12-01'
 readMin: 12
-topic: "Inference"
-topicId: "inference"
-tags: ["attention", "kernels"]
-featured: true     # surface on home page
-draft: false       # set true to hide from /blog and sitemap
+topic: 'Inference'
+topicId: 'inference'
+tags: ['attention', 'kernels']
+featured: true # surface on home page
+draft: false # set true to hide from /blog and sitemap
 ---
 ```
 
@@ -50,7 +50,8 @@ draft: false       # set true to hide from /blog and sitemap
 Standard Markdown works:
 
 ```mdx
-**bold**, *italic*, [links](https://example.com), `inline code`,
+**bold**, _italic_, [links](https://example.com), `inline code`,
+
 > blockquotes,
 
 ## Headings
@@ -90,9 +91,7 @@ These are available in any post — import is automatic.
 **`<Note>`** — for callouts and important caveats:
 
 ```mdx
-<Note>
-  Important caveat or pointer that breaks the flow.
-</Note>
+<Note>Important caveat or pointer that breaks the flow.</Note>
 ```
 
 ### Math

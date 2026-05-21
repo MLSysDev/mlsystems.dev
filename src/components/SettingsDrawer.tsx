@@ -51,7 +51,9 @@ export default function SettingsDrawer() {
   useEffect(() => {
     if (!mounted) return;
     applyToRoot(settings);
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(settings)); } catch {}
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch {}
   }, [settings, mounted]);
 
   const set = <K extends keyof Settings>(k: K, v: Settings[K]) =>
@@ -105,16 +107,27 @@ export default function SettingsDrawer() {
             overflowY: 'auto',
           }}
         >
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginBottom: 16 }}>Settings</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, marginBottom: 16 }}>
+            Settings
+          </div>
 
           <Group label="Theme">
-            <Segmented value={settings.theme} options={['light', 'dark']} onChange={(v) => set('theme', v as Settings['theme'])} />
+            <Segmented
+              value={settings.theme}
+              options={['light', 'dark']}
+              onChange={(v) => set('theme', v as Settings['theme'])}
+            />
           </Group>
 
           <Group label="Accent">
             <div style={{ display: 'flex', gap: 6 }}>
               {(['oxide', 'indigo', 'emerald', 'ink'] as const).map((a) => {
-                const color = { oxide: '#b8431f', indigo: '#3949c2', emerald: '#15795e', ink: '#18171a' }[a];
+                const color = {
+                  oxide: '#b8431f',
+                  indigo: '#3949c2',
+                  emerald: '#15795e',
+                  ink: '#18171a',
+                }[a];
                 const isActive = settings.accent === a;
                 return (
                   <button
@@ -122,7 +135,9 @@ export default function SettingsDrawer() {
                     onClick={() => set('accent', a)}
                     aria-label={a}
                     style={{
-                      width: 32, height: 32, borderRadius: 6,
+                      width: 32,
+                      height: 32,
+                      borderRadius: 6,
                       background: color,
                       border: `2px solid ${isActive ? 'var(--ink)' : 'transparent'}`,
                       cursor: 'pointer',
@@ -135,30 +150,42 @@ export default function SettingsDrawer() {
           </Group>
 
           <Group label="Typography">
-            <Select value={settings.typeset} onChange={(v) => set('typeset', v as Settings['typeset'])}
+            <Select
+              value={settings.typeset}
+              onChange={(v) => set('typeset', v as Settings['typeset'])}
               options={[
                 { value: 'editorial', label: 'Editorial' },
                 { value: 'modern', label: 'Modern' },
                 { value: 'terminal', label: 'Terminal' },
-              ]} />
+              ]}
+            />
           </Group>
 
           <Group label="Density">
-            <Segmented value={settings.density} options={['compact', 'comfortable', 'spacious']} onChange={(v) => set('density', v as Settings['density'])} />
+            <Segmented
+              value={settings.density}
+              options={['compact', 'comfortable', 'spacious']}
+              onChange={(v) => set('density', v as Settings['density'])}
+            />
           </Group>
 
           <Group label="Background">
-            <Select value={settings.background} onChange={(v) => set('background', v as Settings['background'])}
+            <Select
+              value={settings.background}
+              onChange={(v) => set('background', v as Settings['background'])}
               options={[
                 { value: 'plain', label: 'Plain' },
                 { value: 'grid', label: 'Grid lines' },
                 { value: 'dots', label: 'Dot grid' },
                 { value: 'noise', label: 'Paper noise' },
-              ]} />
+              ]}
+            />
           </Group>
 
           <button
-            onClick={() => { setSettings(DEFAULTS); }}
+            onClick={() => {
+              setSettings(DEFAULTS);
+            }}
             style={{
               marginTop: 8,
               fontFamily: 'var(--font-mono)',
@@ -182,14 +209,16 @@ export default function SettingsDrawer() {
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
-      <div style={{
-        fontFamily: 'var(--font-mono)',
-        fontSize: 10,
-        textTransform: 'uppercase',
-        letterSpacing: '0.1em',
-        color: 'var(--ink-3)',
-        marginBottom: 8,
-      }}>
+      <div
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 10,
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: 'var(--ink-3)',
+          marginBottom: 8,
+        }}
+      >
         {label}
       </div>
       {children}
@@ -197,16 +226,26 @@ function Group({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
-function Segmented({ value, options, onChange }: { value: string; options: readonly string[]; onChange: (v: string) => void }) {
+function Segmented({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: readonly string[];
+  onChange: (v: string) => void;
+}) {
   return (
-    <div style={{
-      display: 'inline-flex',
-      gap: 0,
-      background: 'var(--paper-2)',
-      borderRadius: 6,
-      padding: 2,
-      border: '1px solid var(--line)',
-    }}>
+    <div
+      style={{
+        display: 'inline-flex',
+        gap: 0,
+        background: 'var(--paper-2)',
+        borderRadius: 6,
+        padding: 2,
+        border: '1px solid var(--line)',
+      }}
+    >
       {options.map((o) => (
         <button
           key={o}
@@ -231,7 +270,15 @@ function Segmented({ value, options, onChange }: { value: string; options: reado
   );
 }
 
-function Select({ value, options, onChange }: { value: string; options: { value: string; label: string }[]; onChange: (v: string) => void }) {
+function Select({
+  value,
+  options,
+  onChange,
+}: {
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
   return (
     <select
       value={value}
@@ -249,7 +296,9 @@ function Select({ value, options, onChange }: { value: string; options: { value:
       }}
     >
       {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
+        <option key={o.value} value={o.value}>
+          {o.label}
+        </option>
       ))}
     </select>
   );

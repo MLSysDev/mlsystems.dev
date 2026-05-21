@@ -1,8 +1,8 @@
 ---
 name: Bug Report
 about: Report a bug, broken link, or rendering issue on the site
-title: "[Bug] "
-labels: ["bug", "needs-triage"]
+title: '[Bug] '
+labels: ['bug', 'needs-triage']
 assignees: []
 ---
 

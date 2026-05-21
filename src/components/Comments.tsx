@@ -10,9 +10,24 @@ type Comment = {
 };
 
 const SEED: Comment[] = [
-  { id: 'c1', author: 'priya', time: '3 hr ago', body: 'The flame graph point at the end is underrated. We saw a 2.4x speedup just by moving the projection up out of the inner loop.' },
-  { id: 'c2', author: 'naoko', time: '5 hr ago', body: "Curious if you've run this on H200s — the bandwidth profile is different enough that some of the assumptions about memory-boundedness need to be re-validated." },
-  { id: 'c3', author: 'hugo', time: '1 day ago', body: 'Beautifully written. The bit about treating it as a scheduling problem first is exactly the framing I wish more vendors would adopt.' },
+  {
+    id: 'c1',
+    author: 'priya',
+    time: '3 hr ago',
+    body: 'The flame graph point at the end is underrated. We saw a 2.4x speedup just by moving the projection up out of the inner loop.',
+  },
+  {
+    id: 'c2',
+    author: 'naoko',
+    time: '5 hr ago',
+    body: "Curious if you've run this on H200s — the bandwidth profile is different enough that some of the assumptions about memory-boundedness need to be re-validated.",
+  },
+  {
+    id: 'c3',
+    author: 'hugo',
+    time: '1 day ago',
+    body: 'Beautifully written. The bit about treating it as a scheduling problem first is exactly the framing I wish more vendors would adopt.',
+  },
 ];
 
 export default function Comments() {
@@ -21,7 +36,10 @@ export default function Comments() {
 
   const submit = () => {
     if (!draft.trim()) return;
-    setComments([{ id: `c${Date.now()}`, author: 'you', time: 'just now', body: draft.trim() }, ...comments]);
+    setComments([
+      { id: `c${Date.now()}`, author: 'you', time: 'just now', body: draft.trim() },
+      ...comments,
+    ]);
     setDraft('');
   };
 

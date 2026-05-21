@@ -1,0 +1,7 @@
+echo "→ running verify (typecheck + lint + format) before push…"
+npm run verify || {
+  echo ""
+  echo "✗ verify failed — fix issues before pushing."
+  echo "  Try: npm run lint:fix && npm run format"
+  exit 1
+}

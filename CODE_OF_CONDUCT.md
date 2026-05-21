@@ -34,4 +34,4 @@ This code applies everywhere the project lives: this repository, the website, Gi
 
 ---
 
-*Adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1.*
+_Adapted from the [Contributor Covenant](https://www.contributor-covenant.org/), version 2.1._

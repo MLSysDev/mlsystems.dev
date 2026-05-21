@@ -7,7 +7,11 @@ export const mdxComponents = {
   h3: (props: ComponentProps<'h3'>) => <h3 {...props} />,
   p: (props: ComponentProps<'p'>) => <p {...props} />,
   a: (props: ComponentProps<'a'>) => (
-    <a {...props} target={props.href?.toString().startsWith('http') ? '_blank' : undefined} rel="noreferrer" />
+    <a
+      {...props}
+      target={props.href?.toString().startsWith('http') ? '_blank' : undefined}
+      rel="noreferrer"
+    />
   ),
   code: (props: ComponentProps<'code'>) => <code {...props} />,
   pre: (props: ComponentProps<'pre'>) => <pre {...props} />,
@@ -17,7 +21,17 @@ export const mdxComponents = {
     <div className="inline-figure">
       <div>{children}</div>
       <div className="inline-figure-caption">
-        <span style={{ fontStyle: 'normal', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-3)', marginRight: 8 }}>FIG.</span>
+        <span
+          style={{
+            fontStyle: 'normal',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 11,
+            color: 'var(--ink-3)',
+            marginRight: 8,
+          }}
+        >
+          FIG.
+        </span>
         {caption}
       </div>
     </div>

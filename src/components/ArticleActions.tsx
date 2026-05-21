@@ -33,24 +33,43 @@ export default function ArticleActions({
         <button
           className="btn"
           onClick={() => setLiked((v) => !v)}
-          style={{ color: liked ? 'var(--accent)' : 'inherit', borderColor: liked ? 'var(--accent)' : 'var(--line-2)' }}
+          style={{
+            color: liked ? 'var(--accent)' : 'inherit',
+            borderColor: liked ? 'var(--accent)' : 'var(--line-2)',
+          }}
         >
           {liked ? '♥' : '♡'} {liked ? '128' : '127'}
         </button>
         <button
           className="btn"
           onClick={() => setBookmarked((v) => !v)}
-          style={{ color: bookmarked ? 'var(--accent)' : 'inherit', borderColor: bookmarked ? 'var(--accent)' : 'var(--line-2)' }}
+          style={{
+            color: bookmarked ? 'var(--accent)' : 'inherit',
+            borderColor: bookmarked ? 'var(--accent)' : 'var(--line-2)',
+          }}
         >
           {bookmarked ? '★' : '☆'} Bookmark
         </button>
         <button
           className="btn"
-          onClick={() => {
-            if (typeof navigator !== 'undefined' && 'share' in navigator) {
-              void (navigator as Navigator & { share: (data: ShareData) => Promise<void> }).share({ title, url: typeof window !== 'undefined' ? window.location.href : undefined });
-            } else if (typeof navigator !== 'undefined') {
-              void navigator.clipboard.writeText(typeof window !== 'undefined' ? window.location.href : '');
+          onClick={async () => {
+            if (typeof window === 'undefined' || typeof navigator === 'undefined') return;
+            const url = window.location.href;
+            const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
+            if (typeof nav.share === 'function') {
+              try {
+                await nav.share({ title, url });
+              } catch {
+                /* user dismissed */
+              }
+              return;
+            }
+            if (nav.clipboard) {
+              try {
+                await nav.clipboard.writeText(url);
+              } catch {
+                /* clipboard blocked */
+              }
             }
           }}
         >
@@ -58,7 +77,8 @@ export default function ArticleActions({
         </button>
       </div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-3)' }}>
-        Cite as: {author.split(' ').reverse().join(', ')}. &quot;{title.split(':')[0]}.&quot; mlsystems.dev, {date}.
+        Cite as: {author.split(' ').reverse().join(', ')}. &quot;{title.split(':')[0]}.&quot;
+        mlsystems.dev, {date}.
       </div>
     </div>
   );

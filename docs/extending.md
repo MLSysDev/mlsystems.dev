@@ -19,7 +19,7 @@ Astro supports both static and SSR modes. To enable auth (signup, login, session
    # or: npx astro add cloudflare
    ```
 
-2. **In `astro.config.mjs`**, change `output: 'static'` to `output: 'hybrid'`. Hybrid means *static by default, SSR opt-in per page*.
+2. **In `astro.config.mjs`**, change `output: 'static'` to `output: 'hybrid'`. Hybrid means _static by default, SSR opt-in per page_.
 
 3. **Pick an auth library:**
    - **[Lucia](https://lucia-auth.com)** — framework-agnostic, simple, you own the session table
@@ -32,7 +32,7 @@ Astro supports both static and SSR modes. To enable auth (signup, login, session
 
    ```astro
    ---
-   export const prerender = false;  // this page renders on every request
+   export const prerender = false; // this page renders on every request
    ---
    ```
 
@@ -146,7 +146,7 @@ To wire to real counts:
 import { getCollection } from 'astro:content';
 const posts = await getCollection('posts', ({ data }) => !data.draft);
 const articleCount = posts.length;
-const contributorCount = new Set(posts.map(p => p.data.authorHandle)).size;
+const contributorCount = new Set(posts.map((p) => p.data.authorHandle)).size;
 ---
 ```
 

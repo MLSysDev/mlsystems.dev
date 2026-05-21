@@ -4,14 +4,15 @@ import type { APIContext } from 'astro';
 import { SITE } from '@/lib/site';
 
 export async function GET(context: APIContext) {
-  const postsRaw = (await getCollection('posts', ({ data }) => !data.draft))
-    .sort((a, b) => +b.data.date - +a.data.date);
+  const postsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(
+    (a, b) => +b.data.date - +a.data.date,
+  );
 
   const posts = await Promise.all(
     postsRaw.map(async (p) => ({
       ...p,
       authorNames: (await getEntries(p.data.authors)).map((a) => a.data.name).join(', '),
-    }))
+    })),
   );
 
   return rss({
