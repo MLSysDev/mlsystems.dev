@@ -9,10 +9,7 @@ const { currentPath } = Astro.props;
 const LINKS = [
   { id: 'blog', label: 'Blog', path: '/blog' },
   { id: 'topics', label: 'Topics', path: '/topics' },
-  { id: 'authors', label: 'Authors', path: '/authors' },
-  { id: 'community', label: 'Community', path: '/community' },
   { id: 'playground', label: 'Playground', path: '/playground' },
-  { id: 'contribute', label: 'Contribute', path: '/contribute' },
 ];
 
 const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/');
@@ -35,6 +32,23 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
           ))
         }
       </div>
+
+      <a href="/contribute" class="nav-write">
+        <svg
+          viewBox="0 0 24 24"
+          width="13"
+          height="13"
+          aria-hidden="true"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+        </svg>
+        Write
+      </a>
 
       <button
         type="button"

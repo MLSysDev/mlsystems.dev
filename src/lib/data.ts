@@ -41,13 +41,13 @@ export const TOPICS: Topic[] = [
   },
   {
     id: 'multimodal',
-    name: 'Multimodal & VLMs',
-    desc: 'Vision-language models, audio, video, world tokens.',
+    name: 'Models',
+    desc: 'LLMs, VLMs, multimodal systems, capabilities, and model behavior.',
   },
   {
-    id: 'world-models',
-    name: 'World Models & Agents',
-    desc: 'Latent dynamics, planning, JEPA, embodied agents.',
+    id: 'agents',
+    name: 'Agents',
+    desc: 'Planning, tool use, multi-agent systems, memory, and orchestration.',
   },
   {
     id: 'evals',

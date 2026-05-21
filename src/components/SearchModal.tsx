@@ -311,7 +311,7 @@ export default function SearchModal() {
             <kbd>esc</kbd> close
           </span>
           <a href="/search" className="search-foot-link" onClick={close}>
-            Full search page →
+            Full search →
           </a>
         </div>
       </div>
