@@ -1,5 +1,5 @@
 {
   "name": "Hugo Belmar",
-  "bio": "Distributed training and architecture researcher. Currently working on MoE routing.",
+  "bio": "Distributed training and architecture researcher. Spends most of his time debugging large runs and arguing about MoE routing strategies. Currently focused on expert-balance objectives and the practical limits of sparse models.",
   "role": "contributor"
 }

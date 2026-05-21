@@ -1,5 +1,5 @@
 {
   "name": "Naoko Ide",
-  "bio": "Retrieval systems engineer interested in embedding compression and approximate search.",
+  "bio": "Retrieval systems engineer interested in embedding compression and approximate search. Has strong opinions on when retrieval helps and when it just adds latency. Currently working on quantized indexes and re-ranker design.",
   "role": "contributor"
 }

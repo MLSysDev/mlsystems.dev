@@ -7,10 +7,14 @@ const authors = defineCollection({
     name: z.string(),
     bio: z.string().optional(),
     role: z.string().optional().default('contributor'),
+    avatar: z.string().optional(),
     github: z.string().optional(),
     twitter: z.string().optional(),
+    linkedin: z.string().optional(),
+    mastodon: z.string().optional(),
+    bluesky: z.string().optional(),
     website: z.string().optional(),
-    avatar: z.string().optional(),
+    email: z.string().email().optional(),
   }),
 });
 

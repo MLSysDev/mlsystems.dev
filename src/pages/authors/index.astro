@@ -1,0 +1,176 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+
+const authors = await getCollection('authors');
+const posts = await getCollection('posts', ({ data }) => !data.draft);
+
+const contributors = authors
+  .map((author) => {
+    const authorPosts = posts.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
+    const lastDate = authorPosts.reduce<Date | null>((acc, p) => {
+      const d = p.data.date;
+      return !acc || d > acc ? d : acc;
+    }, null);
+    const initials = author.data.name
+      .split(' ')
+      .map((w) => w[0])
+      .join('');
+    return {
+      id: author.id,
+      data: author.data,
+      postCount: authorPosts.length,
+      lastDate,
+      initials,
+    };
+  })
+  .sort((a, b) => {
+    if (b.postCount !== a.postCount) return b.postCount - a.postCount;
+    return a.data.name.localeCompare(b.data.name);
+  });
+---
+
+<BaseLayout
+  title="Contributors"
+  description="Engineers and researchers writing on ML Systems."
+  image="/og-default.png"
+>
+  <div class="container">
+    <div class="page-head">
+      <div class="eyebrow page-eyebrow">The People</div>
+      <h1 class="page-h1">Contributors.</h1>
+      <p class="page-lede">
+        {contributors.length} writers from labs, startups, and research groups working on the hard parts
+        of ML systems. Every article is attributed — and most of them are open to questions on{' '}
+        <a href="https://github.com/orgs/MLSysDev/discussions" target="_blank" rel="noreferrer"
+          >Discussions</a
+        >.
+      </p>
+    </div>
+
+    <div class="contributors-grid">
+      {
+        contributors.map((c) => (
+          <a href={`/authors/${c.id}`} class="contributor-card">
+            <div class="contributor-avatar" aria-hidden="true">
+              {c.initials}
+            </div>
+            <div class="contributor-meta">
+              <div class="contributor-name">{c.data.name}</div>
+              <div class="contributor-role">{c.data.role}</div>
+              {c.data.bio && <p class="contributor-bio">{c.data.bio}</p>}
+              <div class="contributor-stats">
+                <span>
+                  {c.postCount} {c.postCount === 1 ? 'article' : 'articles'}
+                </span>
+                <span>·</span>
+                <span>@{c.id}</span>
+              </div>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .contributors-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    margin-top: 24px;
+    margin-bottom: 80px;
+  }
+  .contributor-card {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 18px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--paper-2);
+    color: inherit;
+    text-decoration: none;
+    transition:
+      transform 0.18s ease,
+      border-color 0.18s ease,
+      background 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  .contributor-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+    background: var(--paper);
+    box-shadow: 0 8px 24px -14px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  .contributor-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 22px;
+    letter-spacing: 0.02em;
+  }
+  .contributor-meta {
+    min-width: 0;
+  }
+  .contributor-name {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 400;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+  .contributor-role {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+    margin-top: 4px;
+  }
+  .contributor-bio {
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    margin: 10px 0 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .contributor-stats {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-3);
+    margin-top: 10px;
+    display: flex;
+    gap: 6px;
+  }
+  @media (max-width: 720px) {
+    .contributors-grid {
+      grid-template-columns: 1fr;
+    }
+    .contributor-card {
+      padding: 18px;
+      grid-template-columns: 48px 1fr;
+      gap: 14px;
+    }
+    .contributor-avatar {
+      width: 48px;
+      height: 48px;
+      font-size: 18px;
+    }
+    .contributor-name {
+      font-size: 20px;
+    }
+  }
+</style>

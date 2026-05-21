@@ -18,7 +18,6 @@ interface Props {
 }
 const { author } = Astro.props;
 
-// All posts by this author (including co-authored)
 const allRaw = await getCollection('posts', ({ data }) => !data.draft);
 const matching = allRaw.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
 const posts = (
@@ -27,11 +26,35 @@ const posts = (
   )
 ).sort((a, b) => +b.data.date - +a.data.date);
 
+const topicCounts = posts.reduce<Record<string, number>>((acc, p) => {
+  acc[p.data.topic] = (acc[p.data.topic] ?? 0) + 1;
+  return acc;
+}, {});
+const topTopics = Object.entries(topicCounts)
+  .sort(([, a], [, b]) => b - a)
+  .slice(0, 3)
+  .map(([t]) => t);
+
 const initials = author.data.name
   .split(' ')
   .map((w) => w[0])
   .join('');
 const canonical = `${SITE.url}/authors/${author.id}`;
+
+const SOCIAL_FIELDS: { key: keyof typeof author.data; label: string; prefix?: string }[] = [
+  { key: 'github', label: 'GitHub' },
+  { key: 'twitter', label: 'Twitter' },
+  { key: 'linkedin', label: 'LinkedIn' },
+  { key: 'mastodon', label: 'Mastodon' },
+  { key: 'bluesky', label: 'Bluesky' },
+  { key: 'website', label: 'Website' },
+  { key: 'email', label: 'Email', prefix: 'mailto:' },
+];
+const socials = SOCIAL_FIELDS.flatMap((f) => {
+  const value = author.data[f.key];
+  if (!value || typeof value !== 'string') return [];
+  return [{ label: f.label, href: f.prefix ? `${f.prefix}${value}` : value }];
+});
 ---
 
 <BaseLayout
@@ -40,65 +63,59 @@ const canonical = `${SITE.url}/authors/${author.id}`;
   canonical={canonical}
   image={`/og/author/${author.id}.png`}
 >
-  <div class="container blog-shell">
-    <div class="author-profile-head">
-      <a href="/blog" class="article-back">← Back to archive</a>
+  <div
+    class="container author-page"
+    data-pagefind-body
+    data-pagefind-meta={`topic:Author, role:${author.data.role}`}
+  >
+    <a href="/authors" class="article-back">← All contributors</a>
 
-      <div style="display: flex; align-items: center; gap: 20px; margin-top: 24px;">
-        <div
-          class="comment-avatar"
-          style="width: 72px; height: 72px; font-size: 24px; flex-shrink: 0;"
-        >
-          {initials}
-        </div>
-        <div style="min-width: 0;">
-          <div class="eyebrow page-eyebrow" style="margin-bottom: 6px;">{author.data.role}</div>
-          <h1
-            style="font-family: var(--font-display); font-size: 48px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.05; margin: 0;"
-          >
-            {author.data.name}
-          </h1>
-          <div
-            style="font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); margin-top: 8px;"
-          >
-            @{author.id}
-          </div>
-        </div>
+    <header class="author-head">
+      <div class="author-head-left">
+        <div class="author-avatar-lg" aria-hidden="true">{initials}</div>
       </div>
+      <div class="author-head-right">
+        <div class="eyebrow page-eyebrow">{author.data.role}</div>
+        <h1 class="author-name">{author.data.name}</h1>
+        <div class="author-handle">@{author.id}</div>
 
-      {
-        author.data.bio && (
-          <p style="font-size: 18px; color: var(--ink-2); line-height: 1.55; margin: 24px 0 0; max-width: 640px;">
-            {author.data.bio}
-          </p>
-        )
-      }
+        {author.data.bio && <p class="author-bio">{author.data.bio}</p>}
 
-      {
-        (author.data.github || author.data.twitter || author.data.website) && (
-          <div style="display: flex; gap: 16px; margin-top: 20px; font-family: var(--font-mono); font-size: 13px;">
-            {author.data.github && (
-              <a href={author.data.github} target="_blank" rel="noreferrer">
-                GitHub
-              </a>
-            )}
-            {author.data.twitter && (
-              <a href={author.data.twitter} target="_blank" rel="noreferrer">
-                Twitter
-              </a>
-            )}
-            {author.data.website && (
-              <a href={author.data.website} target="_blank" rel="noreferrer">
-                Website
-              </a>
-            )}
+        <div class="author-stats">
+          <div>
+            <strong>{posts.length}</strong>
+            <span>{posts.length === 1 ? 'article' : 'articles'}</span>
           </div>
-        )
-      }
-    </div>
+          {
+            topTopics.length > 0 && (
+              <div>
+                <strong>{topTopics.join(' · ')}</strong>
+                <span>focus</span>
+              </div>
+            )
+          }
+        </div>
 
-    <div style="margin-top: 56px;">
-      <div class="eyebrow" style="margin-bottom: 16px;">
+        {
+          socials.length > 0 && (
+            <div class="author-links">
+              {socials.map((s) => (
+                <a
+                  href={s.href}
+                  target={s.href.startsWith('mailto:') ? undefined : '_blank'}
+                  rel={s.href.startsWith('mailto:') ? undefined : 'noreferrer'}
+                >
+                  {s.label} →
+                </a>
+              ))}
+            </div>
+          )
+        }
+      </div>
+    </header>
+
+    <section class="author-articles">
+      <div class="eyebrow">
         {posts.length === 1 ? '1 article' : `${posts.length} articles`}
       </div>
 
@@ -128,14 +145,119 @@ const canonical = `${SITE.url}/authors/${author.id}`;
           </div>
         )
       }
-    </div>
+    </section>
   </div>
 </BaseLayout>
 
 <style>
-  .author-profile-head {
-    padding-top: 32px;
-    padding-bottom: 32px;
+  .author-page {
+    padding-top: 24px;
+    padding-bottom: 80px;
+  }
+  .author-head {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 28px;
+    padding: 28px 0 36px;
     border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+  .author-avatar-lg {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+  }
+  .author-name {
+    font-family: var(--font-display);
+    font-size: 48px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+    margin: 4px 0 0;
+  }
+  .author-handle {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 6px;
+  }
+  .author-bio {
+    font-size: 17px;
+    color: var(--ink-2);
+    line-height: 1.55;
+    margin: 18px 0 0;
+    max-width: 640px;
+  }
+  .author-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    margin-top: 22px;
+  }
+  .author-stats div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .author-stats strong {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--ink);
+  }
+  .author-stats span {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink-3);
+  }
+  .author-links {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    margin-top: 18px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .author-links a {
+    color: var(--accent);
+  }
+  .author-articles {
+    margin-top: 8px;
+  }
+  .author-articles .eyebrow {
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 720px) {
+    .author-head {
+      grid-template-columns: 1fr;
+      gap: 18px;
+      padding: 20px 0 28px;
+      margin-bottom: 32px;
+    }
+    .author-avatar-lg {
+      width: 72px;
+      height: 72px;
+      font-size: 26px;
+    }
+    .author-name {
+      font-size: 36px;
+    }
+    .author-stats {
+      gap: 20px;
+      margin-top: 18px;
+    }
   }
 </style>

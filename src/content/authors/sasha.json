@@ -1,5 +1,5 @@
 {
   "name": "Sasha Petrov",
-  "bio": "Retrieval-augmented generation, document understanding, and grounded model evaluation.",
+  "bio": "Retrieval-augmented generation, document understanding, and grounded model evaluation. Spends most of his time arguing that the answer to \"do we need RAG?\" is usually \"not the way you think.\" Currently exploring long-context vs retrieval trade-offs.",
   "role": "contributor"
 }
