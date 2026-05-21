@@ -1,5 +1,5 @@
 ---
-// Top navigation — static markup; mobile menu uses ~30 lines of inline JS.
+// Top navigation — static markup; mobile menu + theme toggle use ~30 lines of inline JS.
 
 interface Props {
   currentPath: string;
@@ -25,40 +25,67 @@ const isActive = (path: string) =>
       <span>ML Systems</span>
     </a>
 
-    <button
-      type="button"
-      class="nav-burger"
-      aria-label="Toggle navigation menu"
-      aria-controls="nav-menu"
-      aria-expanded="false"
-      data-nav-toggle
-    >
-      <span class="nav-burger-bar"></span>
-      <span class="nav-burger-bar"></span>
-      <span class="nav-burger-bar"></span>
-    </button>
+    <div class="nav-right">
+      <div class="nav-links" id="nav-menu">
+        {LINKS.map((l) => (
+          <a href={l.path} class={isActive(l.path) ? 'active' : ''}>{l.label}</a>
+        ))}
+      </div>
 
-    <div class="nav-links" id="nav-menu">
-      {LINKS.map((l) => (
-        <a href={l.path} class={isActive(l.path) ? 'active' : ''}>{l.label}</a>
-      ))}
+      <button
+        type="button"
+        class="theme-toggle"
+        aria-label="Toggle dark / light theme"
+        title="Toggle theme"
+        data-theme-toggle
+      >
+        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="4" />
+          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+        </svg>
+        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" />
+        </svg>
+      </button>
+
+      <button
+        type="button"
+        class="nav-burger"
+        aria-label="Toggle navigation menu"
+        aria-controls="nav-menu"
+        aria-expanded="false"
+        data-nav-toggle
+      >
+        <span class="nav-burger-bar"></span>
+        <span class="nav-burger-bar"></span>
+        <span class="nav-burger-bar"></span>
+      </button>
     </div>
   </div>
 </nav>
 
 <script>
-  // Mobile hamburger — toggle .nav-open on the <nav>, sync aria-expanded.
+  // Mobile hamburger
   const nav = document.getElementById('site-nav');
   const toggle = nav?.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   toggle?.addEventListener('click', () => {
     const open = nav!.classList.toggle('nav-open');
     toggle.setAttribute('aria-expanded', String(open));
   });
-  // Close menu when a link is clicked (mobile UX)
   nav?.querySelectorAll('.nav-links a').forEach((a) => {
     a.addEventListener('click', () => {
       nav.classList.remove('nav-open');
       toggle?.setAttribute('aria-expanded', 'false');
     });
+  });
+
+  // Theme toggle — swaps data-theme on <html> and persists in localStorage.
+  // Initial value is set by an inline script in <head> to avoid FOUC.
+  const themeBtn = nav?.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  themeBtn?.addEventListener('click', () => {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try { localStorage.setItem('theme', next); } catch {}
   });
 </script>

@@ -44,10 +44,6 @@ all.forEach((a) => {
         <div class="eyebrow page-eyebrow">The Archive</div>
         <h1 class="blog-h1">All articles.</h1>
       </div>
-      <p style="font-size: 17px; color: var(--ink-2); max-width: 480px; margin: 0; line-height: 1.55;">
-        {all.length} articles across {TOPICS.length} topics. Filter by area, or just scroll —
-        this index reads top to bottom, newest first.
-      </p>
     </div>
 
     <BlogFilter activeTopic={activeTopic} allCount={all.length} topicCounts={topicCounts} />
