@@ -8,7 +8,17 @@ Authors on **mlsystems.dev** are just JSON files. Adding yourself takes about tw
 
 ## 1. Create your author file
 
-Pick a handle — short, lowercase, hyphen-free. This becomes your URL: `lchen` → `/authors/lchen` → `@lchen`.
+Pick a handle. This becomes your URL and `@mention`, and it's **permanent** — changing it later breaks inbound links and your Open Graph card.
+
+**Rules:** lowercase, no spaces, ASCII only. Hyphens allowed.
+
+**Conventions** (in priority order):
+
+1. **Single name** if unambiguous — `priya`, `naoko`
+2. **`firstname-lastname`** if your first name is common or already taken — `priya-sharma`, `liam-chen`
+3. **`firstinitiallastname`** for the very common case — `psharma`, `lchen`
+
+The filename is the source of truth — you literally cannot create two files with the same handle, so collisions are caught by the filesystem. If your preferred handle is taken, check `src/content/authors/` and pick one of the fallback patterns above.
 
 ```bash
 touch src/content/authors/<your-handle>.json
