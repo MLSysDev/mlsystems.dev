@@ -37,3 +37,6 @@ Thumbs.db
 
 # Roopik IDE metadata
 .roopik/
+
+.dev.vars*
+!.dev.vars.example

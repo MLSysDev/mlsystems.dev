@@ -4,10 +4,13 @@ import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
+import cloudflare from "@astrojs/cloudflare";
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://mlsystems.dev',
   trailingSlash: 'ignore',
+
   integrations: [
     react(),
     mdx({
@@ -30,4 +33,6 @@ export default defineConfig({
   build: {
     inlineStylesheets: 'auto',
   },
+
+  adapter: cloudflare()
 });
