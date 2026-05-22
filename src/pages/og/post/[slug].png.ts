@@ -5,7 +5,7 @@ import { generateOgPng } from '@/lib/og';
 import { pngResponseWithFallback } from '@/lib/og-response';
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const posts = await getCollection('posts', ({ data }) => !data.draft && !data.cover);
   return posts.map((post) => ({
     params: { slug: post.id },
     props: { post },

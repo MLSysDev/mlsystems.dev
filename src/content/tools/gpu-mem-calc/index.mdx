@@ -1,0 +1,50 @@
+---
+name: Training Memory Calculator
+summary: Per-GPU VRAM breakdown for training and inference — params, gradients, optimizer state, activations, KV cache, with ZeRO/FSDP sharding.
+tag: Live
+icon: ▦
+authors:
+  - toma
+topics:
+  - training
+  - distributed
+tags: [memory, vram, fsdp, zero, activations, training]
+core: true
+featured: true
+---
+
+import GpuMemoryCalc from './GpuMemoryCalc';
+
+<GpuMemoryCalc client:visible />
+
+## What it does
+
+Computes the per-GPU memory footprint for training or inference of a transformer model, broken down by component so you can spot the dominant cost and the right knob to turn.
+
+## Why it's useful
+
+Existing online VRAM calculators are usually inference-only or miss the training pieces that actually matter — optimizer state (12N for Adam in mixed precision), activation memory under different recompute strategies, and how sharding stages redistribute the cost. This one cites every formula inline so engineers can verify the math themselves.
+
+## Formulas, briefly
+
+- **Parameters:** `N × bytes/param`
+- **Gradients (training):** `N × bytes/param`
+- **Adam optimizer:** `12N` bytes (fp32 master + m + v). Adam-8bit: ~`6N`. SGD-momentum: ~`8N`.
+- **Activations per layer (Korthikanti 2022):** `s·b·h·(34 + 5·a·s/h)`. Selective recompute drops the attention term; full recompute keeps `~2sbh` per layer.
+- **KV cache (inference, GQA):** `2 × layers × kv_heads × head_dim × seq × batch × bytes/elem`
+- **ZeRO/FSDP:** stage 1 shards optimizer state; stage 2 also gradients; stage 3 also parameters — each by world size.
+- **Framework overhead:** flat 10% for PyTorch caching allocator, NCCL buffers, kernel workspaces. Range in practice: 5–20%.
+
+## References
+
+- [Korthikanti et al. 2022 — Reducing Activation Recomputation in Large Transformer Models](https://arxiv.org/abs/2205.05198)
+- [Rajbhandari et al. 2019 — ZeRO: Memory Optimizations Toward Training Trillion Parameter Models](https://arxiv.org/abs/1910.02054)
+- [EleutherAI — Transformer Math 101](https://blog.eleuther.ai/transformer-math/)
+- [HuggingFace — Methods and tools for efficient training on a single GPU](https://huggingface.co/docs/transformers/perf_train_gpu_one)
+
+## Limitations
+
+- Assumes vanilla transformer with bf16 activations. FlashAttention saves activation memory significantly — not modeled here.
+- MoE models aren't accounted for (expert-parallelism and routed activations have different memory profiles).
+- Pipeline parallelism and tensor parallelism aren't modeled — only ZeRO-style data-parallel sharding.
+- Inference activations are approximated as a small working set; real engines (vLLM, TGI) use paged attention which has different memory characteristics.

@@ -2,7 +2,7 @@
 import { getCollection, getEntries } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { formatDate } from '@/lib/data';
+import { formatDate, sortPostsByDate } from '@/lib/data';
 import { SITE } from '@/lib/site';
 
 export async function getStaticPaths() {
@@ -24,7 +24,7 @@ const posts = (
   await Promise.all(
     matching.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
   )
-).sort((a, b) => +b.data.date - +a.data.date);
+).sort(sortPostsByDate);
 
 const topicCounts = posts.reduce<Record<string, number>>((acc, p) => {
   acc[p.data.topic] = (acc[p.data.topic] ?? 0) + 1;
@@ -126,7 +126,6 @@ const socials = SOCIAL_FIELDS.flatMap((f) => {
           <div class="blog-list">
             {posts.map((p) => (
               <a href={`/blog/${p.id}`} class="blog-row" data-topic={p.data.topicId}>
-                <span class="blog-row-id">[{p.data.id}]</span>
                 <div>
                   <h3 class="blog-row-title">{p.data.title}</h3>
                   <p class="blog-row-summary">{p.data.summary}</p>

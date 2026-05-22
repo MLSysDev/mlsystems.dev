@@ -5,7 +5,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import { mdxComponents } from '@/components/MDXComponents.tsx';
 import ArticleActions from '@/components/ArticleActions.tsx';
 import Comments from '@/components/Comments.tsx';
-import { formatDate } from '@/lib/data';
+import { formatDate, sortPostsByDate } from '@/lib/data';
 import { SITE } from '@/lib/site';
 
 // Pre-build a page for every published post.
@@ -31,7 +31,7 @@ const authorNames = authors.map((a) => a.data.name).join(', ');
 const all = await getCollection('posts', ({ data }) => !data.draft);
 const relatedRaw = all
   .filter((a) => a.data.topicId === post.data.topicId && a.id !== post.id)
-  .sort((a, b) => +b.data.date - +a.data.date)
+  .sort(sortPostsByDate)
   .slice(0, 3);
 const related = await Promise.all(
   relatedRaw.map(async (r) => ({ ...r, authors: await getEntries(r.data.authors) })),
@@ -39,7 +39,8 @@ const related = await Promise.all(
 
 const canonical = `${SITE.url}/blog/${post.id}`;
 const dateISO = post.data.date.toISOString();
-const ogImage = `/og/post/${post.id}.png`;
+const cover = post.data.cover;
+const ogImage = cover ? (typeof cover === 'string' ? cover : cover.src) : `/og/post/${post.id}.png`;
 
 const jsonLd = {
   '@context': 'https://schema.org',
@@ -73,7 +74,6 @@ const jsonLd = {
       <a href="/blog" class="article-back">← Back to archive</a>
 
       <div class="article-byline" style="margin-bottom: 4px;">
-        <span class="article-id" style="color: var(--accent);">[{post.data.id}]</span>
         <span style="padding: 2px 10px; border: 1px solid var(--line-2); border-radius: 99px;"
           >{post.data.topic}</span
         >
@@ -142,7 +142,6 @@ const jsonLd = {
             {related.map((r) => (
               <a href={`/blog/${r.id}`} class="article-card" style="padding: 20px 0;">
                 <div class="article-meta">
-                  <span class="article-id">[{r.data.id}]</span>
                   <span style="color: var(--ink-3);">{r.data.topic}</span>
                 </div>
                 <h3 class="article-title" style="font-size: 22px;">

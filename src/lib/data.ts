@@ -72,62 +72,76 @@ export function countPostsByTopic<T extends { data: { topicId: string } }>(
   return counts;
 }
 
-export type Tool = {
-  id: string;
+export type ExternalToolCategory =
+  | 'Tokenization'
+  | 'Memory & VRAM'
+  | 'Architecture'
+  | 'Training & Scaling';
+
+export type ExternalTool = {
   name: string;
+  source: string;
   desc: string;
-  tag: string;
-  available: boolean;
+  href: string;
+  category: ExternalToolCategory;
 };
 
-export const TOOLS: Tool[] = [
+export const EXTERNAL_TOOLS: ExternalTool[] = [
   {
-    id: 'throughput-calc',
-    name: 'Throughput Calculator',
-    desc: 'Estimate tokens/sec for any GPU + model + batch size combination.',
-    tag: 'Live',
-    available: true,
+    name: 'The Tokenizer Playground',
+    source: 'Xenova · Hugging Face',
+    desc: 'Compare how GPT-4, LLaMA, Mistral, Qwen, Gemma, and others tokenize the same text — side by side, in the browser.',
+    href: 'https://huggingface.co/spaces/Xenova/the-tokenizer-playground',
+    category: 'Tokenization',
   },
   {
-    id: 'attention-viz',
-    name: 'Attention Visualizer',
-    desc: 'Inspect attention patterns layer-by-layer for any HF model.',
-    tag: 'Live',
-    available: true,
+    name: 'Tiktokenizer',
+    source: 'dqbd',
+    desc: 'OpenAI-focused tokenizer playground. Visualize cl100k, o200k, and legacy encodings with per-token highlights.',
+    href: 'https://tiktokenizer.vercel.app/',
+    category: 'Tokenization',
   },
   {
-    id: 'cost-calc',
-    name: 'Inference Cost Calculator',
-    desc: 'Compare provider pricing against self-hosting at realistic utilization.',
-    tag: 'Live',
-    available: true,
+    name: 'LLM Model VRAM Calculator',
+    source: 'NyxKrage · Hugging Face',
+    desc: 'Widely-referenced inference VRAM estimator for popular open-source models with quantization and context-length sliders.',
+    href: 'https://huggingface.co/spaces/NyxKrage/LLM-Model-VRAM-Calculator',
+    category: 'Memory & VRAM',
   },
   {
-    id: 'model-card',
-    name: 'Model Card Generator',
-    desc: 'Generate a structured model card from a checkpoint and evaluation log.',
-    tag: 'Beta',
-    available: false,
+    name: 'APXML VRAM Calculator',
+    source: 'APXML',
+    desc: 'Inference-focused VRAM calculator covering Nvidia GPUs and Apple Silicon. Good for picking hardware for a target model.',
+    href: 'https://apxml.com/tools/vram-calculator',
+    category: 'Memory & VRAM',
   },
   {
-    id: 'eval-harness',
-    name: 'Eval Harness Playground',
-    desc: 'Run focused evaluations against any inference endpoint and compare quality, latency, and cost.',
-    tag: 'Beta',
-    available: false,
+    name: 'LLM Visualization',
+    source: 'Brendan Bycroft',
+    desc: 'A 3D, animated walk through the entire forward pass of GPT-2 nano, layer by layer. The clearest mental model of how a transformer works.',
+    href: 'https://bbycroft.net/llm',
+    category: 'Architecture',
   },
   {
-    id: 'kernel-bench',
-    name: 'Kernel Benchmark',
-    desc: 'Compare Triton, CUDA, and PyTorch implementations across shapes and dtypes.',
-    tag: 'Soon',
-    available: false,
+    name: 'Chinchilla Scaling Calculator',
+    source: 'Nathan Godey',
+    desc: 'Plug in a compute budget, get the compute-optimal model and data size per Hoffmann et al. 2022. Charts the iso-loss surface too.',
+    href: 'https://nathangodey.github.io/posts/scaling/',
+    category: 'Training & Scaling',
   },
 ];
 
 export function formatDate(iso: string): string {
   const d = new Date(iso);
   return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
+export function sortPostsByDate<T extends { id: string; data: { date: Date } }>(
+  a: T,
+  b: T,
+): number {
+  const d = +b.data.date - +a.data.date;
+  return d !== 0 ? d : a.id.localeCompare(b.id);
 }
 
 export function formatMonth(iso: string): string {

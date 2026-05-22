@@ -2,18 +2,12 @@
 import { getCollection, getEntries } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import BlogFilter from '@/components/BlogFilter.astro';
-import { TOPICS, formatDate, formatMonth } from '@/lib/data';
+import { TOPICS, formatDate, formatMonth, sortPostsByDate } from '@/lib/data';
 
-// Read active topic from ?topic= (querystring filtering is client-side via JS
-// would normally require SSR; for static, this URL param is decorative — Astro's
-// build-time render shows All by default. The BlogFilter component does client-
-// side filtering on the rendered list.)
 const url = new URL(Astro.request.url);
 const activeTopic = url.searchParams.get('topic') || 'all';
 
-const allRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(
-  (a, b) => +b.data.date - +a.data.date,
-);
+const allRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
 
 // Resolve author references for each post so we can render names without async in templates
 const all = await Promise.all(
@@ -59,7 +53,6 @@ all.forEach((a) => {
           <div class="blog-list">
             {items.map((a) => (
               <a href={`/blog/${a.id}`} class="blog-row" data-topic={a.data.topicId}>
-                <span class="blog-row-id">[{a.data.id}]</span>
                 <div>
                   <h3 class="blog-row-title">{a.data.title}</h3>
                   <p class="blog-row-summary">{a.data.summary}</p>

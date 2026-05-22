@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Field, Stat, StatRow } from './_shared';
+import { Field, Stat, StatRow } from '@/components/playground/primitives';
 
 const GPU_SPECS = {
   h100: { name: 'H100 SXM', mem: 80, bw: 3350, tflops: { bf16: 989, fp8: 1979, fp4: 1979 } },

@@ -666,9 +666,6 @@ a:hover {
   color: var(--ink-3);
   align-items: center;
 }
-.article-id {
-  color: var(--accent);
-}
 .article-topic {
   padding: 2px 8px;
   border: 1px solid var(--line-2);
@@ -1403,7 +1400,7 @@ a:hover {
 }
 .blog-row {
   display: grid;
-  grid-template-columns: 110px 1fr 200px 80px;
+  grid-template-columns: 1fr 200px 80px;
   gap: 24px;
   padding: 28px 0;
   border-top: 1px solid var(--line);
@@ -1423,11 +1420,6 @@ a:hover {
 }
 .blog-row:hover .blog-row-title {
   color: var(--accent);
-}
-.blog-row-id {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--ink-3);
 }
 .blog-row-title {
   font-family: var(--font-display);

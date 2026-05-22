@@ -2,11 +2,10 @@ import rss from '@astrojs/rss';
 import { getCollection, getEntries } from 'astro:content';
 import type { APIContext } from 'astro';
 import { SITE } from '@/lib/site';
+import { sortPostsByDate } from '@/lib/data';
 
 export async function GET(context: APIContext) {
-  const postsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(
-    (a, b) => +b.data.date - +a.data.date,
-  );
+  const postsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
 
   const posts = await Promise.all(
     postsRaw.map(async (p) => ({
