@@ -6,6 +6,10 @@ import { dirname, join } from 'path';
 import react from '@astrojs/react';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import rehypeSlug from 'rehype-slug';
+import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -70,8 +74,19 @@ export default defineConfig({
   integrations: [
     react(),
     mdx({
-      remarkPlugins: [],
-      rehypePlugins: [],
+      remarkPlugins: [remarkMath],
+      rehypePlugins: [
+        rehypeSlug,
+        [
+          rehypeAutolinkHeadings,
+          {
+            behavior: 'append',
+            properties: { className: ['heading-anchor'], ariaLabel: 'Anchor' },
+            content: { type: 'text', value: '#' },
+          },
+        ],
+        rehypeKatex,
+      ],
     }),
     sitemap({
       changefreq: 'weekly',

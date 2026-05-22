@@ -1,5 +1,7 @@
 /* ML Systems — design tokens & base */
 
+@import 'katex/dist/katex.min.css';
+
 html {
   overflow-x: hidden;
 }
@@ -2266,4 +2268,39 @@ main {
   .playground-tool-name {
     font-size: 13px;
   }
+}
+
+/* ── Math (KaTeX) ── */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+  margin: 1.25rem 0;
+}
+.katex {
+  font-size: 1.05em;
+}
+
+/* ── Heading anchors (rehype-autolink-headings) ── */
+.heading-anchor {
+  margin-left: 0.4em;
+  color: var(--ink-4);
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  text-decoration: none;
+  opacity: 0;
+  transition:
+    opacity 180ms ease-out,
+    color 180ms ease-out;
+}
+h1:hover .heading-anchor,
+h2:hover .heading-anchor,
+h3:hover .heading-anchor,
+h4:hover .heading-anchor,
+h5:hover .heading-anchor,
+h6:hover .heading-anchor {
+  opacity: 1;
+}
+.heading-anchor:hover {
+  color: var(--accent);
 }

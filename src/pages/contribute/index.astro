@@ -6,7 +6,7 @@ const STEPS = [
   {
     n: '01',
     title: 'Share an idea',
-    body: 'Start a GitHub Discussion, drop into Discord, or open a PR. A few sentences is enough.',
+    body: 'Open a thread in our Blog ideas discussion on GitHub. A few sentences is enough — we will take it from there.',
   },
   {
     n: '02',
@@ -79,11 +79,22 @@ const STEPS = [
         >
           <div></div>
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-            <a href={`mailto:${SITE.pitchEmail}`} class="btn btn-primary">
-              Share an idea <span class="btn-arrow">→</span>
+            <a
+              href="https://github.com/orgs/MLSysDev/discussions/categories/blog-ideas"
+              target="_blank"
+              rel="noreferrer"
+              class="btn btn-primary"
+            >
+              Pitch on GitHub Discussions <span class="btn-arrow">→</span>
             </a>
-            <a href={SITE.github} target="_blank" rel="noreferrer" class="btn">
-              Open a PR on GitHub
+            <a href={`mailto:${SITE.pitchEmail}`} class="btn"> Email an idea </a>
+            <a
+              href="https://github.com/MLSysDev/mlsystems.dev/pulls"
+              target="_blank"
+              rel="noreferrer"
+              class="btn"
+            >
+              Open a PR
             </a>
           </div>
         </div>
