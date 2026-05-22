@@ -1,0 +1,106 @@
+---
+import { getCollection, getEntries } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { TOPICS, formatDate, formatMonth, sortPostsByDate } from '@/lib/data';
+import { SITE } from '@/lib/site';
+
+export async function getStaticPaths() {
+  return TOPICS.map((t) => ({ params: { id: t.id }, props: { topic: t } }));
+}
+
+interface Props {
+  topic: (typeof TOPICS)[number];
+}
+const { topic } = Astro.props;
+
+const allRaw = (await getCollection('posts', ({ data }) => !data.draft))
+  .filter((p) => p.data.topicId === topic.id)
+  .sort(sortPostsByDate);
+
+const posts = await Promise.all(
+  allRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
+);
+
+const grouped: Record<string, typeof posts> = {};
+posts.forEach((a) => {
+  const m = formatMonth(a.data.date.toISOString());
+  if (!grouped[m]) grouped[m] = [];
+  grouped[m].push(a);
+});
+
+const canonical = `${SITE.url}/topics/${topic.id}/`;
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `${topic.name} — ${SITE.name}`,
+  description: topic.desc,
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+  mainEntity: {
+    '@type': 'ItemList',
+    itemListElement: posts.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: `${SITE.url}/blog/${p.id}/`,
+      name: p.data.title,
+    })),
+  },
+};
+---
+
+<BaseLayout
+  title={`${topic.name} — articles on ${topic.name.toLowerCase()}`}
+  description={`${topic.desc} — articles, primers, and case studies on ${topic.name.toLowerCase()} from the ML Systems community.`}
+  image="/og/page/topics.png"
+  jsonLd={jsonLd}
+>
+  <div class="container blog-shell">
+    <div class="blog-head">
+      <div>
+        <div class="eyebrow page-eyebrow">Topic</div>
+        <h1 class="blog-h1">{topic.name}.</h1>
+        <p class="page-lede" style="max-width: 680px;">{topic.desc}</p>
+      </div>
+    </div>
+
+    {
+      posts.length === 0 ? (
+        <div style="padding: 80px 0; text-align: center; color: var(--ink-3);">
+          No articles in this topic yet. Be the first to{' '}
+          <a href="/contribute" style="color: var(--accent);">
+            write one
+          </a>
+          .
+        </div>
+      ) : (
+        Object.entries(grouped).map(([month, items]) => (
+          <div class="blog-month-group" style="margin-bottom: 40px;">
+            <div class="eyebrow" style="margin-bottom: 4px; color: var(--ink-3);">
+              {month}
+            </div>
+            <div class="blog-list">
+              {items.map((a) => (
+                <a href={`/blog/${a.id}`} class="blog-row" data-topic={a.data.topicId}>
+                  <div class="blog-row-body">
+                    <div class="blog-row-title-line">
+                      <h3 class="blog-row-title">{a.data.title}</h3>
+                      {a.data.tags?.slice(0, 2).map((t) => (
+                        <span class="blog-row-tag">#{t}</span>
+                      ))}
+                    </div>
+                    <p class="blog-row-summary">{a.data.summary}</p>
+                  </div>
+                  <div class="blog-row-meta">
+                    <strong>{a.authors.map((au) => au.data.name).join(' · ')}</strong>
+                    <span>{formatDate(a.data.date.toISOString())}</span>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        ))
+      )
+    }
+  </div>
+</BaseLayout>

@@ -5,7 +5,7 @@ export const SITE = {
   domain: 'mlsystems.dev',
   url: 'https://mlsystems.dev',
   description:
-    'An open archive for the engineers and researchers building modern machine learning systems.',
+    'Open community writing about machine learning systems — inference engines, training infrastructure, GPU memory, embeddings, and deployments. Articles, primers, and case studies from anyone learning or building in the space.',
   tagline: 'Machine learning, from kernels to clusters.',
   author: 'The ML Systems Community',
   twitter: '@MLSystemsDev',

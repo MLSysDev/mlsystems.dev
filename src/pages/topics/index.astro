@@ -24,7 +24,7 @@ const topicCounts = countPostsByTopic(posts);
     <div class="topics-list" style="margin-top: 16px;">
       {
         TOPICS.map((t, i) => (
-          <a href={`/blog?topic=${t.id}`} class="topic-row">
+          <a href={`/topics/${t.id}/`} class="topic-row">
             <span class="topic-num">{String(i + 1).padStart(2, '0')}</span>
             <h3 class="topic-name">{t.name}</h3>
             <span class="topic-desc">{t.desc}</span>

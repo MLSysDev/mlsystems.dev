@@ -27,7 +27,7 @@ interface Props {
 }
 
 const {
-  title = `${SITE.name} — An open archive for the engineers building modern AI`,
+  title = `${SITE.name} — Open community blog on machine learning systems & infrastructure`,
   description = SITE.description,
   canonical = new URL(Astro.url.pathname, SITE.url).toString(),
   image = '/og-default.png',
@@ -41,6 +41,33 @@ const fullTitle = title.includes(SITE.name) ? title : `${title} — ${SITE.name}
 const imageUrl = image.startsWith('http') ? image : new URL(image, SITE.url).toString();
 const currentPath = Astro.url.pathname;
 const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
+
+const siteJsonLd = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE.name,
+    url: SITE.url,
+    logo: new URL('/favicon-96x96.png', SITE.url).toString(),
+    description: SITE.description,
+    sameAs: [SITE.github, 'https://x.com/MLSystemsDev'],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: SITE.name,
+    url: SITE.url,
+    description: SITE.description,
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${SITE.url}/search?q={search_term_string}`,
+      },
+      'query-input': 'required name=search_term_string',
+    },
+  },
+];
 ---
 
 <!doctype html>
@@ -113,13 +140,26 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
   <meta name="twitter:image" content={imageUrl} />
   <meta name="twitter:creator" content={SITE.twitter} />
 
-  <!-- Fonts (preconnect + display=swap for performance) -->
+  <!-- Fonts — preloaded non-blocking. Stylesheet swaps in after first paint. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
+    rel="preload"
+    as="style"
     href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
-    rel="stylesheet"
   />
+  <link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+    />
+  </noscript>
 
   <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -134,7 +174,8 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
   <!-- Sitemap -->
   <link rel="sitemap" href="/sitemap-index.xml" />
 
-  <!-- JSON-LD structured data -->
+  <!-- JSON-LD structured data: site-wide Organization + WebSite -->
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(siteJsonLd)} />
   {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
   <!-- Google Analytics (gtag.js) with Consent Mode v2 (denied by default) -->
@@ -179,6 +220,6 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
       <Footer />
     </div>
     <SearchModal client:idle />
-    <AnalyticsConsent measurementId={gaMeasurementId} client:load />
+    <AnalyticsConsent measurementId={gaMeasurementId} client:idle />
   </body>
 </html>
