@@ -13,29 +13,11 @@ const STORAGE_KEY = 'mlsystems-analytics-consent';
 
 type Consent = 'accepted' | 'declined';
 
-function loadGoogleAnalytics(measurementId: string) {
-  if (!measurementId || window.gtag) return;
-
-  window.dataLayer = window.dataLayer || [];
-  window.gtag = function gtag(...args: unknown[]) {
-    window.dataLayer?.push(args);
-  };
-
-  window.gtag('consent', 'default', {
-    analytics_storage: 'granted',
-    ad_storage: 'denied',
-    ad_user_data: 'denied',
-    ad_personalization: 'denied',
+function updateConsent(granted: boolean) {
+  if (typeof window === 'undefined' || !window.gtag) return;
+  window.gtag('consent', 'update', {
+    analytics_storage: granted ? 'granted' : 'denied',
   });
-  window.gtag('js', new Date());
-  window.gtag('config', measurementId, {
-    anonymize_ip: true,
-  });
-
-  const script = document.createElement('script');
-  script.async = true;
-  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-  document.head.appendChild(script);
 }
 
 export default function AnalyticsConsent({ measurementId }: { measurementId?: string }) {
@@ -46,17 +28,16 @@ export default function AnalyticsConsent({ measurementId }: { measurementId?: st
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as Consent | null;
       setConsent(stored === 'accepted' || stored === 'declined' ? stored : null);
-      if (stored === 'accepted' && measurementId) loadGoogleAnalytics(measurementId);
     } catch {}
     setMounted(true);
-  }, [measurementId]);
+  }, []);
 
   function choose(next: Consent) {
     setConsent(next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
     } catch {}
-    if (next === 'accepted' && measurementId) loadGoogleAnalytics(measurementId);
+    updateConsent(next === 'accepted');
   }
 
   if (!mounted || !measurementId || consent) return null;

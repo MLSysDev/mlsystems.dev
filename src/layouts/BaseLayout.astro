@@ -137,6 +137,36 @@ const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
   <!-- JSON-LD structured data -->
   {jsonLd && <script is:inline type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
 
+  <!-- Google Analytics (gtag.js) with Consent Mode v2 (denied by default) -->
+  {
+    gaMeasurementId && (
+      <>
+        <script
+          is:inline
+          async
+          src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+        />
+        <script
+          is:inline
+          set:html={`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            var __c = null;
+            try { __c = localStorage.getItem('mlsystems-analytics-consent'); } catch (e) {}
+            gtag('consent', 'default', {
+              ad_storage: 'denied',
+              ad_user_data: 'denied',
+              ad_personalization: 'denied',
+              analytics_storage: __c === 'accepted' ? 'granted' : 'denied'
+            });
+            gtag('js', new Date());
+            gtag('config', '${gaMeasurementId}', { anonymize_ip: true });
+          `}
+        />
+      </>
+    )
+  }
+
   <body>
     <a href="#main" class="skip-link" data-pagefind-ignore>Skip to content</a>
     <div data-pagefind-ignore>
