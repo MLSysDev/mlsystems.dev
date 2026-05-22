@@ -53,18 +53,19 @@ all.forEach((a) => {
           <div class="blog-list">
             {items.map((a) => (
               <a href={`/blog/${a.id}`} class="blog-row" data-topic={a.data.topicId}>
-                <div>
-                  <h3 class="blog-row-title">{a.data.title}</h3>
+                <div class="blog-row-body">
+                  <div class="blog-row-title-line">
+                    <h3 class="blog-row-title">{a.data.title}</h3>
+                    <span class="blog-row-chip">{a.data.topic}</span>
+                    {a.data.tags?.slice(0, 2).map((t) => (
+                      <span class="blog-row-tag">#{t}</span>
+                    ))}
+                  </div>
                   <p class="blog-row-summary">{a.data.summary}</p>
                 </div>
-                <div class="blog-row-author">
+                <div class="blog-row-meta">
                   <strong>{a.authors.map((au) => au.data.name).join(' · ')}</strong>
-                  {a.data.topic}
-                </div>
-                <div class="blog-row-time">
-                  {formatDate(a.data.date.toISOString())}
-                  <br />
-                  {a.data.readMin} min
+                  <span>{formatDate(a.data.date.toISOString())}</span>
                 </div>
               </a>
             ))}

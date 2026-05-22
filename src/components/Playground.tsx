@@ -25,46 +25,22 @@ export default function Playground({ tools }: { tools: PlaygroundTool[] }) {
   const Active = TOOL_COMPONENTS[active];
 
   return (
-    <div
-      className="playground-grid"
-      style={{ display: 'grid', gridTemplateColumns: '260px 1fr', gap: 32, marginTop: 24 }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+    <div className="playground-grid">
+      <div className="playground-sidebar">
         {tools.map((t) => {
           const interactive = t.available && Boolean(TOOL_COMPONENTS[t.id]);
           return (
             <button
               key={t.id}
+              className={`playground-tool-btn${active === t.id ? ' active' : ''}${!interactive ? ' disabled' : ''}`}
               onClick={() => interactive && setActive(t.id)}
               disabled={!interactive}
-              style={{
-                textAlign: 'left',
-                padding: '14px 16px',
-                background: active === t.id ? 'var(--paper-2)' : 'transparent',
-                border: '1px solid ' + (active === t.id ? 'var(--line-2)' : 'transparent'),
-                borderRadius: 6,
-                cursor: interactive ? 'pointer' : 'default',
-                opacity: interactive ? 1 : 0.5,
-                color: 'inherit',
-                fontFamily: 'inherit',
-                transition: 'background 0.15s',
-              }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 15, fontWeight: 500, color: 'var(--ink)' }}>{t.name}</span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 10,
-                    color: interactive ? 'var(--accent)' : 'var(--ink-3)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.06em',
-                  }}
-                >
-                  · {t.tag}
-                </span>
+              <div className="playground-tool-header">
+                <span className="playground-tool-name">{t.name}</span>
+                <span className="playground-tool-tag">{t.tag}</span>
               </div>
-              <div style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.45 }}>{t.desc}</div>
+              <div className="playground-tool-desc">{t.desc}</div>
             </button>
           );
         })}

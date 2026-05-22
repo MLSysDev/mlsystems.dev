@@ -37,17 +37,14 @@ const catalogTools = allTools.sort((a, b) => {
 
 <BaseLayout
   title="Playground"
-  description="Working calculators, visualizers, and benchmarks for ML systems work — throughput, attention, cost."
+  description="Explore ML systems in real-time with live, interactive tools"
   image="/og/page/playground.png"
 >
   <div class="container">
     <div class="page-head">
       <div class="eyebrow page-eyebrow">Playground</div>
       <h1 class="page-h1">Tools.</h1>
-      <p class="page-lede">
-        Working calculators, visualizers, and benchmarks for ML systems work. Open source, no auth,
-        no telemetry. Pick a tool below.
-      </p>
+      <p class="page-lede">Explore ML systems in real-time with live, interactive tools</p>
     </div>
 
     <Playground tools={coreTools} client:visible />
@@ -97,7 +94,7 @@ const catalogTools = allTools.sort((a, b) => {
                     class={`tool-card tool-card-${t.data.tag.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     {t.data.thumbnail && (
-                      <div class="tool-card-thumb">
+                      <div class="tool-card-thumb" aria-hidden="true">
                         {typeof t.data.thumbnail === 'string' ? (
                           <img src={t.data.thumbnail} alt="" loading="lazy" decoding="async" />
                         ) : (
@@ -105,18 +102,13 @@ const catalogTools = allTools.sort((a, b) => {
                         )}
                       </div>
                     )}
-                    <div class="tool-card-top">
-                      {!t.data.thumbnail && (
-                        <span class="tool-card-icon" aria-hidden="true">
-                          {t.data.icon ?? '◇'}
-                        </span>
-                      )}
-                      <span class="tool-card-tag">{t.data.tag}</span>
-                    </div>
                     <h3 class="tool-card-name">{t.data.name}</h3>
                     <p class="tool-card-summary">{t.data.summary}</p>
-                    <div class="tool-card-foot">
-                      <span class="tool-card-link">Open tool →</span>
+                    <div class="tool-card-footer">
+                      <span class="tool-card-icon" aria-hidden="true">
+                        {t.data.icon ?? '◇'}
+                      </span>
+                      {t.data.tag !== 'Live' && <span class="tool-card-status">{t.data.tag}</span>}
                     </div>
                   </a>
                 </li>
@@ -134,32 +126,64 @@ const catalogTools = allTools.sort((a, b) => {
         <h2 class="more-tools-title">Canonical references.</h2>
       </div>
 
-      <ul class="tools-card-grid">
-        {
-          EXTERNAL_TOOLS.map((t) => (
-            <li>
-              <a
-                href={t.href}
-                target="_blank"
-                rel="noreferrer"
-                class="tool-card tool-card-external"
-              >
-                <div class="tool-card-top">
-                  <span class="tool-card-icon" aria-hidden="true">
-                    ↗
-                  </span>
-                  <span class="tool-card-tag">{t.category}</span>
-                </div>
-                <h3 class="tool-card-name">{t.name}</h3>
-                <p class="tool-card-summary">{t.desc}</p>
-                <div class="tool-card-foot">
-                  <span class="tool-card-link">{t.source}</span>
-                </div>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <div class="tools-catalog" data-tools-catalog>
+        <div class="tools-catalog-search">
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.7"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7"></circle>
+            <path d="m20 20-3.5-3.5"></path>
+          </svg>
+          <input
+            type="search"
+            placeholder="Filter by name or category…"
+            aria-label="Filter canonical references"
+            data-tools-filter
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+
+        <div class="tools-catalog-scroll">
+          <ul class="tools-card-grid tools-catalog-grid">
+            {
+              EXTERNAL_TOOLS.map((t) => (
+                <li data-tool-name={t.name.toLowerCase()} data-tool-tag={t.category.toLowerCase()}>
+                  <a
+                    href={t.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    class="tool-card tool-card-external"
+                  >
+                    <div class="tool-card-top">
+                      <span class="tool-card-icon" aria-hidden="true">
+                        ↗
+                      </span>
+                      <span class="tool-card-tag">{t.category}</span>
+                    </div>
+                    <h3 class="tool-card-name">{t.name}</h3>
+                    <p class="tool-card-summary">{t.desc}</p>
+                    <div class="tool-card-foot">
+                      <span class="tool-card-link">{t.source}</span>
+                    </div>
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+          <div class="tools-catalog-empty" data-tools-empty hidden>
+            No references match your filter.
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 </BaseLayout>
@@ -332,11 +356,37 @@ const catalogTools = allTools.sort((a, b) => {
   }
   @media (max-width: 620px) {
     .tools-card-grid {
-      grid-template-columns: 1fr;
-      gap: 12px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
     .more-tools-title {
-      font-size: 32px;
+      font-size: 28px;
+    }
+    .tool-card {
+      padding: 16px 14px 14px;
+    }
+    .tool-card-name {
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+    .tool-card-summary {
+      font-size: 12px;
+      line-height: 1.45;
+      margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .tool-card-foot {
+      padding-top: 8px;
+    }
+    .tool-card-link {
+      font-size: 10px;
+    }
+    .tool-card-tag {
+      font-size: 9px;
+      padding: 2px 6px;
     }
   }
 
@@ -400,13 +450,20 @@ const catalogTools = allTools.sort((a, b) => {
     overflow-y: auto;
     padding-right: 4px;
     scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
   }
   .tools-catalog-scroll::-webkit-scrollbar {
-    width: 6px;
+    width: 4px;
+  }
+  .tools-catalog-scroll::-webkit-scrollbar-track {
+    background: transparent;
   }
   .tools-catalog-scroll::-webkit-scrollbar-thumb {
     background: var(--line-2);
-    border-radius: 3px;
+    border-radius: 99px;
+  }
+  .tools-catalog-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--ink-3);
   }
   .tools-catalog-empty {
     padding: 40px 0;
@@ -416,17 +473,46 @@ const catalogTools = allTools.sort((a, b) => {
   }
 
   .tool-card-thumb {
-    margin: -24px -24px 18px;
-    aspect-ratio: 16 / 9;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
     overflow: hidden;
-    border-bottom: 1px solid var(--line);
-    background: var(--paper-3);
+    border-radius: inherit;
   }
   .tool-card-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
+    opacity: 0.12;
+    transition: opacity 0.18s ease;
+  }
+  .tool-card:hover .tool-card-thumb img {
+    opacity: 0.2;
+  }
+  .tool-card-thumb ~ * {
+    position: relative;
+    z-index: 1;
+  }
+  .tool-card-footer {
+    margin-top: auto;
+    padding-top: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+  .tool-card-status {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 3px 9px;
+    border: 1px solid var(--line-2);
+    border-radius: 99px;
+    color: var(--ink-3);
+    background: color-mix(in srgb, var(--paper-2) 90%, transparent);
   }
 
   @media (max-width: 720px) {
@@ -437,21 +523,21 @@ const catalogTools = allTools.sort((a, b) => {
 </style>
 
 <script>
-  const root = document.querySelector<HTMLElement>('[data-tools-catalog]');
-  const input = root?.querySelector<HTMLInputElement>('[data-tools-filter]');
-  const items = root?.querySelectorAll<HTMLElement>('.tools-catalog-grid > li');
-  const empty = root?.querySelector<HTMLElement>('[data-tools-empty]');
+  document.querySelectorAll<HTMLElement>('[data-tools-catalog]').forEach((root) => {
+    const input = root.querySelector<HTMLInputElement>('[data-tools-filter]');
+    const items = root.querySelectorAll<HTMLElement>('.tools-catalog-grid > li');
+    const empty = root.querySelector<HTMLElement>('[data-tools-empty]');
 
-  input?.addEventListener('input', () => {
-    const q = input.value.trim().toLowerCase();
-    let visible = 0;
-    items?.forEach((li) => {
-      const name = li.dataset.toolName ?? '';
-      const tag = li.dataset.toolTag ?? '';
-      const match = !q || name.includes(q) || tag.includes(q);
-      li.style.display = match ? '' : 'none';
-      if (match) visible++;
+    input?.addEventListener('input', () => {
+      const q = input.value.trim().toLowerCase();
+      let visible = 0;
+      items.forEach((li) => {
+        const match =
+          !q || (li.dataset.toolName ?? '').includes(q) || (li.dataset.toolTag ?? '').includes(q);
+        li.style.display = match ? '' : 'none';
+        if (match) visible++;
+      });
+      if (empty) empty.hidden = visible > 0;
     });
-    if (empty) empty.hidden = visible > 0;
   });
 </script>
