@@ -285,13 +285,21 @@ main {
   white-space: nowrap;
 }
 .brand .brand-mark {
+  --mark-accent: var(--accent);
+  --mark-ink: var(--ink);
   display: inline-block;
-  width: 10px;
-  height: 10px;
-  background: var(--accent);
-  border-radius: 1px;
-  margin-right: 4px;
-  transform: translateY(-1px);
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 0.3em;
+  transform: translateY(0.02em);
+  background-color: transparent;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='2' y='2' width='12' height='12' rx='1' fill='%23b8431f'/><rect x='18' y='2' width='12' height='12' rx='1' fill='none' stroke='%2318171a' stroke-width='2'/><rect x='2' y='18' width='12' height='12' rx='1' fill='none' stroke='%2318171a' stroke-width='2'/><rect x='18' y='18' width='12' height='12' rx='1' fill='none' stroke='%2318171a' stroke-width='2'/></svg>");
+  background-size: contain;
+  background-repeat: no-repeat;
+  border-radius: 0;
+}
+[data-theme='dark'] .brand .brand-mark {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect x='2' y='2' width='12' height='12' rx='1' fill='%23ff7a4d'/><rect x='18' y='2' width='12' height='12' rx='1' fill='none' stroke='%23f5f0e8' stroke-width='2'/><rect x='2' y='18' width='12' height='12' rx='1' fill='none' stroke='%23f5f0e8' stroke-width='2'/><rect x='18' y='18' width='12' height='12' rx='1' fill='none' stroke='%23f5f0e8' stroke-width='2'/></svg>");
 }
 .nav-right {
   margin-left: auto;
