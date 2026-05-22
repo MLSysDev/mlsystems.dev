@@ -70,7 +70,7 @@ export function AttentionFig({ t }: { t: number }) {
           y={-12}
           fontSize="9"
           fontFamily="var(--font-mono)"
-          fill="var(--ink-3)"
+          fill="var(--ink-2)"
           textAnchor="middle"
           transform={`rotate(-30 ${j * cell + cell / 2} -12)`}
         >
@@ -84,7 +84,7 @@ export function AttentionFig({ t }: { t: number }) {
           y={i * cell + cell / 2 + 3}
           fontSize="9"
           fontFamily="var(--font-mono)"
-          fill="var(--ink-3)"
+          fill="var(--ink-2)"
           textAnchor="end"
         >
           {tok}
@@ -122,7 +122,7 @@ export function AttentionFig({ t }: { t: number }) {
         y={size + 26}
         fontSize="10"
         fontFamily="var(--font-mono)"
-        fill="var(--ink-3)"
+        fill="var(--ink-2)"
         textAnchor="middle"
       >
         key positions →
@@ -132,7 +132,7 @@ export function AttentionFig({ t }: { t: number }) {
         y={size / 2}
         fontSize="10"
         fontFamily="var(--font-mono)"
-        fill="var(--ink-3)"
+        fill="var(--ink-2)"
         textAnchor="middle"
         transform={`rotate(-90 -58 ${size / 2})`}
       >
@@ -195,7 +195,7 @@ function LossFig({ t }: { t: number }) {
             y={sy(y) + 3}
             fontSize="9"
             fontFamily="var(--font-mono)"
-            fill="var(--ink-3)"
+            fill="var(--ink-2)"
             textAnchor="end"
           >
             {y.toFixed(1)}
@@ -209,7 +209,7 @@ function LossFig({ t }: { t: number }) {
           y={H - margin.b + 16}
           fontSize="9"
           fontFamily="var(--font-mono)"
-          fill="var(--ink-3)"
+          fill="var(--ink-2)"
           textAnchor="middle"
         >
           {k}k
@@ -261,7 +261,7 @@ function LossFig({ t }: { t: number }) {
             cx={sx(visibleN - 1)}
             cy={sy(runs.baseline[visibleN - 1])}
             r="2.5"
-            fill="var(--ink-3)"
+            fill="var(--ink-2)"
           />
           <circle
             cx={sx(visibleN - 1)}
@@ -305,7 +305,7 @@ function LossFig({ t }: { t: number }) {
         y={H - 4}
         fontSize="10"
         fontFamily="var(--font-mono)"
-        fill="var(--ink-3)"
+        fill="var(--ink-2)"
         textAnchor="middle"
       >
         training step
@@ -315,7 +315,7 @@ function LossFig({ t }: { t: number }) {
         y={H / 2}
         fontSize="10"
         fontFamily="var(--font-mono)"
-        fill="var(--ink-3)"
+        fill="var(--ink-2)"
         textAnchor="middle"
         transform={`rotate(-90 12 ${H / 2})`}
       >
@@ -363,7 +363,7 @@ function ThroughputFig({ t }: { t: number }) {
             y={H - margin.b + 16}
             fontSize="9"
             fontFamily="var(--font-mono)"
-            fill="var(--ink-3)"
+            fill="var(--ink-2)"
             textAnchor="middle"
           >
             {x}
@@ -421,7 +421,7 @@ function ThroughputFig({ t }: { t: number }) {
         y={H - 4}
         fontSize="10"
         fontFamily="var(--font-mono)"
-        fill="var(--ink-3)"
+        fill="var(--ink-2)"
         textAnchor="middle"
       >
         tokens / second / GPU (H100, Llama-70B)
@@ -473,14 +473,14 @@ function EmbeddingFig({ t }: { t: number }) {
         width={W - 30}
         height={H - 50}
         fill="none"
-        stroke="var(--line)"
-        strokeWidth="0.5"
+        stroke="var(--ink-3)"
+        strokeWidth="1"
         strokeDasharray="3 4"
       />
       {clusters.map((c, ci) => (
         <g key={c.label}>
           {c.pts.map((p, pi) => {
-            const drift = Math.sin(t * 0.6 + p.phase) * 0.008;
+            const drift = Math.sin(t * 1.0 + p.phase) * 0.008;
             const cx = 20 + (p.x + drift) * (W - 30);
             const cy = 14 + (p.y + drift) * (H - 50);
             return <circle key={pi} cx={cx} cy={cy} r="2.2" fill={colors[ci]} opacity="0.85" />;
@@ -503,7 +503,7 @@ function EmbeddingFig({ t }: { t: number }) {
         y={H - 4}
         fontSize="10"
         fontFamily="var(--font-mono)"
-        fill="var(--ink-3)"
+        fill="var(--ink-2)"
         textAnchor="middle"
       >
         UMAP dim 1
@@ -513,7 +513,7 @@ function EmbeddingFig({ t }: { t: number }) {
         y={H / 2 - 18}
         fontSize="10"
         fontFamily="var(--font-mono)"
-        fill="var(--ink-3)"
+        fill="var(--ink-2)"
         textAnchor="middle"
         transform={`rotate(-90 12 ${H / 2 - 18})`}
       >
