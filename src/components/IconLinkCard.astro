@@ -1,0 +1,125 @@
+---
+// Icon + label + action link card. Shared by About and Contact.
+// Surface + hover-lift come from the global .card / .card--interactive classes.
+interface Props {
+  href?: string | null;
+  /** SVG path `d` for a 24×24 viewBox icon */
+  icon: string;
+  label: string;
+  action: string;
+}
+const { href, icon, label, action } = Astro.props;
+const external = !!href && href.startsWith('http');
+---
+
+<a
+  href={href ?? undefined}
+  class="card card--interactive icon-link-card"
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noreferrer' : undefined}
+>
+  <span class="ilc-icon" aria-hidden="true">
+    <svg viewBox="0 0 24 24" width="22" height="22"><path d={icon}></path></svg>
+  </span>
+  <span class="ilc-label">{label}</span>
+  <span class="ilc-action">{action}</span>
+  <span class="ilc-arrow" aria-hidden="true">→</span>
+</a>
+
+<style>
+  .icon-link-card {
+    position: relative;
+    display: grid;
+    grid-template-columns: 56px 1fr 28px;
+    grid-template-areas:
+      'icon  label   arrow'
+      'icon  action  arrow';
+    column-gap: 16px;
+    row-gap: 2px;
+    align-items: center;
+    padding: 22px;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .icon-link-card::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--accent);
+    transform: scaleY(0);
+    transform-origin: top;
+    transition: transform 0.22s ease;
+  }
+  .icon-link-card:hover::before {
+    transform: scaleY(1);
+  }
+  .icon-link-card:hover .ilc-action,
+  .icon-link-card:hover .ilc-arrow,
+  .icon-link-card:hover .ilc-icon {
+    color: var(--accent);
+  }
+  .icon-link-card:hover .ilc-icon {
+    border-color: var(--accent);
+  }
+  .icon-link-card:hover .ilc-arrow {
+    transform: translateX(4px);
+  }
+
+  .ilc-icon {
+    grid-area: icon;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .ilc-icon svg {
+    display: block;
+    fill: currentColor;
+  }
+  .ilc-label {
+    grid-area: label;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    align-self: end;
+  }
+  .ilc-action {
+    grid-area: action;
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--ink);
+    line-height: 1.15;
+    word-break: break-word;
+    align-self: start;
+    transition: color 0.15s ease;
+  }
+  .ilc-arrow {
+    grid-area: arrow;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 18px;
+    color: var(--ink-3);
+    transition:
+      transform 0.18s ease,
+      color 0.15s ease;
+  }
+
+  @media (max-width: 620px) {
+    .icon-link-card {
+      padding: 18px;
+    }
+  }
+</style>

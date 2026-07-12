@@ -725,6 +725,29 @@ main {
   grid-template-columns: repeat(3, 1fr);
   gap: var(--row-gap);
 }
+/* Shared card surface + hover lift. Used by IconLinkCard and the page cards
+   (contributor, tool, community). Distinct layouts stay per-page; only the
+   surface + hover recipe live here. */
+.card {
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+  color: inherit;
+  text-decoration: none;
+}
+.card--interactive {
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease,
+    box-shadow 0.18s ease;
+}
+.card--interactive:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+  background: var(--paper);
+  box-shadow: var(--shadow-hover);
+}
+
 .article-card {
   display: flex;
   flex-direction: column;
