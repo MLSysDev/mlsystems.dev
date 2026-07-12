@@ -27,8 +27,8 @@ html {
 
 :root {
   /* Type */
-  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
-  --font-sans: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   --font-read: 'Source Serif 4', 'Source Serif Pro', Georgia, Cambria, 'Times New Roman', serif;
 
@@ -277,12 +277,12 @@ body {
 
 /* Type pairing modes */
 [data-typeset='editorial'] {
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='modern'] {
-  --font-display: 'Geist', system-ui, sans-serif;
-  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-display: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='terminal'] {
   --font-display: 'JetBrains Mono', monospace;

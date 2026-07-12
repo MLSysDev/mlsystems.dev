@@ -15,7 +15,7 @@
   border: none;
   background: none;
   color: var(--ink);
-  font-family: var(--font-sans, 'Geist', sans-serif);
+  font-family: var(--font-sans, 'Hanken Grotesk', sans-serif);
   font-weight: 700;
   font-size: clamp(32px, 6vw, 56px);
   line-height: 1.1;
@@ -30,7 +30,7 @@
   background: none;
   resize: none;
   color: var(--ink-2);
-  font-family: var(--font-sans, 'Geist', sans-serif);
+  font-family: var(--font-sans, 'Hanken Grotesk', sans-serif);
   font-size: clamp(15px, 2.5vw, 22px);
   line-height: 1.4;
   margin-top: 12px;
@@ -378,7 +378,7 @@
 .bn-block-content h1,
 .bn-block-content h2,
 .bn-block-content h3 {
-  font-family: var(--font-sans, 'Geist', sans-serif);
+  font-family: var(--font-sans, 'Hanken Grotesk', sans-serif);
   font-weight: 600;
   color: var(--ink);
 }
