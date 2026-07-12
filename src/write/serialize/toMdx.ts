@@ -26,8 +26,10 @@ export type PostMeta = {
   coverFileName: string;
 };
 
+export type TableStyle = { border: 'rule' | 'lined' | 'plain'; zebra: boolean };
+
 export type SerializeOptions = {
-  tableVariants: Record<string, string>;
+  tableVariants: Record<string, TableStyle>;
   today: Date;
   wordsPerMinute?: number;
 };
@@ -43,7 +45,7 @@ type Ctx = {
   idents: Set<string>;
   componentFiles: { fileName: string; source: string }[];
   componentImports: string[];
-  tableVariants: Record<string, string>;
+  tableVariants: Record<string, TableStyle>;
 };
 
 export function escapeText(s: string): string {
@@ -145,9 +147,14 @@ function serializeTable(block: SBlock, ctx: Ctx): string {
   const cols = tableCells(rows[0]).length;
   lines.splice(1, 0, `| ${Array.from({ length: cols }, () => '---').join(' | ')} |`);
   const table = lines.join('\n');
-  const variant = ctx.tableVariants[block.id];
-  if (variant && variant !== 'rule') {
-    return `<Table variant="${variant}">\n\n${table}\n\n</Table>`;
+  const style = ctx.tableVariants[block.id];
+  const border = style?.border ?? 'rule';
+  const zebra = style?.zebra ?? false;
+  if (border !== 'rule' || zebra) {
+    const attrs = [border !== 'rule' ? `variant="${border}"` : null, zebra ? 'zebra' : null]
+      .filter(Boolean)
+      .join(' ');
+    return `<Table ${attrs}>\n\n${table}\n\n</Table>`;
   }
   return table;
 }

@@ -1,10 +1,10 @@
-import type { PostMeta, SBlock } from '../serialize/toMdx';
+import type { PostMeta, SBlock, TableStyle } from '../serialize/toMdx';
 import { allAssets, restoreAsset } from './assets';
 
 export type Draft = {
   meta: PostMeta;
   blocks: SBlock[];
-  tableVariants: Record<string, string>;
+  tableVariants: Record<string, TableStyle>;
   savedAt: number;
 };
 

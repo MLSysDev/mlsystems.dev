@@ -65,8 +65,20 @@ export const mdxComponents = {
       {children}
     </div>
   ),
-  Table: ({ variant, children }: { variant?: string; children: ReactNode }) => (
-    <div className={`table-variant table--${variant ?? TABLE_DEFAULT_VARIANT}`}>{children}</div>
+  Table: ({
+    variant,
+    zebra,
+    children,
+  }: {
+    variant?: string;
+    zebra?: boolean;
+    children: ReactNode;
+  }) => (
+    <div
+      className={`table-variant table--${variant ?? TABLE_DEFAULT_VARIANT}${zebra ? ' table--zebra' : ''}`}
+    >
+      {children}
+    </div>
   ),
   Video: ({ id, caption, title }: { id: string; caption?: string; title?: string }) => (
     <figure className="video-embed">

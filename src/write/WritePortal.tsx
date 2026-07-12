@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { filterSuggestionItems } from '@blocknote/core';
 import {
   SuggestionMenuController,
@@ -10,7 +10,7 @@ import '@blocknote/mantine/style.css';
 import { schema } from './editor/schema';
 import { getSlashItems } from './editor/slashMenu';
 import { MetaForm, type Option } from './meta/MetaForm';
-import { serializePost, type PostMeta, type SBlock } from './serialize/toMdx';
+import { serializePost, type PostMeta, type SBlock, type TableStyle } from './serialize/toMdx';
 import { validate } from './serialize/validate';
 import { buildZip } from './serialize/toZip';
 import { allAssets } from './storage/assets';
@@ -23,7 +23,33 @@ import {
 } from './storage/drafts';
 import './editor/editor-theme.css';
 
-const TABLE_VARIANTS = ['rule', 'zebra', 'lined', 'plain'];
+const BORDER_VARIANTS: TableStyle['border'][] = ['rule', 'lined', 'plain'];
+const DEFAULT_TABLE_STYLE: TableStyle = { border: 'rule', zebra: false };
+
+function tableVariantCss(variants: Record<string, TableStyle>): string {
+  return Object.entries(variants)
+    .map(([id, style]) => {
+      if (!style || typeof style !== 'object') return '';
+      const sel = `.bn-editor [data-id="${id}"] [data-content-type='table']`;
+      const rules: string[] = [];
+      if (style.border === 'lined') {
+        rules.push(
+          `${sel} :is(td, th) { border: 1px solid var(--line); padding-left: 12px; padding-right: 12px; }`,
+        );
+      }
+      if (style.border === 'plain') {
+        rules.push(`${sel} tr:not(:first-child) > * { border-bottom: none; }`);
+      }
+      if (style.zebra) {
+        rules.push(
+          `${sel} tr:not(:first-child):nth-child(odd) > * { background: var(--paper-2); }`,
+        );
+      }
+      return rules.join('\n');
+    })
+    .filter(Boolean)
+    .join('\n');
+}
 
 type Props = {
   authors: Option[];
@@ -48,27 +74,15 @@ function emptyMeta(defaultAuthor: string): PostMeta {
 export default function WritePortal({ authors, topics, repoUrl }: Props) {
   const editor = useCreateBlockNote({ schema });
   const [meta, setMeta] = useState<PostMeta>(() => emptyMeta(authors[0]?.id ?? 'guest'));
-  const [tableVariants, setTableVariants] = useState<Record<string, string>>({});
+  const [tableVariants, setTableVariants] = useState<Record<string, TableStyle>>({});
   const [currentTableId, setCurrentTableId] = useState<string | null>(null);
+  const [barPos, setBarPos] = useState<{ top: number; left: number } | null>(null);
   const [restore, setRestore] = useState<null | { savedAt: number }>(null);
   const [issues, setIssues] = useState<string[]>([]);
   const [storageOff, setStorageOff] = useState(false);
   const [busy, setBusy] = useState(false);
-  const canvasRef = useRef<HTMLDivElement>(null);
-  const variantsRef = useRef(tableVariants);
-  variantsRef.current = tableVariants;
 
-  const applyTableVariants = useCallback(() => {
-    const root = canvasRef.current;
-    if (!root) return;
-    root.querySelectorAll<HTMLElement>('[data-content-type="table"]').forEach((el) => {
-      const outer = el.closest<HTMLElement>('.bn-block-outer[data-id]');
-      if (!outer) return;
-      const variant = variantsRef.current[outer.dataset.id ?? ''] ?? 'rule';
-      if (variant === 'rule') outer.removeAttribute('data-table-variant');
-      else outer.setAttribute('data-table-variant', variant);
-    });
-  }, []);
+  const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
 
   useEffect(() => {
     const draft = loadDraft();
@@ -76,8 +90,30 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   }, []);
 
   useEffect(() => {
-    applyTableVariants();
-  }, [tableVariants, applyTableVariants]);
+    if (!currentTableId) {
+      setBarPos(null);
+      return;
+    }
+    const update = () => {
+      const el = document.querySelector<HTMLElement>(
+        `.bn-block-outer[data-id="${currentTableId}"]`,
+      );
+      if (!el) {
+        setBarPos(null);
+        return;
+      }
+      const r = el.getBoundingClientRect();
+      const above = r.top - 52;
+      setBarPos({ top: above < 76 ? r.bottom + 10 : above, left: r.left });
+    };
+    update();
+    window.addEventListener('scroll', update, true);
+    window.addEventListener('resize', update);
+    return () => {
+      window.removeEventListener('scroll', update, true);
+      window.removeEventListener('resize', update);
+    };
+  }, [currentTableId]);
 
   const getDraft = useCallback(
     () => ({
@@ -90,10 +126,9 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   );
 
   const autosave = useCallback(() => {
-    applyTableVariants();
     if (restore) return;
     saveDraftDebounced(getDraft, () => setStorageOff(true));
-  }, [getDraft, restore, applyTableVariants]);
+  }, [getDraft, restore]);
 
   useEditorSelectionChange(() => {
     const block = editor.getTextCursorPosition().block;
@@ -173,30 +208,48 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
         }}
       />
 
-      {currentTableId && (
-        <div className="write-table-bar">
-          <span>Table style</span>
-          {TABLE_VARIANTS.map((v) => (
-            <button
-              key={v}
-              type="button"
-              className={
-                (tableVariants[currentTableId] ?? 'rule') === v
-                  ? 'write-chip is-active'
-                  : 'write-chip'
-              }
-              onClick={() => {
-                setTableVariants((prev) => ({ ...prev, [currentTableId]: v }));
-                autosave();
-              }}
+      {currentTableId &&
+        barPos &&
+        (() => {
+          const style = tableVariants[currentTableId] ?? DEFAULT_TABLE_STYLE;
+          const setStyle = (patch: Partial<TableStyle>) => {
+            setTableVariants((prev) => ({
+              ...prev,
+              [currentTableId]: { ...(prev[currentTableId] ?? DEFAULT_TABLE_STYLE), ...patch },
+            }));
+            autosave();
+          };
+          return (
+            <div
+              className="write-floating-bar"
+              style={{ top: `${barPos.top}px`, left: `${barPos.left}px` }}
+              onMouseDown={(e) => e.preventDefault()}
             >
-              {v}
-            </button>
-          ))}
-        </div>
-      )}
+              <span>Table</span>
+              {BORDER_VARIANTS.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={style.border === v ? 'write-chip is-active' : 'write-chip'}
+                  onClick={() => setStyle({ border: v })}
+                >
+                  {v}
+                </button>
+              ))}
+              <span className="write-table-divider" aria-hidden="true" />
+              <button
+                type="button"
+                className={style.zebra ? 'write-chip is-active' : 'write-chip'}
+                onClick={() => setStyle({ zebra: !style.zebra })}
+              >
+                Zebra rows
+              </button>
+            </div>
+          );
+        })()}
 
-      <div className="write-canvas" ref={canvasRef}>
+      <style>{variantCss}</style>
+      <div className="write-canvas">
         <BlockNoteView editor={editor} slashMenu={false} onChange={autosave}>
           <SuggestionMenuController
             triggerCharacter="/"

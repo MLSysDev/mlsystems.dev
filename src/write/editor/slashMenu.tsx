@@ -2,7 +2,12 @@ import { insertOrUpdateBlockForSlashMenu } from '@blocknote/core';
 import { getDefaultReactSlashMenuItems } from '@blocknote/react';
 import type { WriteEditor } from './schema';
 
-const HIDDEN = ['image', 'video', 'audio', 'file', 'check list', 'toggle', 'emoji'];
+const HIDDEN = ['image', 'video', 'audio', 'file', 'check list', 'toggle', 'emoji', 'table'];
+
+const EMPTY_3X3 = {
+  type: 'tableContent' as const,
+  rows: [{ cells: ['', '', ''] }, { cells: ['', '', ''] }, { cells: ['', '', ''] }],
+};
 
 export function getSlashItems(editor: WriteEditor) {
   const defaults = getDefaultReactSlashMenuItems(editor).filter(
@@ -30,6 +35,14 @@ export function getSlashItems(editor: WriteEditor) {
       aliases: ['video', 'youtube', 'embed'],
       group: 'Media',
       onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'video' }),
+    },
+    {
+      title: 'Table',
+      subtext: 'A 3×3 table — the first row is the header',
+      aliases: ['table', 'grid', 'rows', 'columns'],
+      group: 'Basic blocks',
+      onItemClick: () =>
+        insertOrUpdateBlockForSlashMenu(editor, { type: 'table', content: EMPTY_3X3 }),
     },
     {
       title: 'Note',

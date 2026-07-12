@@ -305,17 +305,20 @@ Color is not part of Markdown, but because this is MDX you can drop in a span wh
 | <span style="color: var(--accent)">Warning</span> | ... |
 ```
 
-**Table designs.** Wrap a table in `<Table>` to change its look. Omit `variant` for the site default.
+**Table designs.** Wrap a table in `<Table>` to change its look. There are two independent controls: the **border style** (`variant`) and **zebra shading** (`zebra`), which can be combined.
+
+`variant` — the border style (pick one; omit for the default):
 
 | variant          | look                                       |
 | ---------------- | ------------------------------------------ |
 | `rule` (default) | header underline + hairline row separators |
-| `zebra`          | shaded alternating rows                    |
 | `lined`          | full grid, every cell bordered             |
 | `plain`          | header underline only, no row lines        |
 
+`zebra` — a boolean that shades alternating rows. It stacks on top of any border style, so `<Table variant="lined" zebra>` gives you a full grid _and_ shaded rows.
+
 ```mdx
-<Table variant="zebra">
+<Table variant="lined" zebra>
 
 | Model | Params         | VRAM (FP16) |
 | ----- | -------------- | ----------- |

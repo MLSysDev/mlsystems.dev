@@ -6,6 +6,7 @@ import {
   type InlineRun,
   type PostMeta,
   type SBlock,
+  type TableStyle,
 } from './toMdx';
 
 const t = (text: string, styles: Record<string, boolean | string> = {}): InlineRun => ({
@@ -44,7 +45,7 @@ const today = new Date('2026-07-12T10:00:00Z');
 function body(
   blocks: SBlock[],
   overrides: Partial<PostMeta> = {},
-  tableVariants: Record<string, string> = {},
+  tableVariants: Record<string, TableStyle> = {},
 ) {
   const { mdx } = serializePost({ ...meta, ...overrides }, blocks, { tableVariants, today });
   return mdx.split('---\n\n').slice(1).join('---\n\n').trimEnd();
@@ -251,12 +252,34 @@ describe('tables', () => {
     expect(out).toBe('| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |');
   });
 
-  it('wraps in Table when a non-default variant is set', () => {
+  it('wraps in Table with a border variant', () => {
     const tb = block('table', {}, tableContent);
-    const out = body([tb], {}, { [tb.id]: 'zebra' });
+    const out = body([tb], {}, { [tb.id]: { border: 'lined', zebra: false } });
     expect(out).toBe(
-      '<Table variant="zebra">\n\n| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |\n\n</Table>',
+      '<Table variant="lined">\n\n| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |\n\n</Table>',
     );
+  });
+
+  it('emits zebra as a standalone attribute over the default border', () => {
+    const tb = block('table', {}, tableContent);
+    const out = body([tb], {}, { [tb.id]: { border: 'rule', zebra: true } });
+    expect(out).toBe(
+      '<Table zebra>\n\n| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |\n\n</Table>',
+    );
+  });
+
+  it('combines a border variant with zebra', () => {
+    const tb = block('table', {}, tableContent);
+    const out = body([tb], {}, { [tb.id]: { border: 'lined', zebra: true } });
+    expect(out).toBe(
+      '<Table variant="lined" zebra>\n\n| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |\n\n</Table>',
+    );
+  });
+
+  it('does not wrap when style is the plain default (rule, no zebra)', () => {
+    const tb = block('table', {}, tableContent);
+    const out = body([tb], {}, { [tb.id]: { border: 'rule', zebra: false } });
+    expect(out).toBe('| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |');
   });
 
   it('supports object-shaped cells', () => {
