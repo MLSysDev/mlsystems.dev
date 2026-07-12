@@ -1,7 +1,7 @@
 import type { PostMeta, SBlock } from './toMdx';
 
 export const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const COMPONENT_NAME_RE = /^[A-Z][A-Za-z0-9]*$/;
+export const COMPONENT_NAME_RE = /^[A-Z][A-Za-z0-9]*$/;
 
 function walk(blocks: SBlock[], visit: (b: SBlock) => void): void {
   for (const block of blocks) {

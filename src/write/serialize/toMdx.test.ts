@@ -103,9 +103,9 @@ describe('serializeInline', () => {
     expect(serializeInline([t('under', { underline: true })])).toBe('<u>under</u>');
   });
 
-  it('renders text color as a styled span, mapping named colors', () => {
+  it('renders text color as a theme-aware color span, mapping named colors', () => {
     expect(serializeInline([t('warn', { textColor: 'red' })])).toBe(
-      '<span style="color: #e03e3e">warn</span>',
+      '<span style="color: var(--tc-red, #e03e3e)">warn</span>',
     );
   });
 
@@ -121,8 +121,34 @@ describe('serializeInline', () => {
 
   it('layers underline and color over markdown emphasis', () => {
     expect(serializeInline([t('x', { bold: true, underline: true, textColor: 'blue' })])).toBe(
-      '<span style="color: #337ea9"><u>**x**</u></span>',
+      '<span style="color: var(--tc-blue, #337ea9)"><u>**x**</u></span>',
     );
+  });
+
+  it('wraps link destinations that contain parentheses in angle brackets', () => {
+    const run = {
+      type: 'link' as const,
+      href: 'https://en.wikipedia.org/wiki/GPT-4_(language_model)',
+      content: [{ type: 'text' as const, text: 'GPT-4', styles: {} }],
+    };
+    expect(serializeInline([run])).toBe(
+      '[GPT-4](<https://en.wikipedia.org/wiki/GPT-4_(language_model)>)',
+    );
+  });
+
+  it('leaves plain destinations bare', () => {
+    const run = {
+      type: 'link' as const,
+      href: 'https://example.com/a',
+      content: [{ type: 'text' as const, text: 'x', styles: {} }],
+    };
+    expect(serializeInline([run])).toBe('[x](https://example.com/a)');
+  });
+
+  it('escapes leading markdown markers so plain text is not reinterpreted', () => {
+    expect(serializeInline([t('- not a list', {})])).toBe('\\- not a list');
+    expect(serializeInline([t('1. not numbered', {})])).toBe('1\\. not numbered');
+    expect(serializeInline([t('--- not a rule', {})])).toBe('\\--- not a rule');
   });
 });
 

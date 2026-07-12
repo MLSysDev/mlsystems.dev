@@ -83,8 +83,18 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   const [issues, setIssues] = useState<string[]>([]);
   const [storageOff, setStorageOff] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [siteTheme, setSiteTheme] = useState<'light' | 'dark'>('light');
 
   const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    const read = () => setSiteTheme(root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
+    read();
+    const obs = new MutationObserver(read);
+    obs.observe(root, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     const draft = loadDraft();
@@ -186,6 +196,8 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
       URL.revokeObjectURL(url);
       clearDraft();
       await clearStoredAssets().catch(() => undefined);
+    } catch {
+      setIssues(['Something went wrong while packaging your post. Please try downloading again.']);
     } finally {
       setBusy(false);
     }
@@ -283,7 +295,13 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
 
       <style>{variantCss}</style>
       <div className="write-canvas" onKeyDownCapture={handleSelectAll}>
-        <BlockNoteView editor={editor} theme="light" slashMenu={false} onChange={autosave}>
+        <BlockNoteView
+          editor={editor}
+          theme={siteTheme}
+          editable={!restore}
+          slashMenu={false}
+          onChange={autosave}
+        >
           <SuggestionMenuController
             triggerCharacter="/"
             getItems={async (query) => filterSuggestionItems(slashItems, query)}

@@ -49,7 +49,10 @@ type Ctx = {
 };
 
 export function escapeText(s: string): string {
-  return s.replace(/[\\<{*_`[]/g, (c) => `\\${c}`).replace(/^([>#])/, '\\$1');
+  return s
+    .replace(/[\\<{*_`[~]/g, (c) => `\\${c}`)
+    .replace(/^(\s{0,3})(\d+)([.)])/, '$1$2\\$3')
+    .replace(/^(\s{0,3})([>#+-])/, '$1\\$2');
 }
 
 const TEXT_COLORS: Record<string, string> = {
@@ -76,11 +79,6 @@ const BG_COLORS: Record<string, string> = {
   pink: '#f4dfeb',
 };
 
-function colorValue(name: unknown, map: Record<string, string>): string | null {
-  if (typeof name !== 'string' || !name || name === 'default') return null;
-  return map[name] ?? name;
-}
-
 function wrapStyles(text: string, styles: Record<string, boolean | string>): string {
   let out: string;
   if (styles.code) {
@@ -92,8 +90,11 @@ function wrapStyles(text: string, styles: Record<string, boolean | string>): str
     if (styles.strike) out = `~~${out}~~`;
   }
   if (styles.underline) out = `<u>${out}</u>`;
-  const color = colorValue(styles.textColor, TEXT_COLORS);
-  if (color) out = `<span style="color: ${color}">${out}</span>`;
+  if (typeof styles.textColor === 'string' && styles.textColor && styles.textColor !== 'default') {
+    const name = styles.textColor;
+    const color = TEXT_COLORS[name] ? `var(--tc-${name}, ${TEXT_COLORS[name]})` : name;
+    out = `<span style="color: ${color}">${out}</span>`;
+  }
   if (typeof styles.backgroundColor === 'string' && styles.backgroundColor !== 'default') {
     const name = styles.backgroundColor;
     const bg = BG_COLORS[name] ? `var(--mark-${name}, ${BG_COLORS[name]})` : name;
@@ -108,7 +109,8 @@ export function serializeInline(content: unknown): string {
     .map((run) => {
       if (run.type === 'link') {
         const label = run.content.map((r) => wrapStyles(r.text, r.styles)).join('');
-        return `[${label}](${run.href})`;
+        const dest = /[()\s]/.test(run.href) ? `<${run.href}>` : run.href;
+        return `[${label}](${dest})`;
       }
       if (run.type === 'text') return wrapStyles(run.text, run.styles);
       return '';

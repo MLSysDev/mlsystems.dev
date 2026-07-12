@@ -10,6 +10,7 @@ const cssVar = (name: string, value?: string | number): CSSProperties | undefine
 export const mdxComponents = {
   h2: (props: ComponentProps<'h2'>) => <h2 {...props} />,
   h3: (props: ComponentProps<'h3'>) => <h3 {...props} />,
+  h4: (props: ComponentProps<'h4'>) => <h4 {...props} />,
   p: (props: ComponentProps<'p'>) => <p {...props} />,
   a: (props: ComponentProps<'a'>) => (
     <a

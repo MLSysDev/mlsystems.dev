@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createReactBlockSpec } from '@blocknote/react';
 import katex from 'katex';
 
@@ -13,9 +13,13 @@ export const createMathBlock = createReactBlockSpec(
   {
     render: ({ block, editor }) => {
       const [editing, setEditing] = useState(!block.props.latex);
-      const html = block.props.latex
-        ? katex.renderToString(block.props.latex, { displayMode: true, throwOnError: false })
-        : '';
+      const html = useMemo(
+        () =>
+          block.props.latex
+            ? katex.renderToString(block.props.latex, { displayMode: true, throwOnError: false })
+            : '',
+        [block.props.latex],
+      );
 
       return (
         <div className="write-math" contentEditable={false}>

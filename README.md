@@ -42,18 +42,6 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ---
 
-## Documentation
-
-| Doc                                                  | What it covers                                                     |
-| ---------------------------------------------------- | ------------------------------------------------------------------ |
-| [docs/writing-articles.md](docs/writing-articles.md) | How to write a post — frontmatter, MDX components, examples        |
-| [docs/architecture.md](docs/architecture.md)         | Project structure, design principles, why files are where they are |
-| [docs/deployment.md](docs/deployment.md)             | Deploying to Vercel, Cloudflare Pages, Netlify, or any static host |
-| [docs/seo.md](docs/seo.md)                           | What SEO is already wired in + pre-launch checklist                |
-| [docs/extending.md](docs/extending.md)               | Growing the site — auth, courses, comments, search, newsletter     |
-
----
-
 ## Tech stack
 
 [Astro 5](https://astro.build) · [MDX](https://mdxjs.com) · [React 19](https://react.dev) (islands only) · [Shiki](https://shiki.style) · TypeScript strict mode · plain CSS with custom properties
@@ -62,14 +50,13 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## License
 
-- **Code** — [MIT](LICENSE). Fork freely, send PRs, build your own thing with it.
-- **Content** (blog posts, learning materials, diagrams) — © each author. All rights reserved.
+Everything here (blog posts, learning materials, diagrams, images, code) is © its respective author. All rights reserved.
 
 **You're welcome to:** read, link to, share URLs, cite posts in your own work, include brief excerpts in slides or presentations with attribution, and translate full posts into other languages (with credit + link back).
 
-**You need permission to:** republish full posts on other sites, use content in commercial products or paid courses, or create derivative works beyond translation. See [LICENSE](LICENSE) for the full terms.
+**You need permission to:** republish full posts on other sites, use content in commercial products or paid courses, or create derivative works beyond translation. Ask the respective author. See [LICENSE](LICENSE) for the full terms.
 
-Community contributors retain copyright on their own posts.
+Contributors retain copyright on their own work.
 
 ---
 

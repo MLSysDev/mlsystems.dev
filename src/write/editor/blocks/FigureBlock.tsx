@@ -29,8 +29,15 @@ export const createFigureBlock = createReactBlockSpec(
   {
     render: ({ block, editor }) => {
       const [url, setUrl] = useState('');
+      const [error, setError] = useState(false);
       const setProps = (patch: Partial<typeof block.props>) =>
         editor.updateBlock(block, { props: { ...block.props, ...patch } });
+
+      const addUrl = () => {
+        const u = url.trim();
+        if (/^https?:\/\/\S+/i.test(u) || u.startsWith('data:image/')) setProps({ src: u });
+        else setError(true);
+      };
 
       const hasImage = block.props.fileName || block.props.src;
 
@@ -51,18 +58,26 @@ export const createFigureBlock = createReactBlockSpec(
                 type="text"
                 placeholder="…or paste an image URL (https://…)"
                 value={url}
-                onChange={(e) => setUrl(e.target.value)}
+                onChange={(e) => {
+                  setUrl(e.target.value);
+                  setError(false);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && url.trim()) {
                     e.preventDefault();
-                    setProps({ src: url.trim() });
+                    addUrl();
                   }
                 }}
               />
-              <button type="button" onClick={() => url.trim() && setProps({ src: url.trim() })}>
+              <button type="button" onClick={addUrl}>
                 Add
               </button>
             </div>
+            {error && (
+              <span className="write-block-error">
+                That doesn’t look like an image URL — it should start with https://.
+              </span>
+            )}
           </div>
         );
       }

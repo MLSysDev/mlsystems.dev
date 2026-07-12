@@ -61,10 +61,16 @@ function tx(db: IDBDatabase, mode: IDBTransactionMode): IDBObjectStore {
 
 export async function persistAssets(): Promise<void> {
   const db = await openDb();
+  const assets = allAssets();
+  const wanted = new Set(assets.map((a) => a.name));
   await new Promise<void>((resolve, reject) => {
     const store = tx(db, 'readwrite');
-    store.clear();
-    for (const { name, file } of allAssets()) store.put(file, name);
+    const keysReq = store.getAllKeys();
+    keysReq.onsuccess = () => {
+      const existing = new Set((keysReq.result as string[]).map(String));
+      for (const key of existing) if (!wanted.has(key)) store.delete(key);
+      for (const { name, file } of assets) if (!existing.has(name)) store.put(file, name);
+    };
     store.transaction.oncomplete = () => resolve();
     store.transaction.onerror = () => reject(store.transaction.error);
   });

@@ -4,10 +4,11 @@ import { createReactBlockSpec } from '@blocknote/react';
 export function parseYouTubeId(input: string): string {
   const s = input.trim();
   if (/^[\w-]{11}$/.test(s)) return s;
-  const m = s.match(
-    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([\w-]{11})/,
-  );
-  return m ? m[1] : '';
+  const path = s.match(/(?:youtu\.be\/|\/embed\/|\/shorts\/|\/live\/)([\w-]{11})/);
+  if (path) return path[1];
+  const query = s.match(/[?&]v=([\w-]{11})/);
+  if (query && /youtube\.com/.test(s)) return query[1];
+  return '';
 }
 
 export const createVideoBlock = createReactBlockSpec(

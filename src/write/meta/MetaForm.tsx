@@ -17,6 +17,8 @@ export function MetaForm({ authors, topics, meta, onChange }: Props) {
 
   const set = (patch: Partial<PostMeta>) => onChange({ ...meta, ...patch });
 
+  const slugLocked = slugTouched || (!!meta.slug && meta.slug !== slugify(meta.title));
+
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase().replace(/^#/, '');
     if (tag && !meta.tags.includes(tag)) set({ tags: [...meta.tags, tag] });
@@ -31,7 +33,7 @@ export function MetaForm({ authors, topics, meta, onChange }: Props) {
         placeholder="Title"
         value={meta.title}
         onChange={(e) =>
-          set({ title: e.target.value, ...(slugTouched ? {} : { slug: slugify(e.target.value) }) })
+          set({ title: e.target.value, ...(slugLocked ? {} : { slug: slugify(e.target.value) }) })
         }
       />
       <textarea

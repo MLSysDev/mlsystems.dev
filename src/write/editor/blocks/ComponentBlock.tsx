@@ -1,6 +1,5 @@
 import { createReactBlockSpec } from '@blocknote/react';
-
-export const COMPONENT_NAME_RE = /^[A-Z][A-Za-z0-9]*$/;
+import { COMPONENT_NAME_RE } from '../../serialize/validate';
 
 export const createComponentBlock = createReactBlockSpec(
   {

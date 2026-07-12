@@ -107,15 +107,21 @@
 .write-banner {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
-  padding: 12px 16px;
+  padding: 14px 18px;
   border: 1px solid var(--line-2);
   border-radius: 8px;
   margin-bottom: 16px;
   font-size: 14px;
   justify-content: space-between;
   background: var(--accent-soft);
+}
+
+.write-banner > div {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .write-floating-bar {
@@ -231,10 +237,20 @@
   position: relative;
   border: 1px solid var(--line-2);
   border-radius: 12px;
-  padding: 20px 8px;
+  padding: 26px 20px;
   margin-top: 8px;
   background: var(--paper);
   min-height: 320px;
+}
+
+@media (min-width: 1040px) {
+  .write-canvas {
+    margin-inline: -48px;
+    padding-inline: 48px;
+  }
+  .write-canvas::before {
+    left: 48px;
+  }
 }
 
 .write-canvas::before {
@@ -256,6 +272,15 @@
   --bn-font-family: var(--font-read, 'Source Serif 4', serif);
   background: transparent;
   color: var(--ink-body, var(--ink-1));
+}
+
+.bn-side-menu .mantine-UnstyledButton-root:not(.mantine-Menu-item) svg {
+  color: var(--ink-3);
+}
+
+.bn-side-menu .mantine-UnstyledButton-root:hover {
+  background-color: var(--paper-3);
+  border-radius: 6px;
 }
 
 .bn-side-menu button:has([data-test='dragHandleAdd']) {
