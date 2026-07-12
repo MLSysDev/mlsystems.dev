@@ -14,7 +14,7 @@
   width: 100%;
   border: none;
   background: none;
-  color: var(--ink-1);
+  color: var(--ink);
   font-family: var(--font-sans, 'Geist', sans-serif);
   font-weight: 700;
   font-size: clamp(32px, 6vw, 56px);
@@ -69,7 +69,7 @@
   font-size: 14px;
   text-transform: none;
   letter-spacing: normal;
-  color: var(--ink-1);
+  color: var(--ink);
   background: var(--paper-2, var(--paper));
   border: 1px solid var(--line-2);
   border-radius: 6px;
@@ -169,7 +169,7 @@
   padding: 6px 12px;
   border: 1px solid var(--line-2);
   background: var(--paper);
-  color: var(--ink-1);
+  color: var(--ink);
 }
 
 .write-ghost,
@@ -201,8 +201,8 @@
 .write-issues {
   margin-top: 20px;
   padding: 14px 18px;
-  border-left: 3px solid #c0392b;
-  background: rgba(192, 57, 43, 0.06);
+  border-left: 3px solid var(--tc-red);
+  background: color-mix(in srgb, var(--tc-red) 8%, transparent);
   border-radius: 0 6px 6px 0;
   font-size: 14px;
 }
@@ -329,7 +329,7 @@
 .bn-editor {
   --bn-font-family: var(--font-read, 'Source Serif 4', serif);
   background: transparent;
-  color: var(--ink-body, var(--ink-1));
+  color: var(--ink-body, var(--ink));
 }
 
 .bn-side-menu .mantine-UnstyledButton-root:not(.mantine-Menu-item) svg {
@@ -372,7 +372,7 @@
   ) {
   border-radius: 5px;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--line-2) 45%, transparent);
-  background: color-mix(in srgb, var(--ink-1) 2%, transparent);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
 }
 
 .bn-block-content h1,
@@ -380,7 +380,7 @@
 .bn-block-content h3 {
   font-family: var(--font-sans, 'Geist', sans-serif);
   font-weight: 600;
-  color: var(--ink-1);
+  color: var(--ink);
 }
 
 .write-block-form,
@@ -425,7 +425,7 @@
   font-family: inherit;
   font-size: 14px;
   background: var(--paper);
-  color: var(--ink-1);
+  color: var(--ink);
 }
 
 .write-component textarea,
@@ -435,12 +435,12 @@
 }
 
 .write-input-invalid {
-  border-color: #c0392b;
+  border-color: var(--tc-red);
 }
 
 .write-block-error {
   display: block;
-  color: #c0392b;
+  color: var(--tc-red);
   font-size: 12px;
   margin-top: 6px;
 }
