@@ -8,6 +8,7 @@ import Comments from '@/components/Comments.tsx';
 import Avatar from '@/components/Avatar.astro';
 import { formatDate, sortPostsByDate, topicName, tagSlug } from '@/lib/data';
 import { SITE } from '@/lib/site';
+import 'katex/dist/katex.min.css';
 
 // Pre-build a page for every published post.
 export async function getStaticPaths() {

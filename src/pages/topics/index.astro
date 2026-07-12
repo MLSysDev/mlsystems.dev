@@ -5,6 +5,7 @@ import { TOPICS, countPostsByTopic } from '@/lib/data';
 
 const posts = await getCollection('posts', ({ data }) => !data.draft);
 const topicCounts = countPostsByTopic(posts);
+const visibleTopics = TOPICS.filter((t) => (topicCounts[t.id] ?? 0) > 0);
 ---
 
 <BaseLayout
@@ -23,12 +24,14 @@ const topicCounts = countPostsByTopic(posts);
 
     <div class="topics-list" style="margin-top: 16px;">
       {
-        TOPICS.map((t, i) => (
-          <a href={`/topics/${t.id}/`} class="topic-row">
+        visibleTopics.map((t, i) => (
+          <a href={`/topics/${t.id}`} class="topic-row">
             <span class="topic-num">{String(i + 1).padStart(2, '0')}</span>
             <h3 class="topic-name">{t.name}</h3>
             <span class="topic-desc">{t.desc}</span>
-            <span class="topic-count">{topicCounts[t.id] ?? 0} articles</span>
+            <span class="topic-count">
+              {topicCounts[t.id]} {topicCounts[t.id] === 1 ? 'article' : 'articles'}
+            </span>
           </a>
         ))
       }

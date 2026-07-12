@@ -5,7 +5,12 @@ import { TOPICS, formatDate, formatMonth, sortPostsByDate } from '@/lib/data';
 import { SITE } from '@/lib/site';
 
 export async function getStaticPaths() {
-  return TOPICS.map((t) => ({ params: { id: t.id }, props: { topic: t } }));
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const active = new Set(posts.map((p) => p.data.topicId));
+  return TOPICS.filter((t) => active.has(t.id)).map((t) => ({
+    params: { id: t.id },
+    props: { topic: t },
+  }));
 }
 
 interface Props {

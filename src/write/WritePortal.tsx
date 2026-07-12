@@ -9,6 +9,7 @@ import {
 } from '@blocknote/react';
 import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
+import 'katex/dist/katex.min.css';
 import { schema } from './editor/schema';
 import { getSlashItems } from './editor/slashMenu';
 import { MetaForm, type Option } from './meta/MetaForm';

@@ -1,6 +1,6 @@
 /* ML Systems — design tokens & base */
-
-@import 'katex/dist/katex.min.css';
+/* KaTeX CSS is imported per-context (article page + /write editor), not
+   globally, so non-math pages don't ship ~23KB of unused CSS. */
 
 html {
   overflow-x: hidden;
@@ -192,6 +192,16 @@ html {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 html,
 body {

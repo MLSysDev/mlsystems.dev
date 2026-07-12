@@ -92,13 +92,14 @@ export const createFigureBlock = createReactBlockSpec(
             <button
               type="button"
               className="write-remove"
+              aria-label="Remove image"
               title="Remove image"
               onClick={() => {
                 if (block.props.fileName) removeAsset(block.props.fileName);
                 setProps({ fileName: '', src: '' });
               }}
             >
-              ✕
+              <span aria-hidden="true">✕</span>
             </button>
           </div>
           <input
