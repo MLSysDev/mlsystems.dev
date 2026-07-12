@@ -1,0 +1,418 @@
+---
+title: "Neural Networks From Zero: From a Single Number to a Billion Parameters"
+summary: "A neural network never sees a word, an image, or a sound — only a list of numbers. Starting from that one fact and a single neuron, this day-zero guide builds the whole machine: how any input becomes numbers, why weights, biases, and activations each exist, how neurons stack into layers and layers into a model, and how to compute a model's size and running cost by hand."
+authors:
+  - dinesh
+date: "2026-07-12"
+readMin: 22
+topic: "Architecture"
+topicId: "architecture"
+tags: ["fundamentals", "perceptron", "neural-networks", "parameters", "flops"]
+featured: true
+---
+
+Almost every explanation of neural networks starts one step too late. It shows you a diagram of circles connected by lines, tells you "these are neurons," and moves on. But it never answers the question a genuinely curious person asks first:
+
+**What are those circles even looking at?**
+
+When someone writes `input = [0.2, 0.9, 0.1, 0.7]`, why are there *four* numbers? Why numbers at all? What if my input is the word "cat"? A photo? A ten-second voice clip? An entire paragraph? How does *any* of that turn into something a network can process?
+
+This is day zero. If you don't understand what an input is, what a single neuron does to it, and why each piece of a neuron exists, then everything downstream — attention, transformers, "7 billion parameters," GPUs running out of memory — is memorization, not understanding. So we're going to build the whole thing from the smallest possible unit, and by the end you'll be able to look at any model and compute, by hand, both *how big it is* and *how much math it costs to run*.
+
+Let's start with the single most important sentence in this entire field.
+
+## A network only ever sees numbers
+
+Here it is:
+
+> A neural network cannot see a word, a pixel, a sound, or a sentence. It can only see **a list of numbers**. Everything else is a translation problem that happens *before* the network.
+
+That list of numbers has a name: a **vector**. When you saw `[0.2, 0.9, 0.1, 0.7]`, that was a vector of length 4 — the network's entire universe for that one input. The "4" isn't magic; it's just how many numbers this particular network was built to accept. A different network might take 784 numbers, or 4096. That fixed count is called the **input dimension**.
+
+So the real question isn't "how does a network understand a cat?" It's: **how do we turn a cat — the word, or the photo — into a list of numbers?** That translation is where all the interesting representational choices live, and it's completely separate from the network itself. Let's do it for every kind of input.
+
+### Turning anything into numbers
+
+<Note>
+The rule to hold onto: the network is fixed and dumb — it eats a vector of numbers. The *encoding* is where meaning gets packed in. Change the encoding and you change what the network can possibly learn, without touching the network at all.
+</Note>
+
+**A single quantity — the easy case.** Say you're predicting whether it'll rain from today's temperature. Temperature is *already* a number: `28.4`. Your input vector is length 1: `[28.4]`. Add humidity and pressure and you have `[28.4, 0.66, 1013]` — length 3. Each slot in the vector is called a **feature**. This is the whole reason the classic examples use 3 or 4 numbers: they're toy problems with 3 or 4 features. Nothing deeper.
+
+**A category — a color, a yes/no, a day of the week.** These aren't numbers, and you can't just assign `Monday = 1, Tuesday = 2`, because that would trick the network into thinking Wednesday is "twice" Monday, which is nonsense. Instead we use **one-hot encoding**: one slot per possible value, all zeros except a single 1.
+
+```
+  Monday    → [1, 0, 0, 0, 0, 0, 0]
+  Wednesday → [0, 0, 1, 0, 0, 0, 0]
+  Sunday    → [0, 0, 0, 0, 0, 0, 1]
+```
+
+Seven categories → a vector of length 7. No false ordering, no fake arithmetic. Just "which one is it."
+
+**A word — where it gets interesting.** A word like "cat" is a category too, but the vocabulary has ~50,000 words, so a one-hot vector would be 50,000 numbers that are almost entirely zeros. Wasteful, and worse, it says every word is equally unrelated to every other — "cat" is exactly as far from "dog" as it is from "helicopter." That's clearly wrong.
+
+So instead we *learn* a compact vector for each word, called an **embedding** — typically a few hundred to a few thousand numbers:
+
+```
+  "cat"        → [ 0.21, -0.44,  0.10, ..., 0.05]   (say, 768 numbers)
+  "dog"        → [ 0.19, -0.41,  0.14, ..., 0.08]   ← close to "cat"
+  "helicopter" → [-0.88,  0.30, -0.52, ..., 0.77]   ← far from both
+```
+
+The magic: these numbers are learned so that *similar meanings end up close together* in the vector space. "cat" and "dog" land near each other; "helicopter" lands far away. The network never sees the letters c-a-t — it sees 768 numbers that encode what "cat" *means*, in a geometry where distance is similarity. (How text gets split into these units in the first place — "tokenization" — and how embeddings are learned are their own deep dives. For today, just hold the shape: **word → vector of numbers.**)
+
+<Figure caption="Word embeddings live in a space where distance means similarity: 'cat' and 'dog' land close together, 'helicopter' sits far away — and the network only ever sees the coordinates, never the letters.">
+<svg viewBox="0 0 470 270" role="img" aria-label="A 2D map of word-embedding space. The points for cat and dog are close together and circled as similar; the point for helicopter is far away in the opposite corner." style="width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <rect x="24" y="18" width="422" height="234" rx="8" fill="none" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+  <ellipse cx="150" cy="112" rx="72" ry="56" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 5" opacity="0.5"/>
+  <g fill="currentColor">
+    <circle cx="120" cy="98" r="6"/>
+    <circle cx="176" cy="128" r="6"/>
+    <circle cx="372" cy="206" r="6"/>
+  </g>
+  <g fill="currentColor" font-size="15">
+    <text x="120" y="86" text-anchor="middle">cat</text>
+    <text x="184" y="150" text-anchor="middle">dog</text>
+    <text x="372" y="230" text-anchor="middle">helicopter</text>
+  </g>
+  <g fill="currentColor" font-size="12" opacity="0.7">
+    <text x="150" y="196" text-anchor="middle">similar meaning → close</text>
+    <text x="360" y="170" text-anchor="middle">unrelated → far</text>
+  </g>
+</svg>
+</Figure>
+
+**An image.** A grayscale photo is a grid of brightness values, each from 0 (black) to 255 (white). A small 28×28 image is 784 of those numbers. Flatten the grid row by row into one long list and you have a vector of length 784. A color photo has three such grids (red, green, blue), so a 224×224 color image is `224 × 224 × 3 = 150,528` numbers. A picture really is worth a (few hundred) thousand numbers.
+
+<Figure caption="A 4×4 grayscale patch is literally 16 numbers (0 = black, 255 = white). Read the grid row by row and you get the flat vector the network actually receives. This diagonal is a '16-pixel image'.">
+<svg viewBox="0 0 470 210" role="img" aria-label="A 4 by 4 grid of grayscale cells forming a dark diagonal on a light background. Each cell shows its brightness value: 30 for the dark diagonal cells, 230 for the light cells. Below, an arrow shows the grid flattened row by row into a list of those numbers." style="width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <g stroke="#888" stroke-width="0.5">
+    <rect x="70" y="20" width="36" height="36" fill="#333"/><rect x="106" y="20" width="36" height="36" fill="#e6e6e6"/><rect x="142" y="20" width="36" height="36" fill="#e6e6e6"/><rect x="178" y="20" width="36" height="36" fill="#e6e6e6"/>
+    <rect x="70" y="56" width="36" height="36" fill="#e6e6e6"/><rect x="106" y="56" width="36" height="36" fill="#333"/><rect x="142" y="56" width="36" height="36" fill="#e6e6e6"/><rect x="178" y="56" width="36" height="36" fill="#e6e6e6"/>
+    <rect x="70" y="92" width="36" height="36" fill="#e6e6e6"/><rect x="106" y="92" width="36" height="36" fill="#e6e6e6"/><rect x="142" y="92" width="36" height="36" fill="#333"/><rect x="178" y="92" width="36" height="36" fill="#e6e6e6"/>
+    <rect x="70" y="128" width="36" height="36" fill="#e6e6e6"/><rect x="106" y="128" width="36" height="36" fill="#e6e6e6"/><rect x="142" y="128" width="36" height="36" fill="#e6e6e6"/><rect x="178" y="128" width="36" height="36" fill="#333"/>
+  </g>
+  <g font-size="11" text-anchor="middle">
+    <text x="88" y="42" fill="#f0f0f0">30</text><text x="124" y="42" fill="#555">230</text><text x="160" y="42" fill="#555">230</text><text x="196" y="42" fill="#555">230</text>
+    <text x="88" y="78" fill="#555">230</text><text x="124" y="78" fill="#f0f0f0">30</text><text x="160" y="78" fill="#555">230</text><text x="196" y="78" fill="#555">230</text>
+    <text x="88" y="114" fill="#555">230</text><text x="124" y="114" fill="#555">230</text><text x="160" y="114" fill="#f0f0f0">30</text><text x="196" y="114" fill="#555">230</text>
+    <text x="88" y="150" fill="#555">230</text><text x="124" y="150" fill="#555">230</text><text x="160" y="150" fill="#555">230</text><text x="196" y="150" fill="#f0f0f0">30</text>
+  </g>
+  <g fill="currentColor">
+    <text x="250" y="96" font-size="22">→</text>
+    <text x="70" y="196" font-size="12" font-family="ui-monospace,monospace">[30, 230, 230, 230, 230, 30, 230, 230, 230, 230, 30, 230, 230, 230, 230, 30]</text>
+  </g>
+</svg>
+</Figure>
+
+**Audio (an mp3).** Sound is a wave — air pressure changing over time. To digitize it, we measure that pressure many times per second (44,100 times/second for CD quality). Ten seconds of audio is `44,100 × 10 = 441,000` numbers, each a sample of the wave's height at that instant. A vector, again — just a very long, time-ordered one.
+
+<Figure caption="Sound is a wave; digitizing it means measuring the wave's height thousands of times per second. Each measurement (each dot) is one number. Ten seconds of CD-quality audio is 441,000 of them, in order.">
+<svg viewBox="0 0 470 200" role="img" aria-label="A waveform drawn as a curve. Evenly spaced sample dots sit on the curve, each with a thin vertical line dropping to the horizontal time axis, illustrating that each sample is one number giving the wave's height at that instant." style="width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <line x1="40" y1="100" x2="440" y2="100" stroke="currentColor" stroke-width="1" opacity="0.25"/>
+  <g stroke="currentColor" stroke-width="1" opacity="0.28">
+    <line x1="60" y1="100" x2="60" y2="100"/><line x1="90" y1="100" x2="90" y2="65"/><line x1="120" y1="100" x2="120" y2="58"/><line x1="150" y1="100" x2="150" y2="90"/><line x1="180" y1="100" x2="180" y2="135"/><line x1="210" y1="100" x2="210" y2="140"/><line x1="240" y1="100" x2="240" y2="105"/><line x1="270" y1="100" x2="270" y2="62"/><line x1="300" y1="100" x2="300" y2="55"/><line x1="330" y1="100" x2="330" y2="88"/><line x1="360" y1="100" x2="360" y2="135"/><line x1="390" y1="100" x2="390" y2="138"/><line x1="420" y1="100" x2="420" y2="100"/>
+  </g>
+  <polyline points="60,100 90,65 120,58 150,90 180,135 210,140 240,105 270,62 300,55 330,88 360,135 390,138 420,100" fill="none" stroke="currentColor" stroke-width="2"/>
+  <g fill="currentColor">
+    <circle cx="60" cy="100" r="4"/><circle cx="90" cy="65" r="4"/><circle cx="120" cy="58" r="4"/><circle cx="150" cy="90" r="4"/><circle cx="180" cy="135" r="4"/><circle cx="210" cy="140" r="4"/><circle cx="240" cy="105" r="4"/><circle cx="270" cy="62" r="4"/><circle cx="300" cy="55" r="4"/><circle cx="330" cy="88" r="4"/><circle cx="360" cy="135" r="4"/><circle cx="390" cy="138" r="4"/><circle cx="420" cy="100" r="4"/>
+  </g>
+  <g fill="currentColor" font-size="11" opacity="0.7" text-anchor="middle">
+    <text x="120" y="48">+0.7</text><text x="300" y="45">+0.8</text><text x="210" y="158">−0.6</text>
+  </g>
+  <text x="438" y="120" fill="currentColor" font-size="11" opacity="0.6" text-anchor="end">time →</text>
+</svg>
+</Figure>
+
+**A paragraph.** A paragraph is a *sequence* of words, so it becomes a *sequence of embedding vectors* — one vector per word (or token), in order. This is the one case where we don't collapse to a single flat vector, because *order matters* ("dog bites man" ≠ "man bites dog"). Handling sequences of vectors while respecting order is exactly the problem transformers were invented to solve — but that's getting ahead of ourselves. The atom is still the same: **each word is a vector of numbers.**
+
+Here's the whole picture in one table:
+
+| Input | How it becomes numbers | Example length |
+|---|---|---|
+| Temperature | it's already a number | 1 |
+| Day of week | one-hot (one slot per category) | 7 |
+| A word | learned embedding vector | ~768 |
+| 28×28 grayscale image | flatten the pixel grid | 784 |
+| 224×224 color image | flatten 3 color grids | 150,528 |
+| 10s of CD-quality audio | samples of the wave over time | 441,000 |
+| A paragraph | a *sequence* of word vectors | (n words) × 768 |
+
+Every single one is just numbers. **That** is what the circles in the diagram are looking at. Now let's build a circle.
+
+## The neuron: the atom of the whole field
+
+Everything — every model with billions of parameters — is built from one tiny unit repeated a staggering number of times. Understand this one unit completely and the rest is assembly.
+
+The unit is loosely inspired by a biological neuron, and the analogy is genuinely useful. A brain cell receives signals from many others through its dendrites. Some of those connections are strong, some weak. The cell adds up all its incoming signals (weighted by connection strength), and *if the total is strong enough, it fires.*
+
+<Figure caption="The artificial neuron mirrors the biological one, part for part: dendrites → inputs, synapse strengths → weights, the cell body's summation → Σ + bias, and 'firing' → the activation function f.">
+<svg viewBox="0 0 480 210" role="img" aria-label="Left: a stylized biological neuron with dendrites feeding a soma and an axon leaving it. An approximately-equals sign in the middle. Right: an artificial neuron with input dots feeding a summation node with a bias, then an activation function f, then an output y." style="width:100%;max-width:540px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <g stroke="currentColor" fill="none" stroke-width="1.5">
+    <circle cx="100" cy="95" r="26"/>
+    <line x1="126" y1="95" x2="212" y2="95"/>
+    <line x1="212" y1="95" x2="230" y2="80"/><line x1="212" y1="95" x2="234" y2="95"/><line x1="212" y1="95" x2="230" y2="110"/>
+  </g>
+  <g stroke="currentColor" stroke-width="1.2" opacity="0.7">
+    <line x1="22" y1="52" x2="80" y2="82"/><line x1="18" y1="90" x2="74" y2="93"/><line x1="22" y1="130" x2="80" y2="108"/><line x1="40" y1="38" x2="86" y2="72"/>
+  </g>
+  <g fill="currentColor" font-size="11" opacity="0.7">
+    <text x="16" y="34">dendrites</text>
+    <text x="168" y="88">axon</text>
+  </g>
+  <g fill="currentColor" font-size="11">
+    <text x="100" y="140" text-anchor="middle" opacity="0.7">soma</text>
+    <text x="115" y="180" text-anchor="middle" font-size="13">biological neuron</text>
+  </g>
+  <text x="258" y="102" fill="currentColor" font-size="26" opacity="0.6">≈</text>
+  <g fill="currentColor">
+    <circle cx="302" cy="62" r="4"/><circle cx="302" cy="95" r="4"/><circle cx="302" cy="128" r="4"/>
+  </g>
+  <g stroke="currentColor" stroke-width="1" opacity="0.55">
+    <line x1="306" y1="62" x2="354" y2="88"/><line x1="306" y1="95" x2="352" y2="95"/><line x1="306" y1="128" x2="354" y2="102"/>
+  </g>
+  <g stroke="currentColor" fill="none" stroke-width="1.5">
+    <circle cx="374" cy="95" r="20"/>
+    <rect x="412" y="78" width="34" height="34" rx="5"/>
+    <line x1="394" y1="95" x2="412" y2="95"/>
+    <line x1="446" y1="95" x2="470" y2="95"/>
+  </g>
+  <g fill="currentColor" text-anchor="middle">
+    <text x="374" y="101" font-size="18">Σ</text>
+    <text x="374" y="130" font-size="11" opacity="0.8">＋ b</text>
+    <text x="429" y="100" font-size="16">f</text>
+    <text x="468" y="90" font-size="14">y</text>
+    <text x="378" y="180" font-size="13">artificial neuron</text>
+  </g>
+</svg>
+</Figure>
+
+An artificial neuron does exactly that, with three ingredients:
+
+<Figure caption="A single neuron: each input is scaled by its own weight, the results are summed, a bias is added, and the total is passed through an activation function to produce one output.">
+<svg viewBox="0 0 470 250" role="img" aria-label="Diagram of a single artificial neuron. Four inputs x1 to x4 on the left each connect via a weighted edge (w1 to w4) to a summation node. A bias b is added at the sum. The sum passes into an activation function f, which produces the output y." style="width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <g stroke="currentColor" fill="none" stroke-width="1.5">
+    <circle cx="42" cy="40" r="17"/>
+    <circle cx="42" cy="95" r="17"/>
+    <circle cx="42" cy="150" r="17"/>
+    <circle cx="42" cy="205" r="17"/>
+    <circle cx="252" cy="120" r="27"/>
+    <rect x="330" y="96" width="50" height="48" rx="6"/>
+  </g>
+  <g stroke="currentColor" stroke-width="1" opacity="0.55">
+    <line x1="59" y1="40" x2="227" y2="112"/>
+    <line x1="59" y1="95" x2="226" y2="116"/>
+    <line x1="59" y1="150" x2="226" y2="124"/>
+    <line x1="59" y1="205" x2="227" y2="129"/>
+    <line x1="279" y1="120" x2="330" y2="120"/>
+    <line x1="380" y1="120" x2="430" y2="120"/>
+  </g>
+  <g fill="currentColor" font-size="15" text-anchor="middle">
+    <text x="42" y="45">x₁</text>
+    <text x="42" y="100">x₂</text>
+    <text x="42" y="155">x₃</text>
+    <text x="42" y="210">x₄</text>
+    <text x="252" y="126" font-size="20">Σ</text>
+    <text x="355" y="126" font-size="18">f</text>
+    <text x="443" y="126">y</text>
+  </g>
+  <g fill="currentColor" font-size="12" opacity="0.8" text-anchor="middle">
+    <text x="140" y="66">w₁</text>
+    <text x="140" y="98">w₂</text>
+    <text x="140" y="130">w₃</text>
+    <text x="140" y="163">w₄</text>
+    <text x="252" y="167">＋ b</text>
+  </g>
+</svg>
+</Figure>
+
+In math, that entire picture is one short line:
+
+```
+  y = f( w₁·x₁ + w₂·x₂ + w₃·x₃ + w₄·x₄ + b )
+      └─┬─┘ └──────────────┬───────────────┘
+   activation        weighted sum + bias
+```
+
+Three ingredients: **weights** (`w`), a **bias** (`b`), and an **activation function** (`f`). Each of them exists for a specific reason, and the fastest way to understand *why* is to ask what breaks if you remove it.
+
+### Why weights? (importance knobs)
+
+A weight is a **dimmer switch on each input** — a learned number that says "how much should *this* feature matter?" A large positive weight means "this input strongly pushes the answer up." A weight near zero means "ignore this input." A negative weight means "this input pushes the answer *down*."
+
+Predicting rain: the humidity input probably deserves a big weight, the day-of-week input a tiny one. The network doesn't know that in advance — it *learns* the weights from data. Training a neural network is, almost entirely, the process of nudging billions of these dimmer switches until the outputs come out right.
+
+**Remove them** — force every weight to 1 — and every input counts equally. The neuron loses all ability to say some features matter more than others. It can no longer learn. Weights are *where the learning lives.*
+
+### Why a bias? (the offset that frees the decision)
+
+The bias is a single number added *after* the weighted sum, and it's the ingredient people find most mysterious — until you see the one-dimensional version.
+
+Strip a neuron down to one input: `y = w·x + b`. That's the equation of a **straight line**, exactly the `y = mx + c` from school. The weight `w` is the slope; the bias `b` is the intercept — where the line crosses the axis.
+
+Now remove the bias: `y = w·x`. You can only make lines that **pass through the origin (0,0)**. You can spin the line to any angle, but it's forever nailed to that one point. If the pattern in your data lives anywhere else — "predict rain when temperature is above 30" — a line through the origin simply cannot express it. The bias is what lets the neuron **slide its decision boundary anywhere**, instead of being pinned to zero.
+
+<Note>
+Analogy: the weights set the *tilt* of the decision boundary; the bias sets its *position*. Without a bias, every boundary in the whole network is forced through the origin — like trying to describe every line on a graph using only lines that touch (0,0). You lose almost everything.
+</Note>
+
+### Why an activation function? (the one that makes deep learning possible)
+
+This is the subtle one, and it's the reason the whole field is called *deep* learning. The activation `f` is a function applied to the neuron's output — historically an S-shaped squash, today usually **ReLU**, which is almost comically simple: `ReLU(z) = max(0, z)` — keep positives, zero out negatives.
+
+Why bother? Because a weighted sum plus a bias is a **linear** operation — it can only draw straight lines and flat planes. And here's the killer fact: **stacking linear operations gives you another linear operation.** If layer 2 is just a weighted sum of layer 1, which is a weighted sum of the input, the whole thing collapses algebraically into a *single* weighted sum. A hundred layers with no activation is mathematically identical to one layer. All that depth buys you *nothing*.
+
+The activation function inserts a **bend** — a non-linearity — between layers, and that bend is what stops the collapse. With bends between them, layers can *compose*: bend, then bend again, then again. Now the network can carve curved, intricate boundaries and represent genuinely complex relationships. The classic proof-by-example is **XOR** ("true when exactly one input is true") — a pattern no single straight line can separate, and which becomes trivial the moment you have two neurons and a non-linearity to combine them.
+
+> Weights and bias let a neuron draw *one* straight boundary. The activation is what lets many neurons combine into something that isn't straight at all. No activation, no depth, no deep learning.
+
+That's the entire atom: **weights** decide what matters, the **bias** frees the boundary from the origin, the **activation** bends the line so depth means something. Three ingredients, each earning its place.
+
+## Why one neuron is never enough
+
+A single neuron draws a single boundary — one line, one plane. Real problems need many. So we do the obvious thing: use lots of neurons. But *how* we arrange them splits into two independent choices, and understanding the difference between them is understanding the shape of every model.
+
+### Many neurons side by side = width (one layer)
+
+Put several neurons in a row, all looking at the *same* input, each with its own weights and bias. Each learns to detect a *different* feature of that input. Feed in an image and, side by side, one neuron might learn to spot a vertical edge, another a patch of red, another a curve. They all work in parallel on the same input, and together they produce a *new* list of numbers — one per neuron — describing the input in terms of the features they detected.
+
+That row of neurons is a **layer**, and the number of neurons in it is the layer's **width**. Width = how many different features you can detect *at the same level of abstraction*, simultaneously.
+
+### Layers behind layers = depth (a stack)
+
+Now the powerful move: take the list of numbers that first layer produced and feed it as input to *another* layer. The second layer isn't looking at raw pixels anymore — it's looking at the *features the first layer found*, and it learns to combine them into bigger patterns. The number of layers stacked this way is the network's **depth**.
+
+This is the famous hierarchy, and it's genuinely how deep vision networks organize themselves:
+
+```
+  raw pixels
+     │
+     ▼
+  Layer 1  → detects edges & simple colors        ("there's an edge here")
+     │
+     ▼
+  Layer 2  → combines edges into shapes            ("edges here form a curve")
+     │
+     ▼
+  Layer 3  → combines shapes into parts            ("curves here form an eye")
+     │
+     ▼
+  Layer 4  → combines parts into objects           ("eyes + nose + fur → cat")
+```
+
+Each layer builds on the one below, working at a higher level of abstraction. That's why we go deep: **depth is composition.** Width gives you *breadth* of features at one level; depth gives you *hierarchy* across levels. They are different axes, and a good architecture needs both.
+
+<Figure caption="A small multi-layer network. Left: the input vector (4 numbers). Middle: a hidden layer of neurons, each detecting a feature. Right: the output. Every line is a weight; every node adds a bias and an activation.">
+<svg viewBox="0 0 470 272" role="img" aria-label="A multilayer perceptron. An input layer of four nodes fully connects to a hidden layer of five nodes, which fully connects to an output layer of two nodes." style="width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;">
+  <g stroke="currentColor" stroke-width="0.8" opacity="0.28">
+    <line x1="75" y1="45" x2="215" y2="30"/><line x1="75" y1="45" x2="215" y2="80"/><line x1="75" y1="45" x2="215" y2="130"/><line x1="75" y1="45" x2="215" y2="180"/><line x1="75" y1="45" x2="215" y2="230"/>
+    <line x1="75" y1="100" x2="215" y2="30"/><line x1="75" y1="100" x2="215" y2="80"/><line x1="75" y1="100" x2="215" y2="130"/><line x1="75" y1="100" x2="215" y2="180"/><line x1="75" y1="100" x2="215" y2="230"/>
+    <line x1="75" y1="155" x2="215" y2="30"/><line x1="75" y1="155" x2="215" y2="80"/><line x1="75" y1="155" x2="215" y2="130"/><line x1="75" y1="155" x2="215" y2="180"/><line x1="75" y1="155" x2="215" y2="230"/>
+    <line x1="75" y1="210" x2="215" y2="30"/><line x1="75" y1="210" x2="215" y2="80"/><line x1="75" y1="210" x2="215" y2="130"/><line x1="75" y1="210" x2="215" y2="180"/><line x1="75" y1="210" x2="215" y2="230"/>
+    <line x1="245" y1="30" x2="385" y2="105"/><line x1="245" y1="30" x2="385" y2="155"/>
+    <line x1="245" y1="80" x2="385" y2="105"/><line x1="245" y1="80" x2="385" y2="155"/>
+    <line x1="245" y1="130" x2="385" y2="105"/><line x1="245" y1="130" x2="385" y2="155"/>
+    <line x1="245" y1="180" x2="385" y2="105"/><line x1="245" y1="180" x2="385" y2="155"/>
+    <line x1="245" y1="230" x2="385" y2="105"/><line x1="245" y1="230" x2="385" y2="155"/>
+  </g>
+  <g stroke="currentColor" fill="none" stroke-width="1.5">
+    <circle cx="60" cy="45" r="15"/><circle cx="60" cy="100" r="15"/><circle cx="60" cy="155" r="15"/><circle cx="60" cy="210" r="15"/>
+    <circle cx="230" cy="30" r="15"/><circle cx="230" cy="80" r="15"/><circle cx="230" cy="130" r="15"/><circle cx="230" cy="180" r="15"/><circle cx="230" cy="230" r="15"/>
+    <circle cx="400" cy="105" r="15"/><circle cx="400" cy="155" r="15"/>
+  </g>
+  <g fill="currentColor" font-size="12" text-anchor="middle" opacity="0.85">
+    <text x="60" y="235">input</text>
+    <text x="230" y="255">hidden layer (width 5)</text>
+    <text x="400" y="185">output</text>
+  </g>
+</svg>
+</Figure>
+
+This whole arrangement — an input, one or more hidden layers, an output — is the **Multi-Layer Perceptron (MLP)**, the original neural network and still a building block inside every transformer today.
+
+### So how many neurons and how many layers?
+
+The honest answer: **there is no formula, and anyone who gives you one is selling something.** Width and depth are the network's *capacity* — its room to learn patterns. Too little and it can't capture the problem (underfitting); too much and it memorizes noise, wastes compute, and gets harder to train (overfitting). The right size depends on how complex the true pattern is, how much data you have, and how much compute you can afford.
+
+In practice it's chosen empirically — start from sizes that worked on similar problems, then adjust. But the *rules of thumb* are worth knowing: more **depth** tends to help when the problem is compositional and hierarchical (vision, language); more **width** helps when there are many independent features to track at once. Modern large models are both very deep *and* very wide, which is precisely why they have so many parameters — which brings us to the payoff.
+
+## From atoms to a model: counting the size
+
+Here's where everything connects, and where "7 billion parameters" stops being a marketing number and becomes something you can compute yourself.
+
+First, collapse a whole layer into one clean object. A layer is just many neurons, each with a weight per input. Stack their weights and you get a **matrix**. A layer that takes `d_in` numbers in and produces `d_out` numbers out has:
+
+- a **weight matrix** of shape `d_out × d_in` — that's `d_out × d_in` individual weights, one for every (output neuron, input) pair,
+- a **bias vector** of length `d_out` — one bias per output neuron.
+
+And the entire layer's computation — every neuron at once — is a single matrix multiply plus the biases, then the activation:
+
+```
+  y = f( W · x + b )        W is [d_out × d_in],  x is [d_in],  b is [d_out]
+```
+
+So counting a model's size is now pure bookkeeping. **A "parameter" is one single learned number** — one entry in a weight matrix, or one bias. That's all it is. "7 billion parameters" means 7 billion individual numbers that training tuned. To find the total, count the weights in every layer and add:
+
+```
+  parameters in one layer  ≈  d_in × d_out   (+ d_out biases, usually negligible)
+
+  total parameters  =  sum over all layers
+```
+
+Worked example — a tiny 3-layer MLP that takes a 784-pixel image and classifies it into 10 digits:
+
+```
+  Layer 1:  784 → 256      784 × 256   =  200,704 weights
+  Layer 2:  256 → 256      256 × 256   =   65,536 weights
+  Layer 3:  256 → 10       256 ×  10   =    2,560 weights
+  ────────────────────────────────────────────────────────
+  total ≈ 268,800 parameters   (plus 522 biases)
+```
+
+That's it. You just counted a model's size by hand. Real transformers use the same arithmetic, just with a specific set of matrices per layer. As a rule of thumb, one transformer layer with hidden size `d` has roughly **`12 × d²`** weights (four matrices for attention plus a wider feed-forward block). So a model with `d = 8192` and 80 layers has about:
+
+```
+  80 layers × 12 × 8192²  ≈  64 billion weights   (+ embeddings → ~70B)
+```
+
+There's your "70B model," derived from nothing but "a parameter is one number in a matrix, and I can count matrices."
+
+**And the size on disk or in memory** follows immediately, because each parameter is just a number stored in some precision. In FP16, one number takes 2 bytes:
+
+```
+  70,000,000,000 params × 2 bytes  =  140 GB
+```
+
+That 140 GB is why a 70B model doesn't fit on a single 80 GB GPU, why quantization (storing each number in 1 byte instead of 2) is such a big deal, and why "how many GPUs do I need?" has a concrete answer. It all traces back to *one number per parameter.*
+
+## The cost of running it: FLOPs
+
+One last piece, and it's the ground truth for every performance conversation you'll ever have. We can count the *math* a model does just as precisely as we counted its size.
+
+Look again at what one weight does inside `W · x`: it gets **multiplied** by its input, and that product gets **added** into a running sum. One multiply, one add — two arithmetic operations. Engineers call a floating-point operation a **FLOP**, so:
+
+> Every parameter costs **2 FLOPs** each time one input passes through the network — one multiply and one add.
+
+For one input (in language models, one "token") flowing through a model with `N` parameters, the total work is therefore about:
+
+```
+  FLOPs per token  ≈  2 × N
+```
+
+For our 70B model: `2 × 70,000,000,000 = 140 billion FLOPs` to process a single token. Not "a lot" — *exactly* 140 billion, a number you derived from first principles.
+
+This single formula is the seed of an enormous amount of systems knowledge. It's why processing a long prompt (many tokens at once, reusing the same weights) behaves completely differently from generating one token at a time (dragging all 140 GB of weights out of memory to do a comparatively tiny 140 GFLOPs of math). That contrast — compute-bound versus memory-bound — is the beating heart of why inference systems look the way they do. But that's the next deep dive. For now, sit with what you can already do:
+
+## What you can now do
+
+Start to finish, with no hand-waving, you can now explain:
+
+- **Input** — a network only ever sees a vector of numbers, and *every* input type (number, category, word, image, audio, paragraph) is a translation into that vector. The encoding is where meaning gets packed in.
+- **The neuron** — `y = f(w·x + b)`: weights are learned importance knobs, the bias frees the decision boundary from the origin, and the activation's bend is what makes depth meaningful.
+- **Width vs depth** — many neurons side by side detect many features at one level; stacked layers compose features into a hierarchy. Both axes, for different reasons.
+- **Model size** — a parameter is one number in a matrix; count the matrices and you have the parameter count; multiply by bytes-per-number and you have the memory.
+- **Model cost** — two FLOPs per parameter per token; `2N` for the whole forward pass.
+
+That is the atom, the molecule, the organism, its size, and its running cost — the day-zero ground truth. Every advanced topic — attention, transformers, KV caches, quantization, distributed training — is built on exactly these pieces. When they show up, they won't be magic. They'll be assembly.
+
+*Next: why generating text one token at a time makes a GPU spend 99% of its time waiting on memory instead of computing — the compute-bound vs memory-bound story that shapes every serving system.*
