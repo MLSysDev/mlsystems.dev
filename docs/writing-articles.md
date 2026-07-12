@@ -2,6 +2,8 @@
 
 Posts on **mlsystems.dev** live in `src/content/posts/`. Each post is a folder containing an `index.mdx` plus any images, components, or data that belong with it.
 
+> **Prefer not to write MDX by hand?** Visit [/write](https://mlsystems.dev/write) — a visual editor that produces a ready-to-publish post folder you can download and drop straight into `src/content/posts/`. No Markdown or setup required. The rest of this guide describes the folder that portal generates, for authors who want to write it directly.
+
 > Looking for the contribution _process_ (forking, branching, PR review)? See [CONTRIBUTING.md](../CONTRIBUTING.md). Adding yourself as an author? See [becoming-an-author.md](./becoming-an-author.md).
 
 ---
@@ -163,7 +165,15 @@ Every image needs **alt text** — the build warns if it's missing.
 
 ### Math
 
-LaTeX inside `$...$` (inline) or `$$...$$` (block). KaTeX rendering can be enabled — open an issue if you need it.
+KaTeX rendering is enabled. Write LaTeX inside `$...$` for inline math or `$$...$$` on its own lines for display equations:
+
+```mdx
+The attention scale factor is $1/\sqrt{d_k}$.
+
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
+```
 
 ---
 
@@ -295,17 +305,20 @@ Color is not part of Markdown, but because this is MDX you can drop in a span wh
 | <span style="color: var(--accent)">Warning</span> | ... |
 ```
 
-**Table designs.** Wrap a table in `<Table>` to change its look. Omit `variant` for the site default.
+**Table designs.** Wrap a table in `<Table>` to change its look. There are two independent controls: the **border style** (`variant`) and **zebra shading** (`zebra`), which can be combined.
+
+`variant` — the border style (pick one; omit for the default):
 
 | variant          | look                                       |
 | ---------------- | ------------------------------------------ |
 | `rule` (default) | header underline + hairline row separators |
-| `zebra`          | shaded alternating rows                    |
 | `lined`          | full grid, every cell bordered             |
 | `plain`          | header underline only, no row lines        |
 
+`zebra` — a boolean that shades alternating rows. It stacks on top of any border style, so `<Table variant="lined" zebra>` gives you a full grid _and_ shaded rows.
+
 ```mdx
-<Table variant="zebra">
+<Table variant="lined" zebra>
 
 | Model | Params         | VRAM (FP16) |
 | ----- | -------------- | ----------- |

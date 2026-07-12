@@ -10,6 +10,7 @@ const cssVar = (name: string, value?: string | number): CSSProperties | undefine
 export const mdxComponents = {
   h2: (props: ComponentProps<'h2'>) => <h2 {...props} />,
   h3: (props: ComponentProps<'h3'>) => <h3 {...props} />,
+  h4: (props: ComponentProps<'h4'>) => <h4 {...props} />,
   p: (props: ComponentProps<'p'>) => <p {...props} />,
   a: (props: ComponentProps<'a'>) => (
     <a
@@ -38,26 +39,28 @@ export const mdxComponents = {
     width,
     children,
   }: {
-    caption: string;
+    caption?: string;
     width?: string | number;
     children: ReactNode;
   }) => (
     <div className="inline-figure" style={cssVar('--fig-w', width)}>
       <div>{children}</div>
-      <div className="inline-figure-caption">
-        <span
-          style={{
-            fontStyle: 'normal',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: 'var(--ink-3)',
-            marginRight: 8,
-          }}
-        >
-          FIG.
-        </span>
-        {caption}
-      </div>
+      {caption && (
+        <div className="inline-figure-caption">
+          <span
+            style={{
+              fontStyle: 'normal',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              color: 'var(--ink-3)',
+              marginRight: 8,
+            }}
+          >
+            FIG.
+          </span>
+          {caption}
+        </div>
+      )}
     </div>
   ),
   Gallery: ({ children, min }: { children: ReactNode; min?: string | number }) => (
@@ -65,8 +68,20 @@ export const mdxComponents = {
       {children}
     </div>
   ),
-  Table: ({ variant, children }: { variant?: string; children: ReactNode }) => (
-    <div className={`table-variant table--${variant ?? TABLE_DEFAULT_VARIANT}`}>{children}</div>
+  Table: ({
+    variant,
+    zebra,
+    children,
+  }: {
+    variant?: string;
+    zebra?: boolean;
+    children: ReactNode;
+  }) => (
+    <div
+      className={`table-variant table--${variant ?? TABLE_DEFAULT_VARIANT}${zebra ? ' table--zebra' : ''}`}
+    >
+      {children}
+    </div>
   ),
   Video: ({ id, caption, title }: { id: string; caption?: string; title?: string }) => (
     <figure className="video-embed">

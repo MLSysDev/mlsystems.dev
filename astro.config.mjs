@@ -43,7 +43,7 @@ try {
 }
 
 /** @type {string[]} */
-const SKIP_PATTERNS = [];
+const SKIP_PATTERNS = ['/write'];
 
 /**
  * @param {string} path
@@ -71,6 +71,9 @@ function changefreqFor(path) {
 export default defineConfig({
   site: 'https://mlsystems.dev',
   trailingSlash: 'ignore',
+  markdown: {
+    shikiConfig: { theme: 'github-dark' },
+  },
   integrations: [
     react(),
     mdx({
@@ -161,11 +164,23 @@ export default defineConfig({
   },
 
   vite: {
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+    },
     ssr: {
       external: ['@resvg/resvg-js', 'satori'],
     },
     optimizeDeps: {
       exclude: ['@resvg/resvg-js', 'satori'],
+      include: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        '@blocknote/core',
+        '@blocknote/react',
+        '@blocknote/mantine',
+        '@blocknote/code-block',
+      ],
     },
     build: {
       rollupOptions: {

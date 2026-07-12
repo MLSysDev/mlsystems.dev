@@ -16,7 +16,7 @@ const STEPS = [
   {
     n: '03',
     title: 'Draft',
-    body: 'Write in markdown, in your own voice. Add code, figures, equations, or links if they help.',
+    body: 'Write it your way. Use our in-browser editor at /write — no markdown needed — or write MDX directly if you prefer. Either way, add code, figures, equations, or links if they help.',
   },
   {
     n: '04',
@@ -79,13 +79,16 @@ const STEPS = [
         >
           <div></div>
           <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <a href="/write" class="btn btn-primary">
+              Draft in your browser <span class="btn-arrow">→</span>
+            </a>
             <a
               href="https://github.com/orgs/MLSysDev/discussions/categories/blog-ideas"
               target="_blank"
               rel="noreferrer"
-              class="btn btn-primary"
+              class="btn"
             >
-              Pitch on GitHub Discussions <span class="btn-arrow">→</span>
+              Pitch on GitHub Discussions
             </a>
             <a href={`mailto:${SITE.pitchEmail}`} class="btn"> Email an idea </a>
             <a
@@ -101,7 +104,20 @@ const STEPS = [
       </div>
 
       <div>
-        <div class="side-panel">
+        <div class="side-panel" style="border-color: var(--accent);">
+          <h3 style="font-size: 20px; margin-bottom: 12px;">Two ways to write</h3>
+          <p style="font-size: 14px; color: var(--ink-2); line-height: 1.6; margin: 0 0 12px;">
+            New to this? Use the <a href="/write" style="color: var(--accent);">in-browser editor</a
+            > — add headings, images, tables, video, and math visually, then download a ready-to-publish
+            folder. No markdown, no setup.
+          </p>
+          <p style="font-size: 14px; color: var(--ink-2); line-height: 1.6; margin: 0;">
+            Comfortable with MDX? Write it directly. Either way, send it to us as a pull request or
+            by email and we'll take it from there.
+          </p>
+        </div>
+
+        <div class="side-panel" style="margin-top: 16px;">
           <h3 style="font-size: 22px; margin-bottom: 16px;">What we publish</h3>
           <ul
             style="padding-left: 18px; font-size: 14px; color: var(--ink-2); line-height: 1.7; margin: 0;"

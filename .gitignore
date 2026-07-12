@@ -40,3 +40,6 @@ Thumbs.db
 
 # Roopik IDE metadata
 .roopik/
+
+# local AI design/planning docs — never committed
+docs/superpowers/
