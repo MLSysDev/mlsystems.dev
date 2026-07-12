@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import IconLinkCard from '@/components/IconLinkCard.astro';
 import { SITE, SOCIALS } from '@/lib/site';
 
 const channels = [
@@ -56,23 +57,7 @@ const channels = [
     <div class="contact-grid">
       {
         channels.map((c) => (
-          <a
-            href={c.href}
-            class="contact-card"
-            target={c.href?.startsWith('http') ? '_blank' : undefined}
-            rel={c.href?.startsWith('http') ? 'noreferrer' : undefined}
-          >
-            <span class="contact-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22">
-                <path d={c.icon} />
-              </svg>
-            </span>
-            <span class="contact-label">{c.label}</span>
-            <span class="contact-action">{c.action}</span>
-            <span class="contact-arrow" aria-hidden="true">
-              →
-            </span>
-          </a>
+          <IconLinkCard href={c.href} icon={c.icon} label={c.label} action={c.action} />
         ))
       }
     </div>
@@ -109,112 +94,6 @@ const channels = [
     gap: 14px;
   }
 
-  .contact-card {
-    position: relative;
-    display: grid;
-    grid-template-columns: 56px 1fr 28px;
-    grid-template-areas:
-      'icon  label   arrow'
-      'icon  action  arrow';
-    column-gap: 16px;
-    row-gap: 2px;
-    align-items: center;
-    padding: 22px 22px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-lg);
-    background: var(--paper-2);
-    color: inherit;
-    text-decoration: none;
-    overflow: hidden;
-    transition:
-      transform 0.18s ease,
-      border-color 0.18s ease,
-      box-shadow 0.18s ease,
-      background 0.18s ease;
-  }
-  .contact-card::before {
-    content: '';
-    position: absolute;
-    inset: 0 auto 0 0;
-    width: 3px;
-    background: var(--accent);
-    transform: scaleY(0);
-    transform-origin: top;
-    transition: transform 0.22s ease;
-  }
-  .contact-card:hover {
-    transform: translateY(-2px);
-    border-color: var(--accent);
-    background: var(--paper);
-    box-shadow: 0 8px 24px -14px color-mix(in srgb, var(--accent) 40%, transparent);
-  }
-  .contact-card:hover::before {
-    transform: scaleY(1);
-  }
-  .contact-card:hover .contact-action {
-    color: var(--accent);
-  }
-  .contact-card:hover .contact-arrow {
-    color: var(--accent);
-    transform: translateX(4px);
-  }
-  .contact-card:hover .contact-icon {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-
-  .contact-icon {
-    grid-area: icon;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    border-radius: 10px;
-    background: var(--paper);
-    border: 1px solid var(--line);
-    color: var(--ink-2);
-    transition:
-      color 0.15s ease,
-      border-color 0.15s ease;
-  }
-  .contact-icon svg {
-    display: block;
-    fill: currentColor;
-  }
-
-  .contact-label {
-    grid-area: label;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-3);
-    align-self: end;
-  }
-  .contact-action {
-    grid-area: action;
-    font-family: var(--font-display);
-    font-size: 20px;
-    color: var(--ink);
-    line-height: 1.15;
-    transition: color 0.15s ease;
-    word-break: break-word;
-    align-self: start;
-  }
-  .contact-arrow {
-    grid-area: arrow;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    font-family: var(--font-mono);
-    font-size: 18px;
-    color: var(--ink-3);
-    transition:
-      transform 0.18s ease,
-      color 0.15s ease;
-  }
-
   @media (max-width: 1000px) {
     .contact-grid {
       grid-template-columns: repeat(2, 1fr);
@@ -224,9 +103,6 @@ const channels = [
     .contact-grid {
       grid-template-columns: 1fr;
       gap: 10px;
-    }
-    .contact-card {
-      padding: 18px 18px;
     }
   }
 </style>

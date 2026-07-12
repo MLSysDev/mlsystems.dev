@@ -1,0 +1,44 @@
+---
+// A numbered process step (see the Contribute page).
+interface Props {
+  n: string;
+  title: string;
+  body: string;
+}
+const { n, title, body } = Astro.props;
+---
+
+<div class="process-step">
+  <div class="process-step-num">{n}</div>
+  <div>
+    <h3 class="process-step-title">{title}</h3>
+    <p class="process-step-body">{body}</p>
+  </div>
+</div>
+
+<style>
+  .process-step {
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 24px;
+    padding: 24px 0;
+    border-top: 1px solid var(--line);
+  }
+  .process-step-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .process-step-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    margin: 0 0 8px;
+    font-weight: 400;
+  }
+  .process-step-body {
+    font-size: 15px;
+    color: var(--ink-2);
+    margin: 0;
+    line-height: 1.6;
+  }
+</style>
