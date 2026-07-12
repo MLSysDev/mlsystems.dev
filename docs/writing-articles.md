@@ -163,7 +163,15 @@ Every image needs **alt text** — the build warns if it's missing.
 
 ### Math
 
-LaTeX inside `$...$` (inline) or `$$...$$` (block). KaTeX rendering can be enabled — open an issue if you need it.
+KaTeX rendering is enabled. Write LaTeX inside `$...$` for inline math or `$$...$$` on its own lines for display equations:
+
+```mdx
+The attention scale factor is $1/\sqrt{d_k}$.
+
+$$
+\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V
+$$
+```
 
 ---
 

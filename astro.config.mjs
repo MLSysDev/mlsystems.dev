@@ -43,7 +43,7 @@ try {
 }
 
 /** @type {string[]} */
-const SKIP_PATTERNS = [];
+const SKIP_PATTERNS = ['/write'];
 
 /**
  * @param {string} path
