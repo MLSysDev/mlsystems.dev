@@ -38,26 +38,28 @@ export const mdxComponents = {
     width,
     children,
   }: {
-    caption: string;
+    caption?: string;
     width?: string | number;
     children: ReactNode;
   }) => (
     <div className="inline-figure" style={cssVar('--fig-w', width)}>
       <div>{children}</div>
-      <div className="inline-figure-caption">
-        <span
-          style={{
-            fontStyle: 'normal',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 11,
-            color: 'var(--ink-3)',
-            marginRight: 8,
-          }}
-        >
-          FIG.
-        </span>
-        {caption}
-      </div>
+      {caption && (
+        <div className="inline-figure-caption">
+          <span
+            style={{
+              fontStyle: 'normal',
+              fontFamily: 'var(--font-mono)',
+              fontSize: 11,
+              color: 'var(--ink-3)',
+              marginRight: 8,
+            }}
+          >
+            FIG.
+          </span>
+          {caption}
+        </div>
+      )}
     </div>
   ),
   Gallery: ({ children, min }: { children: ReactNode; min?: string | number }) => (

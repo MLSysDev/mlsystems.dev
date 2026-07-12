@@ -1,26 +1,43 @@
+import { useState } from 'react';
 import { createReactBlockSpec } from '@blocknote/react';
 import { addAsset, getAssetUrl, removeAsset } from '../../storage/assets';
+
+const SIZES: { key: string; label: string; width: number }[] = [
+  { key: 'small', label: 'Small', width: 360 },
+  { key: 'medium', label: 'Medium', width: 620 },
+  { key: 'large', label: 'Large', width: 960 },
+];
+
+function widthToKey(width: string | number): string {
+  const n = Number(width);
+  const match = SIZES.find((s) => s.width === n);
+  return match ? match.key : 'medium';
+}
 
 export const createFigureBlock = createReactBlockSpec(
   {
     type: 'figure',
     propSchema: {
       fileName: { default: '' },
+      src: { default: '' },
       alt: { default: '' },
       caption: { default: '' },
-      width: { default: '' },
+      width: { default: 620 },
     },
     content: 'none',
   },
   {
     render: ({ block, editor }) => {
+      const [url, setUrl] = useState('');
       const setProps = (patch: Partial<typeof block.props>) =>
         editor.updateBlock(block, { props: { ...block.props, ...patch } });
 
-      if (!block.props.fileName) {
+      const hasImage = block.props.fileName || block.props.src;
+
+      if (!hasImage) {
         return (
           <div className="write-block-form" contentEditable={false}>
-            <span className="write-block-label">Image</span>
+            <span className="write-block-label">Image — upload a file or paste a URL</span>
             <input
               type="file"
               accept="image/*"
@@ -29,21 +46,41 @@ export const createFigureBlock = createReactBlockSpec(
                 if (file) setProps({ fileName: addAsset(file) });
               }}
             />
+            <div className="write-block-row" style={{ marginTop: 8 }}>
+              <input
+                type="text"
+                placeholder="…or paste an image URL (https://…)"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && url.trim()) {
+                    e.preventDefault();
+                    setProps({ src: url.trim() });
+                  }
+                }}
+              />
+              <button type="button" onClick={() => url.trim() && setProps({ src: url.trim() })}>
+                Add
+              </button>
+            </div>
           </div>
         );
       }
 
+      const previewSrc = block.props.fileName ? getAssetUrl(block.props.fileName) : block.props.src;
+      const activeKey = widthToKey(block.props.width);
+
       return (
         <figure className="write-figure" contentEditable={false}>
-          <div className="write-figure-frame">
-            <img src={getAssetUrl(block.props.fileName)} alt={block.props.alt} />
+          <div className="write-figure-frame" style={{ maxWidth: `${block.props.width}px` }}>
+            <img src={previewSrc} alt={block.props.alt} />
             <button
               type="button"
               className="write-remove"
               title="Remove image"
               onClick={() => {
-                removeAsset(block.props.fileName);
-                setProps({ fileName: '' });
+                if (block.props.fileName) removeAsset(block.props.fileName);
+                setProps({ fileName: '', src: '' });
               }}
             >
               ✕
@@ -63,14 +100,18 @@ export const createFigureBlock = createReactBlockSpec(
             value={block.props.caption}
             onChange={(e) => setProps({ caption: e.target.value })}
           />
-          <label className="write-width-row">
-            Display width
-            <select value={block.props.width} onChange={(e) => setProps({ width: e.target.value })}>
-              <option value="">Default</option>
-              <option value="740">Text width</option>
-              <option value="900">Wide</option>
-            </select>
-          </label>
+          <div className="write-size-toggle">
+            {SIZES.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                className={activeKey === s.key ? 'write-chip is-active' : 'write-chip'}
+                onClick={() => setProps({ width: s.width })}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </figure>
       );
     },

@@ -114,6 +114,14 @@ function imageLine(fileName: string, alt: string, ctx: Ctx): string {
   return `<Image src={${identFor(fileName, ctx)}} ${attr('alt', alt)} />`;
 }
 
+function figureInner(block: SBlock, ctx: Ctx): string {
+  const alt = String(block.props.alt ?? '');
+  const fileName = String(block.props.fileName ?? '');
+  if (fileName) return imageLine(fileName, alt, ctx);
+  const src = String(block.props.src ?? '');
+  return `<img ${attr('src', src)} ${attr('alt', alt)} />`;
+}
+
 function indent(text: string, spaces: number): string {
   const pad = ' '.repeat(spaces);
   return text
@@ -161,13 +169,14 @@ function serializeTable(block: SBlock, ctx: Ctx): string {
 
 function serializeFigure(block: SBlock, ctx: Ctx): string {
   const fileName = String(block.props.fileName ?? '');
-  if (!fileName) return '';
-  const image = imageLine(fileName, String(block.props.alt ?? ''), ctx);
+  const src = String(block.props.src ?? '');
+  if (!fileName && !src) return '';
+  const image = figureInner(block, ctx);
   const caption = String(block.props.caption ?? '');
-  if (!caption) return image;
   const width = block.props.width;
+  const captionAttr = caption ? ` ${attr('caption', caption)}` : '';
   const widthAttr = width !== '' && width != null ? ` width={${Number(width)}}` : '';
-  return `<Figure ${attr('caption', caption)}${widthAttr}>\n  ${image}\n</Figure>`;
+  return `<Figure${captionAttr}${widthAttr}>\n  ${image}\n</Figure>`;
 }
 
 function serializeGallery(block: SBlock, ctx: Ctx): string {

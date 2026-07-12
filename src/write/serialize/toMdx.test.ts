@@ -198,10 +198,33 @@ describe('figures and galleries', () => {
     expect(assetNames).toEqual(['flash-attention.png']);
   });
 
-  it('renders bare Image when no caption', () => {
+  it('wraps in Figure without a caption attribute when caption is empty', () => {
     const out = body([block('figure', { fileName: 'a.png', alt: 'A', caption: '', width: '' })]);
-    expect(out).toContain('<Image src={a} alt="A" />');
-    expect(out).not.toContain('<Figure');
+    expect(out).toContain('<Figure>\n  <Image src={a} alt="A" />\n</Figure>');
+  });
+
+  it('emits a width when a size is set', () => {
+    const out = body([block('figure', { fileName: 'a.png', alt: 'A', caption: '', width: 620 })]);
+    expect(out).toContain('<Figure width={620}>\n  <Image src={a} alt="A" />\n</Figure>');
+  });
+
+  it('renders a URL image as a plain img with no astro import', () => {
+    const { mdx } = serializePost(
+      meta,
+      [
+        block('figure', {
+          src: 'https://example.com/x.png',
+          alt: 'Remote',
+          caption: '',
+          width: 360,
+        }),
+      ],
+      { tableVariants: {}, today },
+    );
+    expect(mdx).not.toContain("import { Image } from 'astro:assets';");
+    expect(mdx).toContain(
+      '<Figure width={360}>\n  <img src="https://example.com/x.png" alt="Remote" />\n</Figure>',
+    );
   });
 
   it('dedupes import identifiers', () => {

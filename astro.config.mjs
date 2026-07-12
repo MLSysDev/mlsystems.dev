@@ -169,7 +169,15 @@ export default defineConfig({
     },
     optimizeDeps: {
       exclude: ['@resvg/resvg-js', 'satori'],
-      include: ['react', 'react-dom', 'react/jsx-runtime'],
+      include: [
+        'react',
+        'react-dom',
+        'react/jsx-runtime',
+        '@blocknote/core',
+        '@blocknote/react',
+        '@blocknote/mantine',
+        '@blocknote/code-block',
+      ],
     },
     build: {
       rollupOptions: {

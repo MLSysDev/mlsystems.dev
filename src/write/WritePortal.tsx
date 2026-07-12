@@ -250,7 +250,7 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
 
       <style>{variantCss}</style>
       <div className="write-canvas">
-        <BlockNoteView editor={editor} slashMenu={false} onChange={autosave}>
+        <BlockNoteView editor={editor} theme="light" slashMenu={false} onChange={autosave}>
           <SuggestionMenuController
             triggerCharacter="/"
             getItems={async (query) => filterSuggestionItems(slashItems, query)}

@@ -24,7 +24,7 @@ export function validate(meta: PostMeta, blocks: SBlock[]): string[] {
     if (b.type === 'paragraph' && Array.isArray(b.content) && b.content.length > 0) {
       hasContent = true;
     }
-    if (b.type === 'figure' && b.props.fileName && !String(b.props.alt).trim()) {
+    if (b.type === 'figure' && (b.props.fileName || b.props.src) && !String(b.props.alt).trim()) {
       issues.push('An image is missing alt text.');
     }
     if (b.type === 'gallery') {
