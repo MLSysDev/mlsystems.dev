@@ -72,6 +72,14 @@ export function topicName(id: string): string {
   return TOPIC_BY_ID.get(id)?.name ?? id;
 }
 
+/** URL-safe slug for a free-text tag (e.g. "KV-cache" → "kv-cache"). */
+export function tagSlug(tag: string): string {
+  return tag
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 export function countPostsByTopic<T extends { data: { topicId: string } }>(
   posts: T[],
 ): Record<string, number> {

@@ -1,0 +1,105 @@
+---
+import { getCollection, getEntries } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate, sortPostsByDate, topicName, tagSlug } from '@/lib/data';
+import { SITE } from '@/lib/site';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const byslug = new Map<string, string>();
+  for (const p of posts) {
+    for (const tag of p.data.tags ?? []) {
+      const slug = tagSlug(tag);
+      if (slug && !byslug.has(slug)) byslug.set(slug, tag);
+    }
+  }
+  return [...byslug.entries()].map(([slug, label]) => ({
+    params: { tag: slug },
+    props: { slug, label },
+  }));
+}
+
+interface Props {
+  slug: string;
+  label: string;
+}
+const { slug, label } = Astro.props;
+
+const allRaw = (await getCollection('posts', ({ data }) => !data.draft))
+  .filter((p) => (p.data.tags ?? []).some((t) => tagSlug(t) === slug))
+  .sort(sortPostsByDate);
+const posts = await Promise.all(
+  allRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
+);
+
+const canonical = `${SITE.url}/tags/${slug}`;
+
+const collectionJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: `#${label} — ${SITE.name}`,
+  description: `Articles tagged ${label} on ${SITE.name}.`,
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+  mainEntity: {
+    '@type': 'ItemList',
+    itemListElement: posts.map((p, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      url: `${SITE.url}/blog/${p.id}`,
+      name: p.data.title,
+    })),
+  },
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Tags', item: `${SITE.url}/tags` },
+    { '@type': 'ListItem', position: 3, name: `#${label}`, item: canonical },
+  ],
+};
+---
+
+<BaseLayout
+  title={`${label}: articles, guides & case studies`}
+  description={`Every ${SITE.name} article tagged ${label} — guides, primers, and case studies on ${label}.`}
+  canonical={canonical}
+  image="/og/page/topics.png"
+  jsonLd={[collectionJsonLd, breadcrumbJsonLd]}
+>
+  <div class="container blog-shell">
+    <div class="blog-head">
+      <div>
+        <div class="eyebrow page-eyebrow">Tag</div>
+        <h1 class="page-h1">#{label}</h1>
+        <p class="page-lede" style="max-width: 680px;">
+          {posts.length}
+          {posts.length === 1 ? 'article' : 'articles'} tagged <strong>{label}</strong>.
+        </p>
+      </div>
+    </div>
+
+    <div class="blog-list">
+      {
+        posts.map((a) => (
+          <a href={`/blog/${a.id}`} class="blog-row" data-topic={a.data.topicId}>
+            <div class="blog-row-body">
+              <div class="blog-row-title-line">
+                <h2 class="blog-row-title">{a.data.title}</h2>
+                <span class="blog-row-chip">{topicName(a.data.topicId)}</span>
+              </div>
+              <p class="blog-row-summary">{a.data.summary}</p>
+            </div>
+            <div class="blog-row-meta">
+              <strong>{a.authors.map((au) => au.data.name).join(' · ')}</strong>
+              <span>{formatDate(a.data.date.toISOString())}</span>
+            </div>
+          </a>
+        ))
+      }
+    </div>
+  </div>
+</BaseLayout>

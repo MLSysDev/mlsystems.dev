@@ -56,13 +56,44 @@ const socials = SOCIAL_FIELDS.flatMap((f) => {
   if (!value || typeof value !== 'string') return [];
   return [{ label: f.label, href: f.prefix ? `${f.prefix}${value}` : value }];
 });
+const sameAs = socials.map((s) => s.href).filter((h) => h.startsWith('http'));
+
+const description =
+  author.data.bio ??
+  `Articles by ${author.data.name} on machine learning systems${
+    topTopics.length ? ` — ${topTopics.join(', ')}` : ''
+  }.`;
+
+const profileJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  mainEntity: {
+    '@type': 'Person',
+    name: author.data.name,
+    url: canonical,
+    ...(author.data.role ? { jobTitle: author.data.role } : {}),
+    ...(author.data.bio ? { description: author.data.bio } : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+  },
+};
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Contributors', item: `${SITE.url}/authors` },
+    { '@type': 'ListItem', position: 3, name: author.data.name, item: canonical },
+  ],
+};
 ---
 
 <BaseLayout
   title={`${author.data.name} — author profile`}
-  description={author.data.bio ?? `Articles by ${author.data.name} on ${SITE.name}.`}
+  description={description}
   canonical={canonical}
   image={`/og/author/${author.id}.png`}
+  jsonLd={[profileJsonLd, breadcrumbJsonLd]}
 >
   <div
     class="container author-page"

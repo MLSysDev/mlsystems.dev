@@ -20,10 +20,18 @@ interface Props {
   ogType?: 'website' | 'article';
   /** ISO 8601 date — used for article OG metadata */
   publishedTime?: string;
+  /** ISO 8601 date — article last-modified time */
+  modifiedTime?: string;
+  /** Article section (topic) — OG article metadata */
+  section?: string;
+  /** Article tags — emitted as article:tag OG metadata */
+  tags?: string[];
+  /** Alt text for the OG image — defaults to the page title */
+  imageAlt?: string;
   /** Set true to keep the page out of search engine indexes */
   noindex?: boolean;
-  /** JSON-LD structured data — pass an object that gets stringified */
-  jsonLd?: Record<string, unknown>;
+  /** JSON-LD structured data — one object or an array of objects, stringified as-is */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
 }
 
 const {
@@ -33,6 +41,10 @@ const {
   image = '/og-default.png',
   ogType = 'website',
   publishedTime,
+  modifiedTime,
+  section,
+  tags,
+  imageAlt,
   noindex = false,
   jsonLd,
 } = Astro.props;
@@ -132,15 +144,20 @@ const siteJsonLd = [
   <meta property="og:image" content={imageUrl} />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={imageAlt ?? fullTitle} />
   <meta property="og:site_name" content={SITE.name} />
   <meta property="og:locale" content="en_US" />
   {publishedTime && <meta property="article:published_time" content={publishedTime} />}
+  {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+  {section && <meta property="article:section" content={section} />}
+  {tags?.map((tag) => <meta property="article:tag" content={tag} />)}
 
   <!-- Twitter -->
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={fullTitle} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={imageUrl} />
+  <meta name="twitter:site" content={SITE.twitter} />
   <meta name="twitter:creator" content={SITE.twitter} />
 
   <!-- Fonts — preloaded non-blocking. Stylesheet swaps in after first paint. -->

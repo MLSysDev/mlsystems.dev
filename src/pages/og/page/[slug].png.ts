@@ -9,6 +9,9 @@ const SECTIONS: Record<string, string> = {
   playground: 'Playground tools',
   contribute: 'Write with us',
   contact: 'Contact us',
+  authors: 'Contributors',
+  about: 'About ML Systems',
+  search: 'Search',
 };
 
 export async function getStaticPaths() {

@@ -23,11 +23,13 @@ try {
       const fm = content.match(/^---\n([\s\S]*?)\n---/);
       if (!fm) continue;
       const dateMatch = fm[1].match(/^date:\s*["']?(\d{4}-\d{2}-\d{2})["']?\s*$/m);
+      const updatedMatch = fm[1].match(/^updated:\s*["']?(\d{4}-\d{2}-\d{2})["']?\s*$/m);
       const draftMatch = fm[1].match(/^draft:\s*(true|false)\s*$/m);
       if (draftMatch && draftMatch[1] === 'true') continue;
-      if (dateMatch) {
+      const stamp = updatedMatch?.[1] ?? dateMatch?.[1];
+      if (stamp) {
         const slug = file.replace(/\.(mdx?|md)$/, '');
-        postLastmod.set(`/blog/${slug}`, new Date(dateMatch[1]));
+        postLastmod.set(`/blog/${slug}`, new Date(stamp));
       }
     } catch (err) {
       console.warn(
@@ -43,7 +45,7 @@ try {
 }
 
 /** @type {string[]} */
-const SKIP_PATTERNS = ['/write'];
+const SKIP_PATTERNS = ['/write', '/search'];
 
 /**
  * @param {string} path
@@ -54,6 +56,7 @@ function priorityFor(path) {
   if (path === '/blog' || path === '/topics') return 0.9;
   if (path === '/playground' || path === '/community' || path === '/contribute') return 0.8;
   if (path.startsWith('/blog/')) return 0.7;
+  if (path.startsWith('/topics/') || path.startsWith('/tags/')) return 0.6;
   if (path.startsWith('/authors/')) return 0.6;
   return 0.5;
 }
@@ -70,7 +73,7 @@ function changefreqFor(path) {
 
 export default defineConfig({
   site: 'https://mlsystems.dev',
-  trailingSlash: 'ignore',
+  trailingSlash: 'never',
   markdown: {
     shikiConfig: { theme: 'github-dark' },
   },
