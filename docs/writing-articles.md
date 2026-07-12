@@ -2,6 +2,8 @@
 
 Posts on **mlsystems.dev** live in `src/content/posts/`. Each post is a folder containing an `index.mdx` plus any images, components, or data that belong with it.
 
+> **Prefer not to write MDX by hand?** Visit [/write](https://mlsystems.dev/write) — a visual editor that produces a ready-to-publish post folder you can download and drop straight into `src/content/posts/`. No Markdown or setup required. The rest of this guide describes the folder that portal generates, for authors who want to write it directly.
+
 > Looking for the contribution _process_ (forking, branching, PR review)? See [CONTRIBUTING.md](../CONTRIBUTING.md). Adding yourself as an author? See [becoming-an-author.md](./becoming-an-author.md).
 
 ---
