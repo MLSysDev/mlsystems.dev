@@ -1332,6 +1332,56 @@ main {
   line-height: 1.4;
   color: var(--ink-2);
 }
+/* GFM task lists (from editor Check List blocks) */
+.article-body ul.contains-task-list {
+  list-style: none;
+  padding-left: 0;
+}
+.article-body li.task-list-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.article-body li.task-list-item input[type='checkbox'] {
+  margin-top: 7px;
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+/* Collapsible details (from editor Toggle List / Toggle Heading blocks) */
+.article-body details {
+  margin: 24px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper-2);
+  padding: 0 20px;
+}
+.article-body details[open] {
+  padding-bottom: 16px;
+}
+.article-body summary {
+  cursor: pointer;
+  padding: 14px 0;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  list-style: none;
+}
+.article-body summary::-webkit-details-marker {
+  display: none;
+}
+.article-body summary::before {
+  content: '▸';
+  display: inline-block;
+  margin-right: 10px;
+  color: var(--accent);
+  transition: transform 0.15s ease;
+}
+.article-body details[open] summary::before {
+  transform: rotate(90deg);
+}
+
 .article-body .inline-figure {
   margin: 32px 0;
   border: 1px solid var(--line);
