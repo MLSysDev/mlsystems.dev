@@ -101,6 +101,11 @@ const siteJsonLd = [
         if (prefs && validAccents.indexOf(prefs.accent) !== -1) {
           root.setAttribute('data-accent', prefs.accent);
         }
+        const theme = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        const meta = document.createElement('meta');
+        meta.setAttribute('name', 'theme-color');
+        meta.setAttribute('content', theme === 'dark' ? '#0e0d0b' : '#f5f1e8');
+        document.head.appendChild(meta);
       } catch {}
     })();
   </script>
@@ -117,9 +122,7 @@ const siteJsonLd = [
   <!-- Robots -->
   {noindex && <meta name="robots" content="noindex, nofollow" />}
 
-  <!-- Theme color (matches paper bg) -->
-  <meta name="theme-color" content="#f5f1e8" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0e0d0b" media="(prefers-color-scheme: dark)" />
+  <!-- Theme color is set from the resolved data-theme in the pre-paint script above. -->
 
   <!-- Open Graph -->
   <meta property="og:type" content={ogType} />

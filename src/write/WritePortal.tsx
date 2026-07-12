@@ -57,7 +57,17 @@ type Props = {
   authors: Option[];
   topics: Option[];
   repoUrl: string;
+  contactEmail: string;
 };
+
+function isEmptyDraft(meta: PostMeta, blocks: SBlock[]): boolean {
+  const metaEmpty =
+    !meta.title.trim() && !meta.summary.trim() && !meta.slug.trim() && meta.tags.length === 0;
+  const blocksEmpty = blocks.every(
+    (b) => b.type === 'paragraph' && (!Array.isArray(b.content) || b.content.length === 0),
+  );
+  return metaEmpty && blocksEmpty;
+}
 
 function emptyMeta(defaultAuthor: string): PostMeta {
   return {
@@ -73,7 +83,7 @@ function emptyMeta(defaultAuthor: string): PostMeta {
   };
 }
 
-export default function WritePortal({ authors, topics, repoUrl }: Props) {
+export default function WritePortal({ authors, topics, repoUrl, contactEmail }: Props) {
   const editor = useCreateBlockNote({ schema });
   const [meta, setMeta] = useState<PostMeta>(() => emptyMeta(authors[0]?.id ?? 'guest'));
   const [tableVariants, setTableVariants] = useState<Record<string, TableStyle>>({});
@@ -83,6 +93,7 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   const [issues, setIssues] = useState<string[]>([]);
   const [storageOff, setStorageOff] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [sentFile, setSentFile] = useState<string | null>(null);
   const [siteTheme, setSiteTheme] = useState<'light' | 'dark'>('light');
 
   const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
@@ -98,7 +109,7 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
 
   useEffect(() => {
     const draft = loadDraft();
-    if (draft) setRestore({ savedAt: draft.savedAt });
+    if (draft && !isEmptyDraft(draft.meta, draft.blocks)) setRestore({ savedAt: draft.savedAt });
   }, []);
 
   useEffect(() => {
@@ -139,8 +150,10 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
 
   const autosave = useCallback(() => {
     if (restore) return;
+    setSentFile(null);
+    if (isEmptyDraft(meta, editor.document as unknown as SBlock[])) return;
     saveDraftDebounced(getDraft, () => setStorageOff(true));
-  }, [getDraft, restore]);
+  }, [getDraft, restore, editor, meta]);
 
   useEditorSelectionChange(() => {
     try {
@@ -196,6 +209,7 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
       URL.revokeObjectURL(url);
       clearDraft();
       await clearStoredAssets().catch(() => undefined);
+      setSentFile(`${meta.slug}.zip`);
     } catch {
       setIssues(['Something went wrong while packaging your post. Please try downloading again.']);
     } finally {
@@ -317,6 +331,39 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
               <li key={issue}>{issue}</li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {sentFile && (
+        <div className="write-done">
+          <div className="write-done-head">
+            <strong>Downloaded {sentFile} ✓</strong>
+            <button type="button" className="write-ghost" onClick={() => setSentFile(null)}>
+              Dismiss
+            </button>
+          </div>
+          <p>
+            That file is your whole post — text, images, everything we need to publish it. Here’s
+            how to send it to us:
+          </p>
+          <div className="write-done-ways">
+            <a
+              className="write-download"
+              href={`mailto:${contactEmail}?subject=${encodeURIComponent(
+                `New post: ${meta.title || 'Untitled'}`,
+              )}&body=${encodeURIComponent(
+                `Hi! I wrote a post for mlsystems.dev.\n\nBefore sending, please attach the folder I just downloaded (${sentFile}) — it's in your Downloads.\n\nTitle: ${meta.title}\nSummary: ${meta.summary}\n\nThanks!`,
+              )}`}
+            >
+              Email it to us
+            </a>
+            <a className="write-done-alt" href={repoUrl} target="_blank" rel="noreferrer">
+              Or open a pull request on GitHub →
+            </a>
+          </div>
+          <p className="write-note-inline">
+            Emailing? Attach the {sentFile} file — your browser saved it to your Downloads folder.
+          </p>
         </div>
       )}
 
