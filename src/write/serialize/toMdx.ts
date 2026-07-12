@@ -52,14 +52,50 @@ export function escapeText(s: string): string {
   return s.replace(/[\\<{*_`[]/g, (c) => `\\${c}`).replace(/^([>#])/, '\\$1');
 }
 
+const TEXT_COLORS: Record<string, string> = {
+  gray: '#9b9a97',
+  brown: '#64473a',
+  red: '#e03e3e',
+  orange: '#d9730d',
+  yellow: '#cb912f',
+  green: '#448361',
+  blue: '#337ea9',
+  purple: '#9065b0',
+  pink: '#c14c8a',
+};
+
+const BG_COLORS: Record<string, string> = {
+  gray: '#ebeced',
+  brown: '#e9e5e3',
+  red: '#fbe4e4',
+  orange: '#f6e9d9',
+  yellow: '#fbf3db',
+  green: '#ddedea',
+  blue: '#ddebf1',
+  purple: '#eae4f2',
+  pink: '#f4dfeb',
+};
+
+function colorValue(name: unknown, map: Record<string, string>): string | null {
+  if (typeof name !== 'string' || !name || name === 'default') return null;
+  return map[name] ?? name;
+}
+
 function wrapStyles(text: string, styles: Record<string, boolean | string>): string {
+  let out: string;
   if (styles.code) {
-    return text.includes('`') ? `\`\` ${text} \`\`` : `\`${text}\``;
+    out = text.includes('`') ? `\`\` ${text} \`\`` : `\`${text}\``;
+  } else {
+    out = escapeText(text);
+    if (styles.bold) out = `**${out}**`;
+    if (styles.italic) out = `_${out}_`;
+    if (styles.strike) out = `~~${out}~~`;
   }
-  let out = escapeText(text);
-  if (styles.bold) out = `**${out}**`;
-  if (styles.italic) out = `_${out}_`;
-  if (styles.strike) out = `~~${out}~~`;
+  if (styles.underline) out = `<u>${out}</u>`;
+  const color = colorValue(styles.textColor, TEXT_COLORS);
+  if (color) out = `<span style="color: ${color}">${out}</span>`;
+  const bg = colorValue(styles.backgroundColor, BG_COLORS);
+  if (bg) out = `<span style="background-color: ${bg}">${out}</span>`;
   return out;
 }
 
@@ -200,13 +236,21 @@ function serializeComponent(block: SBlock, ctx: Ctx): string {
   return `<${name} client:visible />`;
 }
 
+function aligned(block: SBlock, s: string): string {
+  const a = block.props.textAlignment;
+  if (typeof a === 'string' && a !== 'left' && s) {
+    return `<div style="text-align: ${a}">\n\n${s}\n\n</div>`;
+  }
+  return s;
+}
+
 function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
   switch (block.type) {
     case 'paragraph':
-      return serializeInline(block.content);
+      return aligned(block, serializeInline(block.content));
     case 'heading': {
       const level = Math.min(Number(block.props.level ?? 1), 3);
-      return `${'#'.repeat(level + 1)} ${serializeInline(block.content)}`;
+      return aligned(block, `${'#'.repeat(level + 1)} ${serializeInline(block.content)}`);
     }
     case 'bulletListItem':
     case 'numberedListItem': {
@@ -218,7 +262,7 @@ function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
       return out;
     }
     case 'quote':
-      return `> ${serializeInline(block.content)}`;
+      return aligned(block, `> ${serializeInline(block.content)}`);
     case 'codeBlock': {
       const lang = String(block.props.language ?? '');
       return `\`\`\`${lang}\n${rawText(block.content)}\n\`\`\``;

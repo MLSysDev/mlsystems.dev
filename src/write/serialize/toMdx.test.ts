@@ -98,6 +98,32 @@ describe('serializeInline', () => {
   it('renders strikethrough', () => {
     expect(serializeInline([t('gone', { strike: true })])).toBe('~~gone~~');
   });
+
+  it('renders underline as a <u> tag', () => {
+    expect(serializeInline([t('under', { underline: true })])).toBe('<u>under</u>');
+  });
+
+  it('renders text color as a styled span, mapping named colors', () => {
+    expect(serializeInline([t('warn', { textColor: 'red' })])).toBe(
+      '<span style="color: #e03e3e">warn</span>',
+    );
+  });
+
+  it('renders highlight as a background-color span', () => {
+    expect(serializeInline([t('hl', { backgroundColor: 'yellow' })])).toBe(
+      '<span style="background-color: #fbf3db">hl</span>',
+    );
+  });
+
+  it('ignores the default color', () => {
+    expect(serializeInline([t('plain', { textColor: 'default' })])).toBe('plain');
+  });
+
+  it('layers underline and color over markdown emphasis', () => {
+    expect(serializeInline([t('x', { bold: true, underline: true, textColor: 'blue' })])).toBe(
+      '<span style="color: #337ea9"><u>**x**</u></span>',
+    );
+  });
 });
 
 describe('block serialization', () => {
@@ -145,6 +171,22 @@ describe('block serialization', () => {
 
   it('skips empty paragraphs', () => {
     expect(body([block('paragraph', {}, []), block('paragraph', {}, [t('kept')])])).toBe('kept');
+  });
+
+  it('wraps centered blocks in an aligned div', () => {
+    expect(body([block('paragraph', { textAlignment: 'center' }, [t('mid')])])).toBe(
+      '<div style="text-align: center">\n\nmid\n\n</div>',
+    );
+  });
+
+  it('centers headings too', () => {
+    expect(body([block('heading', { level: 1, textAlignment: 'center' }, [t('Title')])])).toBe(
+      '<div style="text-align: center">\n\n## Title\n\n</div>',
+    );
+  });
+
+  it('leaves left-aligned blocks unwrapped', () => {
+    expect(body([block('paragraph', { textAlignment: 'left' }, [t('normal')])])).toBe('normal');
   });
 });
 
