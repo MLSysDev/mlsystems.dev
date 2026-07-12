@@ -81,6 +81,17 @@ html {
   --sp-9: 96px;
   --sp-10: 128px;
 
+  /* Border radius scale */
+  --radius-xs: 3px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 99px;
+  --radius-circle: 50%;
+
+  /* Elevation — shared hover lift used by cards */
+  --shadow-hover: 0 8px 24px -14px color-mix(in srgb, var(--accent) 40%, transparent);
+
   /* Layout */
   --content-w: 1180px;
   --text-w: 680px;
