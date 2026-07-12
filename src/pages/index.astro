@@ -3,6 +3,7 @@ import { getCollection, getEntries } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
+import Stat from '@/components/Stat.astro';
 import { TOPICS, countPostsByTopic, formatDate, sortPostsByDate, topicName } from '@/lib/data';
 import { SITE, SOCIALS } from '@/lib/site';
 
@@ -77,33 +78,10 @@ const featuredTools = allTools
             </a>
             <a href="/contribute" class="btn">Write with us</a>
           </div>
-          <div
-            style="margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap; font-family: var(--font-mono); font-size: 12px; color: var(--ink-3);"
-          >
-            <div>
-              <div
-                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
-              >
-                {articleCount}
-              </div>
-              <div style="margin-top: 6px;">articles</div>
-            </div>
-            <div>
-              <div
-                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
-              >
-                {contributorCount}
-              </div>
-              <div style="margin-top: 6px;">contributors</div>
-            </div>
-            <div>
-              <div
-                style="font-size: 28px; font-family: var(--font-display); color: var(--ink); line-height: 1;"
-              >
-                {topicCount}
-              </div>
-              <div style="margin-top: 6px;">topics</div>
-            </div>
+          <div style="margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap;">
+            <Stat value={articleCount} label="articles" />
+            <Stat value={contributorCount} label="contributors" />
+            <Stat value={topicCount} label="topics" />
           </div>
         </div>
         <div>
