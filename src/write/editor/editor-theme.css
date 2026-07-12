@@ -258,6 +258,24 @@
   color: var(--ink-body, var(--ink-1));
 }
 
+.bn-side-menu button:has([data-test='dragHandleAdd']) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px solid var(--line-2);
+  border-radius: 50%;
+  transition:
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.bn-side-menu button:has([data-test='dragHandleAdd']):hover {
+  border-color: var(--ink-3);
+  background: var(--paper-2, var(--paper));
+}
+
 .bn-editor {
   font-family: var(--font-read, 'Source Serif 4', serif);
   font-size: clamp(18px, 1.7vw, 20px);
