@@ -242,6 +242,28 @@ Place multiple images side by side. They flow into as many columns as fit and wr
 <Gallery min={160}>...</Gallery>
 ```
 
+#### `<Video>` — an embedded video
+
+Embed a YouTube video. It loads only when the reader clicks play (keeps the page fast and private — no YouTube scripts until then):
+
+```mdx
+<Video id="dQw4w9WgXcQ" caption="Kent Beck on the origins of TDD." />
+```
+
+`id` is the YouTube video ID — the part after `v=` in the URL (`youtube.com/watch?v=dQw4w9WgXcQ` → `dQw4w9WgXcQ`). `caption` is optional.
+
+#### Separators
+
+To break a long piece into sections with a visual divider, put `---` on its own line (blank line above and below). It renders as a centered `· · ·`:
+
+```mdx
+Some paragraph.
+
+---
+
+The next part.
+```
+
 #### `<Note>` — a callout
 
 ```mdx

@@ -184,5 +184,22 @@ const jsonLd = {
         }
       });
     });
+
+    const videoButtons = document.querySelectorAll<HTMLButtonElement>('.video-embed-play');
+    videoButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-video-id');
+        const iframe = document.createElement('iframe');
+        iframe.className = 'video-embed-frame';
+        iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
+        iframe.title = 'YouTube video player';
+        iframe.setAttribute(
+          'allow',
+          'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+        );
+        iframe.allowFullscreen = true;
+        btn.replaceWith(iframe);
+      });
+    });
   </script>
 </BaseLayout>
