@@ -229,20 +229,6 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
 
   return (
     <div className="write-portal">
-      {restore && (
-        <div className="write-banner">
-          <span>You have an unsaved draft from {new Date(restore.savedAt).toLocaleString()}.</span>
-          <div>
-            <button type="button" onClick={acceptRestore}>
-              Continue draft
-            </button>
-            <button type="button" className="write-ghost" onClick={discardRestore}>
-              Start fresh
-            </button>
-          </div>
-        </div>
-      )}
-
       <MetaForm
         authors={authors}
         topics={topics}
@@ -292,6 +278,20 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
             </div>
           );
         })()}
+
+      {restore && (
+        <div className="write-banner">
+          <span>You have an unsaved draft from {new Date(restore.savedAt).toLocaleString()}.</span>
+          <div>
+            <button type="button" onClick={acceptRestore}>
+              Continue draft
+            </button>
+            <button type="button" className="write-ghost" onClick={discardRestore}>
+              Start fresh
+            </button>
+          </div>
+        </div>
+      )}
 
       <style>{variantCss}</style>
       <div className="write-canvas" onKeyDownCapture={handleSelectAll}>

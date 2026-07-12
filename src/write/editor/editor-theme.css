@@ -237,7 +237,7 @@
   position: relative;
   border: 1px solid var(--line-2);
   border-radius: 12px;
-  padding: 26px 20px;
+  padding: 18px 20px;
   margin-top: 8px;
   background: var(--paper);
   min-height: 320px;
@@ -245,11 +245,11 @@
 
 @media (min-width: 1040px) {
   .write-canvas {
-    margin-inline: -48px;
-    padding-inline: 48px;
+    margin-inline: -24px;
+    padding-inline: 24px;
   }
   .write-canvas::before {
-    left: 48px;
+    left: 24px;
   }
 }
 
