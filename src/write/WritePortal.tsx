@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { filterSuggestionItems } from '@blocknote/core';
 import {
   SuggestionMenuController,
@@ -54,11 +54,30 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   const [issues, setIssues] = useState<string[]>([]);
   const [storageOff, setStorageOff] = useState(false);
   const [busy, setBusy] = useState(false);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const variantsRef = useRef(tableVariants);
+  variantsRef.current = tableVariants;
+
+  const applyTableVariants = useCallback(() => {
+    const root = canvasRef.current;
+    if (!root) return;
+    root.querySelectorAll<HTMLElement>('[data-content-type="table"]').forEach((el) => {
+      const outer = el.closest<HTMLElement>('.bn-block-outer[data-id]');
+      if (!outer) return;
+      const variant = variantsRef.current[outer.dataset.id ?? ''] ?? 'rule';
+      if (variant === 'rule') outer.removeAttribute('data-table-variant');
+      else outer.setAttribute('data-table-variant', variant);
+    });
+  }, []);
 
   useEffect(() => {
     const draft = loadDraft();
     if (draft) setRestore({ savedAt: draft.savedAt });
   }, []);
+
+  useEffect(() => {
+    applyTableVariants();
+  }, [tableVariants, applyTableVariants]);
 
   const getDraft = useCallback(
     () => ({
@@ -71,9 +90,10 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   );
 
   const autosave = useCallback(() => {
+    applyTableVariants();
     if (restore) return;
     saveDraftDebounced(getDraft, () => setStorageOff(true));
-  }, [getDraft, restore]);
+  }, [getDraft, restore, applyTableVariants]);
 
   useEditorSelectionChange(() => {
     const block = editor.getTextCursorPosition().block;
@@ -118,6 +138,8 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
       a.download = `${meta.slug}.zip`;
       a.click();
       URL.revokeObjectURL(url);
+      clearDraft();
+      await clearStoredAssets().catch(() => undefined);
     } finally {
       setBusy(false);
     }
@@ -174,12 +196,14 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
         </div>
       )}
 
-      <BlockNoteView editor={editor} slashMenu={false} onChange={autosave}>
-        <SuggestionMenuController
-          triggerCharacter="/"
-          getItems={async (query) => filterSuggestionItems(slashItems, query)}
-        />
-      </BlockNoteView>
+      <div className="write-canvas" ref={canvasRef}>
+        <BlockNoteView editor={editor} slashMenu={false} onChange={autosave}>
+          <SuggestionMenuController
+            triggerCharacter="/"
+            getItems={async (query) => filterSuggestionItems(slashItems, query)}
+          />
+        </BlockNoteView>
+      </div>
 
       {issues.length > 0 && (
         <div className="write-issues">
