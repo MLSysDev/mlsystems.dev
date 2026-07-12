@@ -1,5 +1,6 @@
 import { defineCollection, reference, z } from 'astro:content';
 import { glob } from 'astro/loaders';
+import { TOPIC_IDS } from '@/lib/data';
 
 const authors = defineCollection({
   loader: glob({ pattern: '**/*.json', base: './src/content/authors' }),
@@ -27,9 +28,12 @@ const posts = defineCollection({
       authors: z.array(reference('authors')).min(1),
       date: z.coerce.date(),
       readMin: z.number().int().positive(),
-      topic: z.string(),
-      topicId: z.string(),
+      // Display name is derived from topicId via topicName(); kept optional for
+      // backward compat with existing frontmatter but no longer rendered.
+      topic: z.string().optional(),
+      topicId: z.enum(TOPIC_IDS),
       tags: z.array(z.string()).optional(),
+      updated: z.coerce.date().optional(),
       cover: z.union([image(), z.string().url()]).optional(),
       featured: z.boolean().optional().default(false),
       draft: z.boolean().optional().default(false),

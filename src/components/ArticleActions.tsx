@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { SITE } from '@/lib/site';
 
 export default function ArticleActions({
   title,
@@ -77,8 +78,8 @@ export default function ArticleActions({
         </button>
       </div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-3)' }}>
-        Cite as: {author.split(' ').reverse().join(', ')}. &quot;{title.split(':')[0]}.&quot;
-        mlsystems.dev, {date}.
+        Cite as: {author.split(' ').reverse().join(', ')}. &quot;{title.split(':')[0]}.&quot;{' '}
+        {SITE.domain}, {date}.
       </div>
     </div>
   );

@@ -3,7 +3,7 @@ import { getCollection, getEntries } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
-import { TOPICS, countPostsByTopic, formatDate, sortPostsByDate } from '@/lib/data';
+import { TOPICS, countPostsByTopic, formatDate, sortPostsByDate, topicName } from '@/lib/data';
 import { SITE, SOCIALS } from '@/lib/site';
 
 const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
@@ -45,8 +45,8 @@ const featuredTools = allTools
 ---
 
 <BaseLayout
-  title="ML Systems — An open archive for the engineers building modern AI"
-  description="An open community for learning, writing, and tinkering on the infrastructure behind modern AI — inference engines, training systems, ml stacks, and everything in between."
+  title="ML Systems — Machine learning systems: inference, training, LLMs & infrastructure"
+  description="Deep dives on machine learning systems — inference, training infrastructure, GPU memory, quantization, and LLM architecture. Articles, primers, and case studies."
 >
   <!-- HERO -->
   <section class="hero">
@@ -107,7 +107,7 @@ const featuredTools = allTools
           </div>
         </div>
         <div>
-          <HeroFigure client:load />
+          <HeroFigure client:visible />
         </div>
       </div>
     </div>
@@ -128,7 +128,7 @@ const featuredTools = allTools
           featuredFinal.map((p) => (
             <a class="article-card" href={`/blog/${p.id}`}>
               <div class="article-meta">
-                <span class="article-topic">{p.data.topic}</span>
+                <span class="article-topic">{topicName(p.data.topicId)}</span>
               </div>
               <h3 class="article-title">{p.data.title}</h3>
               <p class="article-summary">{p.data.summary}</p>
@@ -234,7 +234,7 @@ const featuredTools = allTools
             discussions, and feature proposals. Searchable, attributed, permanent.
           </p>
           <a
-            href="https://github.com/orgs/MLSysDev/discussions"
+            href={SITE.orgDiscussionsUrl}
             target="_blank"
             rel="noreferrer"
             class="btn"
@@ -307,7 +307,7 @@ const featuredTools = allTools
         </div>
         <div class="cta-actions">
           <a href="/contribute" class="btn btn-primary">Pitch an article →</a>
-          <a href="/contribute" class="btn">Read the style guide</a>
+          <a href="/contribute#style-guide" class="btn">Read the style guide</a>
           <a href={SITE.github} target="_blank" rel="noreferrer" class="btn">Browse on GitHub</a>
         </div>
       </div>
@@ -389,7 +389,7 @@ const featuredTools = allTools
   }
   .topic-tab.active {
     background: var(--accent);
-    color: #fff;
+    color: var(--paper);
     border-color: var(--accent);
   }
   .topic-tab-count {

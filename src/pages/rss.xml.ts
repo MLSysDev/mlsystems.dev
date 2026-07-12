@@ -2,7 +2,7 @@ import rss from '@astrojs/rss';
 import { getCollection, getEntries } from 'astro:content';
 import type { APIContext } from 'astro';
 import { SITE } from '@/lib/site';
-import { sortPostsByDate } from '@/lib/data';
+import { sortPostsByDate, topicName } from '@/lib/data';
 
 export async function GET(context: APIContext) {
   const postsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
@@ -24,7 +24,7 @@ export async function GET(context: APIContext) {
       pubDate: p.data.date,
       link: `/blog/${p.id}/`,
       author: p.authorNames,
-      categories: [p.data.topic, ...(p.data.tags ?? [])],
+      categories: [topicName(p.data.topicId), ...(p.data.tags ?? [])],
       customData: `<author>${escapeXml(p.authorNames)}</author>`,
     })),
     customData: `<language>en-us</language>`,

@@ -44,6 +44,7 @@ export const createGalleryBlock = createReactBlockSpec(
                   <button
                     type="button"
                     className="write-remove"
+                    aria-label={`Remove image ${i + 1}`}
                     title="Remove image"
                     onClick={() => {
                       removeAsset(name);
@@ -53,7 +54,7 @@ export const createGalleryBlock = createReactBlockSpec(
                       );
                     }}
                   >
-                    ✕
+                    <span aria-hidden="true">✕</span>
                   </button>
                 </div>
                 <input

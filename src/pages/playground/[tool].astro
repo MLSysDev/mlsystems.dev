@@ -23,6 +23,16 @@ const { Content } = await render(tool);
 const authors = tool.data.authors ? await getEntries(tool.data.authors) : [];
 const canonical = `${SITE.url}/playground/${tool.id}`;
 const ogImage = `/og/tool/${tool.id}.png`;
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Playground', item: `${SITE.url}/playground` },
+    { '@type': 'ListItem', position: 3, name: tool.data.name, item: canonical },
+  ],
+};
 ---
 
 <BaseLayout
@@ -30,6 +40,7 @@ const ogImage = `/og/tool/${tool.id}.png`;
   description={tool.data.summary}
   canonical={canonical}
   image={ogImage}
+  jsonLd={breadcrumbJsonLd}
 >
   <div
     class="container tool-shell"

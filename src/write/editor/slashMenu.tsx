@@ -64,6 +64,14 @@ const ICONS = {
       <path d="m10 9 5 3-5 3z" fill="currentColor" />
     </>,
   ),
+  table: svg(
+    <>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="9" y1="9" x2="9" y2="20" />
+      <line x1="15" y1="9" x2="15" y2="20" />
+    </>,
+  ),
   note: svg(<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />),
   divider: svg(
     <>
@@ -118,6 +126,7 @@ export function getSlashItems(editor: WriteEditor) {
       subtext: 'A 3×3 table — the first row is the header',
       aliases: ['table', 'grid', 'rows', 'columns'],
       group: 'Basic blocks',
+      icon: ICONS.table,
       onItemClick: () =>
         insertOrUpdateBlockForSlashMenu(editor, { type: 'table', content: EMPTY_3X3 }),
     },

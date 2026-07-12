@@ -5,7 +5,12 @@ import { TOPICS, formatDate, formatMonth, sortPostsByDate } from '@/lib/data';
 import { SITE } from '@/lib/site';
 
 export async function getStaticPaths() {
-  return TOPICS.map((t) => ({ params: { id: t.id }, props: { topic: t } }));
+  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const active = new Set(posts.map((p) => p.data.topicId));
+  return TOPICS.filter((t) => active.has(t.id)).map((t) => ({
+    params: { id: t.id },
+    props: { topic: t },
+  }));
 }
 
 interface Props {
@@ -28,9 +33,9 @@ posts.forEach((a) => {
   grouped[m].push(a);
 });
 
-const canonical = `${SITE.url}/topics/${topic.id}/`;
+const canonical = `${SITE.url}/topics/${topic.id}`;
 
-const jsonLd = {
+const collectionJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'CollectionPage',
   name: `${topic.name} — ${SITE.name}`,
@@ -42,18 +47,29 @@ const jsonLd = {
     itemListElement: posts.map((p, i) => ({
       '@type': 'ListItem',
       position: i + 1,
-      url: `${SITE.url}/blog/${p.id}/`,
+      url: `${SITE.url}/blog/${p.id}`,
       name: p.data.title,
     })),
   },
 };
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Topics', item: `${SITE.url}/topics` },
+    { '@type': 'ListItem', position: 3, name: topic.name, item: canonical },
+  ],
+};
 ---
 
 <BaseLayout
-  title={`${topic.name} — articles on ${topic.name.toLowerCase()}`}
-  description={`${topic.desc} — articles, primers, and case studies on ${topic.name.toLowerCase()} from the ML Systems community.`}
+  title={`${topic.name}: guides, primers & case studies`}
+  description={`Guides, primers, and case studies on ${topic.name.toLowerCase()} — ${topic.desc}`}
+  canonical={canonical}
   image="/og/page/topics.png"
-  jsonLd={jsonLd}
+  jsonLd={[collectionJsonLd, breadcrumbJsonLd]}
 >
   <div class="container blog-shell">
     <div class="blog-head">

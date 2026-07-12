@@ -38,6 +38,13 @@
   outline: none;
 }
 
+.write-title:focus-visible,
+.write-summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 .write-meta-row {
   display: flex;
   flex-wrap: wrap;
@@ -216,16 +223,67 @@
 }
 
 .write-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: var(--accent);
   color: var(--paper);
-  border-color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
   font-size: 13px;
   padding: 10px 20px;
+  cursor: pointer;
+  text-decoration: none;
 }
 
 .write-download:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.write-done {
+  margin-top: 24px;
+  padding: 18px 20px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.write-done-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.write-done-head strong {
+  font-size: 15px;
+}
+
+.write-done p {
+  margin: 6px 0;
+  color: var(--ink-2);
+}
+
+.write-done-ways {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin: 12px 0 4px;
+}
+
+.write-done-alt {
+  color: var(--accent);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.write-done-alt:hover {
+  text-decoration: underline;
 }
 
 .write-note-inline {

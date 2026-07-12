@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/lib/site';
 
 const authors = await getCollection('authors');
 const posts = await getCollection('posts', ({ data }) => !data.draft);
@@ -32,8 +33,8 @@ const contributors = authors
 
 <BaseLayout
   title="Contributors"
-  description="Engineers and researchers writing on ML Systems."
-  image="/og-default.png"
+  description="Engineers, researchers, and students writing on machine learning systems — the people behind the articles, primers, and tools on ML Systems."
+  image="/og/page/authors.png"
 >
   <div class="container">
     <div class="page-head">
@@ -42,9 +43,7 @@ const contributors = authors
       <p class="page-lede">
         {contributors.length} writers from labs, startups, and research groups working on the hard parts
         of ML systems. Every article is attributed — and most of them are open to questions on{' '}
-        <a href="https://github.com/orgs/MLSysDev/discussions" target="_blank" rel="noreferrer"
-          >Discussions</a
-        >.
+        <a href={SITE.orgDiscussionsUrl} target="_blank" rel="noreferrer">Discussions</a>.
       </p>
     </div>
 

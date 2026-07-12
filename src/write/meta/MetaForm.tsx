@@ -31,6 +31,7 @@ export function MetaForm({ authors, topics, meta, onChange }: Props) {
         type="text"
         className="write-title"
         placeholder="Title"
+        aria-label="Post title"
         value={meta.title}
         onChange={(e) =>
           set({ title: e.target.value, ...(slugLocked ? {} : { slug: slugify(e.target.value) }) })
@@ -40,6 +41,7 @@ export function MetaForm({ authors, topics, meta, onChange }: Props) {
         className="write-summary"
         rows={2}
         placeholder="A one-sentence summary — shows under the title and on social cards"
+        aria-label="Post summary"
         value={meta.summary}
         onChange={(e) => set({ summary: e.target.value })}
       />
