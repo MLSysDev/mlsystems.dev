@@ -3,7 +3,10 @@ import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { AllSelection, TextSelection } from 'prosemirror-state';
 import { filterSuggestionItems } from '@blocknote/core';
 import {
+  FormattingToolbar,
+  FormattingToolbarController,
   SuggestionMenuController,
+  blockTypeSelectItems,
   useCreateBlockNote,
   useEditorSelectionChange,
 } from '@blocknote/react';
@@ -220,6 +223,17 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
 
   const slashItems = useMemo(() => getSlashItems(editor), [editor]);
 
+  // Drop H4–H6 from the block-type dropdown — the serializer only emits h2–h4
+  // (editor H1–H3), so deeper levels would silently collapse on the published site.
+  const blockTypeItems = useMemo(
+    () =>
+      blockTypeSelectItems(editor.dictionary).filter(
+        (item) =>
+          !(item.type === 'heading' && !item.props?.isToggleable && Number(item.props?.level) > 3),
+      ),
+    [editor],
+  );
+
   const handleSelectAll = (e: ReactKeyboardEvent) => {
     if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'a' || e.shiftKey || e.altKey) return;
     const view = editor.prosemirrorView;
@@ -315,8 +329,12 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           theme={siteTheme}
           editable={!restore}
           slashMenu={false}
+          formattingToolbar={false}
           onChange={autosave}
         >
+          <FormattingToolbarController
+            formattingToolbar={() => <FormattingToolbar blockTypeSelectItems={blockTypeItems} />}
+          />
           <SuggestionMenuController
             triggerCharacter="/"
             getItems={async (query) => filterSuggestionItems(slashItems, query)}

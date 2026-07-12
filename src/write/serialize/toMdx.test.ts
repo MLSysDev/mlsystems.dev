@@ -214,6 +214,33 @@ describe('block serialization', () => {
   it('leaves left-aligned blocks unwrapped', () => {
     expect(body([block('paragraph', { textAlignment: 'left' }, [t('normal')])])).toBe('normal');
   });
+
+  it('renders check list items as GFM task lists', () => {
+    const out = body([
+      block('checkListItem', { checked: false }, [t('todo')]),
+      block('checkListItem', { checked: true }, [t('done')]),
+    ]);
+    expect(out).toBe('- [ ] todo\n- [x] done');
+  });
+
+  it('renders toggle list items as collapsible details', () => {
+    const out = body([
+      block('toggleListItem', {}, [t('Summary')], [block('paragraph', {}, [t('hidden body')])]),
+    ]);
+    expect(out).toBe('<details>\n<summary>Summary</summary>\n\nhidden body\n\n</details>');
+  });
+
+  it('renders toggle headings as collapsible details', () => {
+    const out = body([
+      block(
+        'heading',
+        { level: 2, isToggleable: true },
+        [t('More')],
+        [block('paragraph', {}, [t('inside')])],
+      ),
+    ]);
+    expect(out).toBe('<details>\n<summary>More</summary>\n\ninside\n\n</details>');
+  });
 });
 
 describe('video blocks', () => {

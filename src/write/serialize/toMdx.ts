@@ -249,23 +249,39 @@ function aligned(block: SBlock, s: string): string {
   return s;
 }
 
+function detailsBlock(block: SBlock, ctx: Ctx): string {
+  const summary = serializeInline(block.content) || 'Details';
+  const body = block.children?.length ? serializeBlocks(block.children, ctx) : '';
+  const inner = body ? `\n\n${body}\n\n` : '\n';
+  return `<details>\n<summary>${summary}</summary>${inner}</details>`;
+}
+
 function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
   switch (block.type) {
     case 'paragraph':
       return aligned(block, serializeInline(block.content));
     case 'heading': {
+      if (block.props.isToggleable) return detailsBlock(block, ctx);
       const level = Math.min(Number(block.props.level ?? 1), 3);
       return aligned(block, `${'#'.repeat(level + 1)} ${serializeInline(block.content)}`);
     }
     case 'bulletListItem':
-    case 'numberedListItem': {
-      const marker = block.type === 'bulletListItem' ? '- ' : `${listNumber}. `;
+    case 'numberedListItem':
+    case 'checkListItem': {
+      const marker =
+        block.type === 'numberedListItem'
+          ? `${listNumber}. `
+          : block.type === 'checkListItem'
+            ? `- [${block.props.checked ? 'x' : ' '}] `
+            : '- ';
       let out = marker + serializeInline(block.content);
       if (block.children?.length) {
         out += `\n${indent(serializeBlocks(block.children, ctx), marker.length)}`;
       }
       return out;
     }
+    case 'toggleListItem':
+      return detailsBlock(block, ctx);
     case 'quote':
       return aligned(block, `> ${serializeInline(block.content)}`);
     case 'codeBlock': {
@@ -302,7 +318,7 @@ function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
 }
 
 function isListItem(type?: string): boolean {
-  return type === 'bulletListItem' || type === 'numberedListItem';
+  return type === 'bulletListItem' || type === 'numberedListItem' || type === 'checkListItem';
 }
 
 function serializeBlocks(blocks: SBlock[], ctx: Ctx): string {

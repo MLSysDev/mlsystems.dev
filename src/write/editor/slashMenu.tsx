@@ -7,12 +7,13 @@ const HIDDEN = [
   'video',
   'audio',
   'file',
-  'check list',
-  'toggle',
   'emoji',
   'table',
   'divider',
   'page',
+  // Toggle headings stay dropdown-only to keep the slash menu uncluttered;
+  // Check List and Toggle List are offered here (both are exported).
+  'toggle heading',
 ];
 
 const GROUP_ORDER = ['Headings', 'Subheadings', 'Basic blocks', 'Media', 'Advanced'];
