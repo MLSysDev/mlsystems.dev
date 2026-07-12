@@ -202,10 +202,104 @@ This keeps `src/components/` clean — global components stay site-wide, one-off
 
 ### Built-in MDX components
 
-Available in any post — import is automatic:
+These are available in every post automatically — no import needed.
 
-- **`<Figure caption="...">`** — image + caption wrapper
-- **`<Note>`** — callout box
+#### `<Figure>` — a captioned visual
+
+Wrap any image, diagram, or inline SVG with a caption:
+
+```mdx
+<Figure caption="FlashAttention tiles attention to reduce HBM traffic.">
+  <Image src={flash} alt="FlashAttention memory access pattern" />
+</Figure>
+```
+
+**Sizing is optional.** By default a figure sits at a comfortable size, centered — small diagrams stay small and are not stretched to fill the page. If a visual deserves more room, set `width` and it grows, breaking out wider than the text column (capped so it never gets too wide to read on large screens):
+
+```mdx
+<Figure caption="A wide architecture diagram." width={900}>
+  <Image src={arch} alt="..." />
+</Figure>
+```
+
+`width` takes a number (pixels) or any CSS length (`"90%"`, `"48rem"`). Leave it off to use the default.
+
+#### `<Gallery>` — several images in a row
+
+Place multiple images side by side. They flow into as many columns as fit and wrap to the next row automatically on narrower screens — you don't lay anything out by hand:
+
+```mdx
+<Gallery>
+  <Image src={a} alt="..." />
+  <Image src={b} alt="..." />
+  <Image src={c} alt="..." />
+</Gallery>
+```
+
+`min` sets how small a cell may get before wrapping (default `240px`). Lower it to fit more per row:
+
+```mdx
+<Gallery min={160}>...</Gallery>
+```
+
+#### `<Note>` — a callout
+
+```mdx
+<Note>A short aside the reader should not miss.</Note>
+```
+
+---
+
+## 6b. Tables
+
+A plain Markdown table just works and picks up the site's default style:
+
+```mdx
+| Input       | How it becomes numbers | Length |
+| ----------- | ---------------------- | ------ |
+| Temperature | already a number       | 1      |
+| A word      | learned embedding      | ~768   |
+```
+
+**Formatting inside cells** is normal Markdown — **bold**, _italic_, `code`, and links all work with no extra effort:
+
+```mdx
+| **Temperature** | it's _already_ a number | `[28.4]` |
+```
+
+Color is not part of Markdown, but because this is MDX you can drop in a span when you truly need one. Use it sparingly, and never as the _only_ way you convey meaning (color-blind readers):
+
+```mdx
+| <span style="color: var(--accent)">Warning</span> | ... |
+```
+
+**Table designs.** Wrap a table in `<Table>` to change its look. Omit `variant` for the site default.
+
+| variant          | look                                       |
+| ---------------- | ------------------------------------------ |
+| `rule` (default) | header underline + hairline row separators |
+| `zebra`          | shaded alternating rows                    |
+| `lined`          | full grid, every cell bordered             |
+| `plain`          | header underline only, no row lines        |
+
+```mdx
+<Table variant="zebra">
+
+| Model | Params         | VRAM (FP16) |
+| ----- | -------------- | ----------- |
+| 7B    | 7,000,000,000  | 14 GB       |
+| 70B   | 70,000,000,000 | 140 GB      |
+
+</Table>
+```
+
+Keep the blank lines around the Markdown table inside `<Table>` — MDX needs them to parse it as a table.
+
+---
+
+## 6c. Headings
+
+Every heading automatically gets a small copy-link icon that appears when the reader hovers the heading; clicking it copies a direct link to that section. Just write headings normally — there is nothing to add.
 
 ---
 

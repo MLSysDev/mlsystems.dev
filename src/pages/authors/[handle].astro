@@ -72,7 +72,15 @@ const socials = SOCIAL_FIELDS.flatMap((f) => {
 
     <header class="author-head">
       <div class="author-head-left">
-        <div class="author-avatar-lg" aria-hidden="true">{initials}</div>
+        <div class="author-avatar-lg" aria-hidden="true">
+          {
+            author.data.avatar ? (
+              <img src={author.data.avatar} alt="" loading="lazy" decoding="async" />
+            ) : (
+              initials
+            )
+          }
+        </div>
       </div>
       <div class="author-head-right">
         <div class="eyebrow page-eyebrow">{author.data.role}</div>
@@ -165,6 +173,7 @@ const socials = SOCIAL_FIELDS.flatMap((f) => {
     width: 88px;
     height: 88px;
     border-radius: 50%;
+    overflow: hidden;
     background: var(--paper-2);
     border: 1px solid var(--line);
     color: var(--accent);
@@ -175,6 +184,11 @@ const socials = SOCIAL_FIELDS.flatMap((f) => {
     font-size: 32px;
     font-weight: 400;
     letter-spacing: 0.02em;
+  }
+  .author-avatar-lg img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
   .author-name {
     font-family: var(--font-display);

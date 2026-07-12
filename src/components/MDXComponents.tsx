@@ -1,6 +1,11 @@
-import type { ComponentProps, ReactNode } from 'react';
+import type { ComponentProps, CSSProperties, ReactNode } from 'react';
 
-// Custom MDX renderers — give blog posts a polished, paper-like default look.
+const TABLE_DEFAULT_VARIANT = 'rule';
+
+const cssVar = (name: string, value?: string | number): CSSProperties | undefined =>
+  value == null
+    ? undefined
+    : ({ [name]: typeof value === 'number' ? `${value}px` : value } as CSSProperties);
 
 export const mdxComponents = {
   h2: (props: ComponentProps<'h2'>) => <h2 {...props} />,
@@ -16,15 +21,27 @@ export const mdxComponents = {
   code: (props: ComponentProps<'code'>) => <code {...props} />,
   pre: (props: ComponentProps<'pre'>) => <pre {...props} />,
   blockquote: (props: ComponentProps<'blockquote'>) => <blockquote {...props} />,
+  table: (props: ComponentProps<'table'>) => (
+    <div className={`table-wrap table--${TABLE_DEFAULT_VARIANT}`}>
+      <table {...props} />
+    </div>
+  ),
   img: ({ alt, src, ...rest }: ComponentProps<'img'>) => {
     if (!alt && typeof process !== 'undefined') {
       console.warn(`[mdx] image missing alt text: ${src}`);
     }
     return <img {...rest} src={src} alt={alt ?? ''} loading="lazy" decoding="async" />;
   },
-  // Inline figure helper — usable as <Figure caption="...">...</Figure>
-  Figure: ({ caption, children }: { caption: string; children: ReactNode }) => (
-    <div className="inline-figure">
+  Figure: ({
+    caption,
+    width,
+    children,
+  }: {
+    caption: string;
+    width?: string | number;
+    children: ReactNode;
+  }) => (
+    <div className="inline-figure" style={cssVar('--fig-w', width)}>
       <div>{children}</div>
       <div className="inline-figure-caption">
         <span
@@ -42,7 +59,14 @@ export const mdxComponents = {
       </div>
     </div>
   ),
-  // Callout helper — usable as <Note>... </Note>
+  Gallery: ({ children, min }: { children: ReactNode; min?: string | number }) => (
+    <div className="mdx-gallery" style={cssVar('--gallery-min', min)}>
+      {children}
+    </div>
+  ),
+  Table: ({ variant, children }: { variant?: string; children: ReactNode }) => (
+    <div className={`table-variant table--${variant ?? TABLE_DEFAULT_VARIANT}`}>{children}</div>
+  ),
   Note: ({ children }: { children: ReactNode }) => (
     <div
       style={{
