@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { AllSelection, TextSelection } from 'prosemirror-state';
 import { filterSuggestionItems } from '@blocknote/core';
 import {
   SuggestionMenuController,
@@ -131,8 +133,17 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   }, [getDraft, restore]);
 
   useEditorSelectionChange(() => {
-    const block = editor.getTextCursorPosition().block;
-    setCurrentTableId(block?.type === 'table' ? block.id : null);
+    try {
+      const sel = editor.getSelection();
+      if (sel && sel.blocks.length !== 1) {
+        setCurrentTableId(null);
+        return;
+      }
+      const block = editor.getTextCursorPosition().block;
+      setCurrentTableId(block?.type === 'table' ? block.id : null);
+    } catch {
+      setCurrentTableId(null);
+    }
   }, editor);
 
   const acceptRestore = async () => {
@@ -181,6 +192,28 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
   };
 
   const slashItems = useMemo(() => getSlashItems(editor), [editor]);
+
+  const handleSelectAll = (e: ReactKeyboardEvent) => {
+    if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'a' || e.shiftKey || e.altKey) return;
+    const view = editor.prosemirrorView;
+    if (!view) return;
+    const { state } = view;
+    const { $from } = state.selection;
+    const blockStart = $from.start($from.depth);
+    const blockEnd = $from.end($from.depth);
+    e.preventDefault();
+    e.stopPropagation();
+    const coversBlock =
+      !state.selection.empty &&
+      state.selection.from <= blockStart &&
+      state.selection.to >= blockEnd;
+    const next =
+      blockStart === blockEnd || coversBlock
+        ? new AllSelection(state.doc)
+        : TextSelection.create(state.doc, blockStart, blockEnd);
+    view.dispatch(state.tr.setSelection(next));
+    view.focus();
+  };
 
   return (
     <div className="write-portal">
@@ -249,7 +282,7 @@ export default function WritePortal({ authors, topics, repoUrl }: Props) {
         })()}
 
       <style>{variantCss}</style>
-      <div className="write-canvas">
+      <div className="write-canvas" onKeyDownCapture={handleSelectAll}>
         <BlockNoteView editor={editor} theme="light" slashMenu={false} onChange={autosave}>
           <SuggestionMenuController
             triggerCharacter="/"

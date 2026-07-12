@@ -94,8 +94,11 @@ function wrapStyles(text: string, styles: Record<string, boolean | string>): str
   if (styles.underline) out = `<u>${out}</u>`;
   const color = colorValue(styles.textColor, TEXT_COLORS);
   if (color) out = `<span style="color: ${color}">${out}</span>`;
-  const bg = colorValue(styles.backgroundColor, BG_COLORS);
-  if (bg) out = `<span style="background-color: ${bg}">${out}</span>`;
+  if (typeof styles.backgroundColor === 'string' && styles.backgroundColor !== 'default') {
+    const name = styles.backgroundColor;
+    const bg = BG_COLORS[name] ? `var(--mark-${name}, ${BG_COLORS[name]})` : name;
+    out = `<span style="background-color: ${bg}">${out}</span>`;
+  }
   return out;
 }
 

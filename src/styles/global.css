@@ -47,6 +47,17 @@ html {
   --accent-2: #8a3318;
   --accent-soft: rgba(184, 67, 31, 0.08);
 
+  /* Highlight tints (light) */
+  --mark-gray: #ebeced;
+  --mark-brown: #e9e5e3;
+  --mark-red: #fbe4e4;
+  --mark-orange: #f6e9d9;
+  --mark-yellow: #fbf3db;
+  --mark-green: #ddedea;
+  --mark-blue: #ddebf1;
+  --mark-purple: #eae4f2;
+  --mark-pink: #f4dfeb;
+
   /* Spacing scale (density: comfortable default) */
   --sp-1: 4px;
   --sp-2: 8px;
@@ -94,6 +105,17 @@ html {
   --accent: #ff7a4d;
   --accent-2: #ffa07a;
   --accent-soft: rgba(255, 122, 77, 0.1);
+
+  /* Highlight tints (dark) — translucent so light text stays readable */
+  --mark-gray: rgba(255, 255, 255, 0.1);
+  --mark-brown: rgba(150, 110, 90, 0.28);
+  --mark-red: rgba(224, 62, 62, 0.28);
+  --mark-orange: rgba(217, 115, 13, 0.28);
+  --mark-yellow: rgba(203, 145, 47, 0.3);
+  --mark-green: rgba(68, 131, 97, 0.32);
+  --mark-blue: rgba(51, 126, 169, 0.32);
+  --mark-purple: rgba(144, 101, 176, 0.32);
+  --mark-pink: rgba(193, 76, 138, 0.3);
 }
 
 /* Accent variants */

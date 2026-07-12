@@ -109,9 +109,9 @@ describe('serializeInline', () => {
     );
   });
 
-  it('renders highlight as a background-color span', () => {
+  it('renders highlight as a theme-aware background-color span', () => {
     expect(serializeInline([t('hl', { backgroundColor: 'yellow' })])).toBe(
-      '<span style="background-color: #fbf3db">hl</span>',
+      '<span style="background-color: var(--mark-yellow, #fbf3db)">hl</span>',
     );
   });
 
