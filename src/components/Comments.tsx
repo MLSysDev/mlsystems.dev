@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { SITE } from '@/lib/site';
 
 // To enable comments:
 //   1. Make the repo public + enable GitHub Discussions.
 //   2. Install the giscus app: https://github.com/apps/giscus
-//   3. Visit https://giscus.app, fill in MLSysDev/mlsystems.dev + the "Comments"
+//   3. Visit https://giscus.app, fill in the repo + the "Comments"
 //      category, and paste the resulting IDs into the two PUBLIC_* env vars.
 // If either ID is missing, this component renders a graceful "not configured"
 // note instead of breaking the page.
-const REPO = 'MLSysDev/mlsystems.dev';
+const REPO = SITE.repo;
 const REPO_ID = import.meta.env.PUBLIC_GISCUS_REPO_ID as string | undefined;
 const CATEGORY = 'Comments';
 const CATEGORY_ID = import.meta.env.PUBLIC_GISCUS_CATEGORY_ID as string | undefined;
@@ -73,12 +74,8 @@ export default function Comments() {
             Giscus
           </a>
           . Once configured, replies live in{' '}
-          <a
-            href="https://github.com/MLSysDev/mlsystems.dev/discussions"
-            target="_blank"
-            rel="noreferrer"
-          >
-            MLSysDev/mlsystems.dev
+          <a href={`${SITE.repoUrl}/discussions`} target="_blank" rel="noreferrer">
+            {SITE.repo}
           </a>{' '}
           discussions.
         </p>

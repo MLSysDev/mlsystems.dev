@@ -11,7 +11,7 @@ const authors = authorEntries
   .sort((a, b) => (a.id === 'guest' ? -1 : b.id === 'guest' ? 1 : a.name.localeCompare(b.name)));
 
 const topics = TOPICS.map((t) => ({ id: t.id, name: t.name }));
-const repoUrl = SITE.github;
+const repoUrl = SITE.repoUrl;
 ---
 
 <BaseLayout
@@ -25,7 +25,7 @@ const repoUrl = SITE.github;
       Draft your post here — no Markdown, no setup. When you’re done, download your post folder and
       email it to us — we’ll take care of publishing. Comfortable with GitHub? You can open a pull
       request instead. Prefer writing MDX by hand? See the <a
-        href="https://github.com/MLSysDev/mlsystems.dev/blob/main/docs/writing-articles.md"
+        href={`${repoUrl}/blob/main/docs/writing-articles.md`}
         style="color: var(--accent);">authoring guide</a
       >.
     </p>

@@ -3,7 +3,7 @@ import { getCollection, getEntries } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
-import { TOPICS, countPostsByTopic, formatDate, sortPostsByDate } from '@/lib/data';
+import { TOPICS, countPostsByTopic, formatDate, sortPostsByDate, topicName } from '@/lib/data';
 import { SITE, SOCIALS } from '@/lib/site';
 
 const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
@@ -128,7 +128,7 @@ const featuredTools = allTools
           featuredFinal.map((p) => (
             <a class="article-card" href={`/blog/${p.id}`}>
               <div class="article-meta">
-                <span class="article-topic">{p.data.topic}</span>
+                <span class="article-topic">{topicName(p.data.topicId)}</span>
               </div>
               <h3 class="article-title">{p.data.title}</h3>
               <p class="article-summary">{p.data.summary}</p>
@@ -234,7 +234,7 @@ const featuredTools = allTools
             discussions, and feature proposals. Searchable, attributed, permanent.
           </p>
           <a
-            href="https://github.com/orgs/MLSysDev/discussions"
+            href={SITE.orgDiscussionsUrl}
             target="_blank"
             rel="noreferrer"
             class="btn"

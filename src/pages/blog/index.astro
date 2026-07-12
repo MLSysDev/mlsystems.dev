@@ -2,7 +2,7 @@
 import { getCollection, getEntries } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import BlogFilter from '@/components/BlogFilter.astro';
-import { TOPICS, formatDate, formatMonth, sortPostsByDate } from '@/lib/data';
+import { TOPICS, formatDate, formatMonth, sortPostsByDate, topicName } from '@/lib/data';
 
 const url = new URL(Astro.request.url);
 const activeTopic = url.searchParams.get('topic') || 'all';
@@ -56,7 +56,7 @@ all.forEach((a) => {
                 <div class="blog-row-body">
                   <div class="blog-row-title-line">
                     <h3 class="blog-row-title">{a.data.title}</h3>
-                    <span class="blog-row-chip">{a.data.topic}</span>
+                    <span class="blog-row-chip">{topicName(a.data.topicId)}</span>
                     {a.data.tags?.slice(0, 2).map((t) => (
                       <span class="blog-row-tag">#{t}</span>
                     ))}

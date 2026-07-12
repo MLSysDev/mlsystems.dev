@@ -1,15 +1,35 @@
 // Site-wide constants. Edit before launch.
 
+const GITHUB_ORG = 'MLSysDev';
+const GITHUB_REPO = `${GITHUB_ORG}/mlsystems.dev`;
+const X_HANDLE = 'MLSystemsDev';
+
+// Social links. Set to null to render as a disabled "coming soon" icon.
+export const SOCIALS: Record<'discord' | 'github' | 'twitter' | 'linkedin', string | null> = {
+  discord: 'https://discord.gg/pxEvXN28tc',
+  github: `https://github.com/${GITHUB_ORG}`,
+  twitter: `https://x.com/${X_HANDLE}`,
+  linkedin: 'https://www.linkedin.com/company/mlsystems-dev',
+};
+
 export const SITE = {
   name: 'ML Systems',
   domain: 'mlsystems.dev',
   url: 'https://mlsystems.dev',
   description:
-    'Open community writing about machine learning systems — inference engines, training infrastructure, GPU memory, embeddings, and deployments. Articles, primers, and case studies from anyone learning or building in the space.',
+    'Deep dives on machine learning systems: inference, training infrastructure, GPU memory, quantization, and LLM architecture — articles, primers, and case studies.',
   tagline: 'Machine learning, from kernels to clusters.',
   author: 'The ML Systems Community',
-  twitter: '@MLSystemsDev',
-  github: 'https://github.com/MLSysDev',
+  twitter: `@${X_HANDLE}`,
+  // GitHub identity — single source of truth for the org/repo and derived URLs.
+  github: SOCIALS.github as string,
+  org: GITHUB_ORG,
+  repo: GITHUB_REPO,
+  repoUrl: `https://github.com/${GITHUB_REPO}`,
+  issuesUrl: `https://github.com/${GITHUB_REPO}/issues`,
+  pullsUrl: `https://github.com/${GITHUB_REPO}/pulls`,
+  discussionsUrl: `https://github.com/${GITHUB_REPO}/discussions`,
+  orgDiscussionsUrl: `https://github.com/orgs/${GITHUB_ORG}/discussions`,
   pitchEmail: 'admin@mlsystems.dev',
   // Used in nav, footer, etc.
   startYear: 2026,
@@ -22,11 +42,3 @@ export const APPEARANCE = {
   background: 'plain',
   density: 'comfortable',
 } as const;
-
-// Social links. Set to null to render as a disabled "coming soon" icon.
-export const SOCIALS: Record<'discord' | 'github' | 'twitter' | 'linkedin', string | null> = {
-  discord: 'https://discord.gg/pxEvXN28tc',
-  github: 'https://github.com/MLSysDev',
-  twitter: 'https://x.com/MLSystemsDev',
-  linkedin: 'https://www.linkedin.com/company/mlsystems-dev',
-};

@@ -61,6 +61,17 @@ export const TOPICS: Topic[] = [
   },
 ];
 
+// Canonical topic IDs — the single source of truth for the taxonomy.
+// Used to validate post frontmatter (see src/content/config.ts).
+export const TOPIC_IDS = TOPICS.map((t) => t.id) as [string, ...string[]];
+
+const TOPIC_BY_ID = new Map(TOPICS.map((t) => [t.id, t]));
+
+/** Canonical display name for a topic ID; falls back to the ID if unknown. */
+export function topicName(id: string): string {
+  return TOPIC_BY_ID.get(id)?.name ?? id;
+}
+
 export function countPostsByTopic<T extends { data: { topicId: string } }>(
   posts: T[],
 ): Record<string, number> {

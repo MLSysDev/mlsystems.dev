@@ -3,6 +3,7 @@ import { getCollection, getEntries } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import { generateOgPng } from '@/lib/og';
 import { pngResponseWithFallback } from '@/lib/og-response';
+import { topicName } from '@/lib/data';
 
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => !data.draft && !data.cover);
@@ -19,7 +20,7 @@ export const GET: APIRoute = async ({ props }) => {
     return generateOgPng({
       title: post.data.title,
       authorNames: authors.map((a) => a.data.name).join(', '),
-      topic: post.data.topic,
+      topic: topicName(post.data.topicId),
     });
   }, `post:${post.id}`);
 };

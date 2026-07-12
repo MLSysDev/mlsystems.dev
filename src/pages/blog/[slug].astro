@@ -6,7 +6,7 @@ import { mdxComponents } from '@/components/MDXComponents.tsx';
 import ArticleActions from '@/components/ArticleActions.tsx';
 import Comments from '@/components/Comments.tsx';
 import Avatar from '@/components/Avatar.astro';
-import { formatDate, sortPostsByDate } from '@/lib/data';
+import { formatDate, sortPostsByDate, topicName } from '@/lib/data';
 import { SITE } from '@/lib/site';
 
 // Pre-build a page for every published post.
@@ -60,7 +60,7 @@ const jsonLd = {
   },
   mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
   keywords: post.data.tags?.join(', '),
-  articleSection: post.data.topic,
+  articleSection: topicName(post.data.topicId),
 };
 ---
 
@@ -76,14 +76,14 @@ const jsonLd = {
   <article
     class="article-shell"
     data-pagefind-body
-    data-pagefind-meta={`topic:${post.data.topic}, date:${formatDate(dateISO)}, read:${post.data.readMin} min, authors:${authorNames}`}
+    data-pagefind-meta={`topic:${topicName(post.data.topicId)}, date:${formatDate(dateISO)}, read:${post.data.readMin} min, authors:${authorNames}`}
   >
     <div class="article-head">
       <a href="/blog" class="article-back">← Back to archive</a>
 
       <div class="article-byline" style="margin-bottom: 4px;">
         <span style="padding: 2px 10px; border: 1px solid var(--line-2); border-radius: 99px;"
-          >{post.data.topic}</span
+          >{topicName(post.data.topicId)}</span
         >
         {post.data.tags?.map((t) => <span style="color: var(--ink-3);">#{t}</span>)}
       </div>
@@ -141,7 +141,7 @@ const jsonLd = {
             {related.map((r) => (
               <a href={`/blog/${r.id}`} class="article-card" style="padding: 20px 0;">
                 <div class="article-meta">
-                  <span style="color: var(--ink-3);">{r.data.topic}</span>
+                  <span style="color: var(--ink-3);">{topicName(r.data.topicId)}</span>
                 </div>
                 <h3 class="article-title" style="font-size: 22px;">
                   {r.data.title}

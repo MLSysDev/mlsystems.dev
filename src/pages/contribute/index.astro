@@ -83,7 +83,7 @@ const STEPS = [
               Draft in your browser <span class="btn-arrow">→</span>
             </a>
             <a
-              href="https://github.com/orgs/MLSysDev/discussions/categories/blog-ideas"
+              href={`${SITE.orgDiscussionsUrl}/categories/blog-ideas`}
               target="_blank"
               rel="noreferrer"
               class="btn"
@@ -91,14 +91,7 @@ const STEPS = [
               Pitch on GitHub Discussions
             </a>
             <a href={`mailto:${SITE.pitchEmail}`} class="btn"> Email an idea </a>
-            <a
-              href="https://github.com/MLSysDev/mlsystems.dev/pulls"
-              target="_blank"
-              rel="noreferrer"
-              class="btn"
-            >
-              Open a PR
-            </a>
+            <a href={SITE.pullsUrl} target="_blank" rel="noreferrer" class="btn"> Open a PR </a>
           </div>
         </div>
       </div>

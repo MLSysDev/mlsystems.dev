@@ -2,7 +2,7 @@
 // Base layout for every page — handles fonts, SEO, OG tags, JSON-LD, theme attrs.
 // Pages set their own title/description via props; everything else is sensible defaults.
 
-import { APPEARANCE, SITE } from '@/lib/site';
+import { APPEARANCE, SITE, SOCIALS } from '@/lib/site';
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import AnalyticsConsent from '@/components/AnalyticsConsent.tsx';
@@ -50,7 +50,7 @@ const siteJsonLd = [
     url: SITE.url,
     logo: new URL('/favicon-96x96.png', SITE.url).toString(),
     description: SITE.description,
-    sameAs: [SITE.github, 'https://x.com/MLSystemsDev'],
+    sameAs: [SOCIALS.github, SOCIALS.twitter, SOCIALS.linkedin].filter(Boolean),
   },
   {
     '@context': 'https://schema.org',
