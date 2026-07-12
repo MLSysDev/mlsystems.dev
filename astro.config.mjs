@@ -161,11 +161,15 @@ export default defineConfig({
   },
 
   vite: {
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+    },
     ssr: {
       external: ['@resvg/resvg-js', 'satori'],
     },
     optimizeDeps: {
       exclude: ['@resvg/resvg-js', 'satori'],
+      include: ['react', 'react-dom', 'react/jsx-runtime'],
     },
     build: {
       rollupOptions: {
