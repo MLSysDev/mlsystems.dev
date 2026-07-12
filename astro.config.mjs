@@ -71,6 +71,9 @@ function changefreqFor(path) {
 export default defineConfig({
   site: 'https://mlsystems.dev',
   trailingSlash: 'ignore',
+  markdown: {
+    shikiConfig: { theme: 'github-dark' },
+  },
   integrations: [
     react(),
     mdx({

@@ -1230,8 +1230,9 @@ main {
   font-size: 1em;
 }
 .article-body pre {
-  background: var(--paper-2);
-  border: 1px solid var(--line);
+  background: #24292e;
+  color: #e1e4e8;
+  border: 1px solid #3a3f46;
   border-radius: 8px;
   padding: 20px;
   overflow-x: auto;
