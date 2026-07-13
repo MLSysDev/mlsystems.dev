@@ -52,6 +52,9 @@ export function validate(meta: PostMeta, blocks: SBlock[]): string[] {
     if (b.type === 'math' && !String(b.props.latex ?? '').trim()) {
       issues.push('A math block is empty.');
     }
+    if (b.type === 'svg' && !/<svg[\s>]/i.test(String(b.props.code ?? ''))) {
+      issues.push('An SVG block has no SVG markup yet.');
+    }
   });
   if (!hasContent) issues.push('Write at least one paragraph.');
 

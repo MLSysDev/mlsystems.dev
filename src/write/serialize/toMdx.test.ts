@@ -359,6 +359,24 @@ describe('custom component blocks', () => {
   });
 });
 
+describe('svg blocks', () => {
+  const svg = '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>';
+
+  it('wraps inline svg in a Figure at column 0, with an optional caption', () => {
+    expect(body([block('svg', { code: svg, caption: 'A dot' })])).toBe(
+      `<Figure caption="A dot">\n${svg}\n</Figure>`,
+    );
+  });
+
+  it('emits the svg without a caption attribute when none is set', () => {
+    expect(body([block('svg', { code: svg })])).toBe(`<Figure>\n${svg}\n</Figure>`);
+  });
+
+  it('drops an empty svg block', () => {
+    expect(body([block('svg', { code: '' })])).toBe('');
+  });
+});
+
 describe('tables', () => {
   const tableContent = {
     type: 'tableContent',

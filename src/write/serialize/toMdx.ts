@@ -223,6 +223,16 @@ function serializeFigure(block: SBlock, ctx: Ctx): string {
   return `<Figure${captionAttr}${widthAttr}>\n  ${image}\n</Figure>`;
 }
 
+function serializeSvg(block: SBlock): string {
+  const code = String(block.props.code ?? '').trim();
+  if (!code) return '';
+  const caption = String(block.props.caption ?? '');
+  const captionAttr = caption ? ` ${attr('caption', caption)}` : '';
+  // SVG stays at column 0 inside <Figure> — indenting it would let MDX read the
+  // markup as an indented code block.
+  return `<Figure${captionAttr}>\n${code}\n</Figure>`;
+}
+
 function serializeGallery(block: SBlock, ctx: Ctx): string {
   const fileNames = JSON.parse(String(block.props.fileNames || '[]')) as string[];
   if (fileNames.length === 0) return '';
@@ -311,6 +321,8 @@ function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
       return serializeFigure(block, ctx);
     case 'gallery':
       return serializeGallery(block, ctx);
+    case 'svg':
+      return serializeSvg(block);
     case 'customComponent':
       return serializeComponent(block, ctx);
     case 'table':

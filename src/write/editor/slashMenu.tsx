@@ -90,6 +90,14 @@ const ICONS = {
       <polyline points="8 6 2 12 8 18" />
     </>,
   ),
+  svg: svg(
+    <>
+      <path d="M12 3v18M3 12h18" opacity="0.4" />
+      <circle cx="7" cy="8" r="2" />
+      <circle cx="17" cy="16" r="2" />
+      <path d="M9 8h6M7 10v4" />
+    </>,
+  ),
 };
 
 export function getSlashItems(editor: WriteEditor) {
@@ -121,6 +129,14 @@ export function getSlashItems(editor: WriteEditor) {
       group: 'Media',
       icon: ICONS.video,
       onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'video' }),
+    },
+    {
+      title: 'SVG / Diagram',
+      subtext: 'Paste an SVG — renders inline, adapts to light & dark',
+      aliases: ['svg', 'diagram', 'vector', 'illustration', 'chart', 'figure'],
+      group: 'Media',
+      icon: ICONS.svg,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'svg' }),
     },
     {
       title: 'Table',
