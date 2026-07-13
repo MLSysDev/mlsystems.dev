@@ -1338,6 +1338,18 @@ a.hashtag:hover {
   margin: 0 0 32px;
   text-wrap: pretty;
 }
+.article-cover {
+  margin: 0 auto 40px;
+  max-width: clamp(var(--text-w), 72vw, var(--text-w-max));
+  padding: 0 var(--sp-5);
+}
+.article-cover img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg, 10px);
+  border: 1px solid var(--line);
+  display: block;
+}
 .article-body {
   font-family: var(--font-read);
   font-size: clamp(18px, 1.7vw, 20px);

@@ -24,6 +24,8 @@ export type PostMeta = {
   tags: string[];
   slug: string;
   coverFileName: string;
+  // Set only when editing an existing post; preserves its original publish date.
+  date?: string;
 };
 
 export type TableStyle = { border: 'rule' | 'lined' | 'plain'; zebra: boolean };
@@ -37,6 +39,7 @@ export type SerializeOptions = {
 export type SerializedPost = {
   mdx: string;
   assetNames: string[];
+  cover?: string;
   componentFiles: { fileName: string; source: string }[];
 };
 
@@ -358,15 +361,17 @@ function yaml(value: string): string {
 function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptions): string {
   const wpm = opts.wordsPerMinute ?? 220;
   const readMin = Math.max(1, Math.round(countWords(blocks) / wpm));
+  const todayStr = opts.today.toISOString().slice(0, 10);
   const lines = [
     `title: ${yaml(meta.title)}`,
     `summary: ${yaml(meta.summary)}`,
     `authors: [${(meta.authors.length ? meta.authors : ['guest']).map(yaml).join(', ')}]`,
-    `date: ${yaml(opts.today.toISOString().slice(0, 10))}`,
+    `date: ${yaml(meta.date || todayStr)}`,
     `readMin: ${readMin}`,
     `topic: ${yaml(meta.topicName)}`,
     `topicId: ${yaml(meta.topicId)}`,
   ];
+  if (meta.date && meta.date !== todayStr) lines.push(`updated: ${yaml(todayStr)}`);
   if (meta.tags.length > 0) lines.push(`tags: [${meta.tags.map(yaml).join(', ')}]`);
   if (meta.coverFileName) lines.push(`cover: ${yaml(`./${meta.coverFileName}`)}`);
   return `---\n${lines.join('\n')}\n---`;
@@ -397,6 +402,7 @@ export function serializePost(
   return {
     mdx: `${sections.join('\n\n')}\n`,
     assetNames: ctx.imports.map((i) => i.fileName),
+    cover: meta.coverFileName || undefined,
     componentFiles: ctx.componentFiles,
   };
 }
