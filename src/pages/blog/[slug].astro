@@ -107,13 +107,10 @@ const breadcrumbJsonLd = {
       <a href="/blog" class="article-back">← Back to archive</a>
 
       <div class="article-byline" style="margin-bottom: 4px;">
-        <span
-          style="padding: 2px 10px; border: 1px solid var(--line-2); border-radius: var(--radius-pill);"
-          >{topicName(post.data.topicId)}</span
-        >
+        <span class="chip chip--sm">{topicName(post.data.topicId)}</span>
         {
           post.data.tags?.map((t) => (
-            <a href={`/tags/${tagSlug(t)}`} style="color: var(--ink-3); text-decoration: none;">
+            <a href={`/tags/${tagSlug(t)}`} class="hashtag">
               #{t}
             </a>
           ))
@@ -173,7 +170,7 @@ const breadcrumbJsonLd = {
             {related.map((r) => (
               <a href={`/blog/${r.id}`} class="article-card" style="padding: 20px 0;">
                 <div class="article-meta">
-                  <span style="color: var(--ink-3);">{topicName(r.data.topicId)}</span>
+                  <span class="chip chip--sm">{topicName(r.data.topicId)}</span>
                 </div>
                 <h3 class="article-title" style="font-size: 22px;">
                   {r.data.title}

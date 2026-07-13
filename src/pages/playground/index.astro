@@ -108,7 +108,7 @@ const catalogTools = allTools.sort((a, b) => {
                       <span class="tool-card-icon" aria-hidden="true">
                         {t.data.icon ?? '◇'}
                       </span>
-                      {t.data.tag !== 'Live' && <span class="tool-card-status">{t.data.tag}</span>}
+                      {t.data.tag !== 'Live' && <span class="chip chip--sm">{t.data.tag}</span>}
                     </div>
                   </a>
                 </li>
@@ -167,7 +167,7 @@ const catalogTools = allTools.sort((a, b) => {
                       <span class="tool-card-icon" aria-hidden="true">
                         ↗
                       </span>
-                      <span class="tool-card-tag">{t.category}</span>
+                      <span class="chip chip--sm">{t.category}</span>
                     </div>
                     <h3 class="tool-card-name">{t.name}</h3>
                     <p class="tool-card-summary">{t.desc}</p>
@@ -281,28 +281,6 @@ const catalogTools = allTools.sort((a, b) => {
     color: var(--accent);
     line-height: 1;
   }
-  .tool-card-tag {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--ink-3);
-    padding: 3px 8px;
-    border: 1px solid var(--line-2);
-    border-radius: var(--radius-pill);
-  }
-  .tool-card-live .tool-card-tag {
-    color: var(--paper);
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-  .tool-card-beta .tool-card-tag {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-  .tool-card-coming-soon .tool-card-tag {
-    color: var(--ink-4);
-  }
   .tool-card-name {
     font-family: var(--font-display);
     font-size: 26px;
@@ -369,16 +347,12 @@ const catalogTools = allTools.sort((a, b) => {
     .tool-card-link {
       font-size: 10px;
     }
-    .tool-card-tag {
+    .tool-card .chip {
       font-size: 9px;
       padding: 2px 6px;
     }
   }
 
-  .tool-card-external .tool-card-tag {
-    color: var(--ink-3);
-    border-color: var(--line-2);
-  }
   .tool-card-external:hover .tool-card-icon {
     transform: translate(2px, -2px);
     transition: transform 0.18s;
@@ -488,18 +462,6 @@ const catalogTools = allTools.sort((a, b) => {
     position: relative;
     z-index: 1;
   }
-  .tool-card-status {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    padding: 3px 9px;
-    border: 1px solid var(--line-2);
-    border-radius: var(--radius-pill);
-    color: var(--ink-3);
-    background: color-mix(in srgb, var(--paper-2) 90%, transparent);
-  }
-
   @media (max-width: 720px) {
     .tools-catalog-scroll {
       max-height: none;

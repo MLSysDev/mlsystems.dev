@@ -257,7 +257,12 @@ export default function SearchModal() {
                 <div className="search-section-label">Browse by topic</div>
                 <div className="search-topic-chips">
                   {TOPICS.map((t) => (
-                    <a key={t.id} href={`/blog?topic=${t.id}`} onClick={close}>
+                    <a
+                      key={t.id}
+                      href={`/blog?topic=${t.id}`}
+                      onClick={close}
+                      className="chip chip--interactive"
+                    >
                       {t.name}
                     </a>
                   ))}
@@ -267,7 +272,12 @@ export default function SearchModal() {
                 <div className="search-section-label">Try searching</div>
                 <div className="search-hint-terms">
                   {['attention', 'quantization', 'vLLM', 'FSDP', 'evals'].map((t) => (
-                    <button key={t} type="button" onClick={() => setQuery(t)}>
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setQuery(t)}
+                      className="chip chip--interactive"
+                    >
                       {t}
                     </button>
                   ))}

@@ -779,11 +779,75 @@ main {
   color: var(--ink-3);
   align-items: center;
 }
-.article-topic {
-  padding: 2px 8px;
+/* Chip — the one pill primitive.
+   Shapes: .chip (normal) · .chip--sm (thin mono-uppercase).
+   Modifiers compose onto either: .chip--interactive (accent hover + .is-active fill),
+   state colors .chip--live / .chip--beta / .chip--soon. .chip__count is the trailing badge.
+   .hashtag is the borderless inline #tag. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
   border: 1px solid var(--line-2);
   border-radius: var(--radius-pill);
+  background: transparent;
   color: var(--ink-2);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.chip--sm {
+  padding: 2px 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.chip__count {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  opacity: 0.75;
+}
+.chip--interactive {
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.chip--interactive:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.chip--interactive.is-active {
+  background: var(--accent);
+  color: var(--paper);
+  border-color: var(--accent);
+}
+.chip--live {
+  color: var(--paper);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.chip--beta {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.chip--soon {
+  color: var(--ink-4);
+}
+.hashtag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--ink-3);
+  text-decoration: none;
+  white-space: nowrap;
+}
+a.hashtag:hover {
+  color: var(--accent);
 }
 .article-title {
   font-family: var(--font-display);
@@ -1036,15 +1100,6 @@ main {
   line-height: 1.5;
   margin: 0;
 }
-.tool-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink-3);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-top: auto;
-}
-
 /* CTA contribute */
 .cta-banner {
   border: 1px solid var(--line-2);
@@ -1798,23 +1853,6 @@ main {
   font-size: 22px;
   letter-spacing: -0.02em;
 }
-.blog-row-chip {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-2);
-  padding: 2px 8px;
-  border: 1px solid var(--ink-3);
-  border-radius: var(--radius-pill);
-  white-space: nowrap;
-}
-.blog-row-tag {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--ink-3);
-  white-space: nowrap;
-}
 .blog-row-summary {
   font-size: 13px;
   color: var(--ink-2);
@@ -2218,7 +2256,7 @@ main {
   font-size: 14px;
   line-height: 1.55;
 }
-.search-empty a {
+.search-empty a:not(.chip) {
   color: var(--accent);
 }
 .search-hint {
@@ -2239,23 +2277,6 @@ main {
   flex-wrap: wrap;
   gap: 6px;
 }
-.search-topic-chips a {
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--ink-2);
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  padding: 4px 10px;
-  text-decoration: none;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-.search-topic-chips a:hover {
-  color: var(--accent);
-  border-color: var(--accent);
-}
 .search-hint-terms {
   display: inline-flex;
   flex-wrap: wrap;
@@ -2268,24 +2289,6 @@ main {
   letter-spacing: 0.12em;
   color: var(--ink-3);
   padding: 10px 14px 4px;
-}
-.search-hint-terms button {
-  font: inherit;
-  font-size: 12px;
-  font-family: var(--font-mono);
-  color: var(--ink-2);
-  background: var(--paper-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  padding: 3px 10px;
-  cursor: pointer;
-  transition:
-    color 0.15s ease,
-    border-color 0.15s ease;
-}
-.search-hint-terms button:hover {
-  color: var(--accent);
-  border-color: var(--accent);
 }
 .search-results {
   list-style: none;

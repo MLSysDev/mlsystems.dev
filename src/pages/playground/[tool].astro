@@ -51,10 +51,10 @@ const breadcrumbJsonLd = {
 
     <header class="tool-head">
       <div class="tool-meta">
-        <span class={`tool-tag tool-tag-${tool.data.tag.toLowerCase().replace(/\s+/g, '-')}`}>
+        <span class={`chip chip--sm chip--${tool.data.tag.toLowerCase().replace(/\s+/g, '-')}`}>
           {tool.data.tag}
         </span>
-        {tool.data.tags?.map((t) => <span class="tool-hashtag">#{t}</span>)}
+        {tool.data.tags?.map((t) => <span class="hashtag">#{t}</span>)}
       </div>
 
       <h1 class="tool-h1">{tool.data.name}</h1>
@@ -110,26 +110,6 @@ const breadcrumbJsonLd = {
     margin-bottom: 24px;
     font-family: var(--font-mono);
     font-size: 11px;
-  }
-  .tool-tag {
-    padding: 3px 10px;
-    border-radius: var(--radius-pill);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--ink);
-    border: 1px solid var(--line-2);
-  }
-  .tool-tag-live {
-    color: var(--paper);
-    background: var(--accent);
-    border-color: var(--accent);
-  }
-  .tool-tag-beta {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-  .tool-hashtag {
-    color: var(--ink-3);
   }
   .tool-h1 {
     font-family: var(--font-display);
