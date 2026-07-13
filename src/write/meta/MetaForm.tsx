@@ -16,6 +16,7 @@ type Props = {
 export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
   const [slugTouched, setSlugTouched] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [proposing, setProposing] = useState(!!meta.proposedTopic);
 
   const set = (patch: Partial<PostMeta>) => onChange({ ...meta, ...patch });
 
@@ -98,10 +99,15 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
         <label>
           Topic
           <select
-            value={meta.topicId}
+            value={proposing ? '__propose__' : meta.topicId}
             onChange={(e) => {
+              if (e.target.value === '__propose__') {
+                setProposing(true);
+                return;
+              }
               const topic = topics.find((t) => t.id === e.target.value);
-              set({ topicId: topic?.id ?? '', topicName: topic?.name ?? '' });
+              setProposing(false);
+              set({ topicId: topic?.id ?? '', topicName: topic?.name ?? '', proposedTopic: '' });
             }}
           >
             <option value="">Pick a topic…</option>
@@ -110,9 +116,41 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                 {t.name}
               </option>
             ))}
+            <option value="__propose__">＋ Propose a new topic…</option>
           </select>
         </label>
       </div>
+
+      {proposing && (
+        <div className="write-meta-row">
+          <label>
+            New topic
+            <input
+              type="text"
+              placeholder="e.g. Memory Systems"
+              value={meta.proposedTopic ?? ''}
+              onChange={(e) => set({ proposedTopic: e.target.value })}
+            />
+          </label>
+          <label>
+            File under for now
+            <select
+              value={meta.topicId}
+              onChange={(e) => {
+                const topic = topics.find((t) => t.id === e.target.value);
+                set({ topicId: topic?.id ?? '', topicName: topic?.name ?? '' });
+              }}
+            >
+              <option value="">Pick the closest…</option>
+              {topics.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
 
       <div className="write-meta-row">
         <label>

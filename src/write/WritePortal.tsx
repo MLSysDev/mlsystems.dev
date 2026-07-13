@@ -105,6 +105,7 @@ function emptyMeta(): PostMeta {
     tags: [],
     slug: '',
     coverFileName: '',
+    proposedTopic: '',
   };
 }
 

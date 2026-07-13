@@ -473,7 +473,17 @@ describe('frontmatter', () => {
     const fm = mdx.split('---')[1];
     expect(fm).not.toContain('tags:');
     expect(fm).not.toContain('cover:');
+    expect(fm).not.toContain('proposedTopic:');
     expect(fm).toContain('readMin: 1');
+  });
+
+  it('emits a proposedTopic when the writer suggests a new one', () => {
+    const { mdx } = serializePost(
+      { ...meta, proposedTopic: 'Memory Systems' },
+      [block('paragraph', {}, [t('x')])],
+      { tableVariants: {}, today },
+    );
+    expect(mdx.split('---')[1]).toContain("proposedTopic: 'Memory Systems'");
   });
 
   it('serializes multiple authors into the frontmatter array', () => {

@@ -26,6 +26,9 @@ export type PostMeta = {
   coverFileName: string;
   // Set only when editing an existing post; preserves its original publish date.
   date?: string;
+  // A topic the writer proposes that isn't in the list yet — a maintainer (or, later,
+  // automation) reads this from the frontmatter and creates it or remaps topicId.
+  proposedTopic?: string;
 };
 
 export type TableStyle = { border: 'rule' | 'lined' | 'plain'; zebra: boolean };
@@ -385,6 +388,7 @@ function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptio
     `topicId: ${yaml(meta.topicId)}`,
   ];
   if (meta.tags.length > 0) lines.push(`tags: [${meta.tags.map(yaml).join(', ')}]`);
+  if (meta.proposedTopic?.trim()) lines.push(`proposedTopic: ${yaml(meta.proposedTopic.trim())}`);
   if (meta.coverFileName) lines.push(`cover: ${yaml(`./${meta.coverFileName}`)}`);
   return `---\n${lines.join('\n')}\n---`;
 }

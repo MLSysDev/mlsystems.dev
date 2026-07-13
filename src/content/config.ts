@@ -32,6 +32,9 @@ const posts = defineCollection({
       // backward compat with existing frontmatter but no longer rendered.
       topic: z.string().optional(),
       topicId: z.enum(TOPIC_IDS),
+      // A writer-suggested topic not yet in TOPIC_IDS — surfaced for a maintainer
+      // (or automation) to create the topic or remap topicId. Ignored by rendering.
+      proposedTopic: z.string().optional(),
       tags: z.array(z.string()).optional(),
       updated: z.coerce.date().optional(),
       cover: z.union([image(), z.string().url()]).optional(),
