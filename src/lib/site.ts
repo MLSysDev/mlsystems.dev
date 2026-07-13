@@ -35,7 +35,7 @@ export const SITE = {
   startYear: 2026,
   // Shows the "Post to GitHub" button in /write. Flip to true once the GitHub App
   // credentials are set in the Cloudflare Function env (see /api/create-pr).
-  githubPostEnabled: false,
+  githubPostEnabled: true,
 };
 
 export const APPEARANCE = {
