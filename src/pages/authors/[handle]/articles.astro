@@ -27,7 +27,7 @@ const posts = (
 ).sort(sortPostsByDate);
 
 const canonical = `${SITE.url}/authors/${author.id}/articles`;
-const description = `Every article by ${author.data.name} on mlsystems.dev — machine learning systems, newest first.`;
+const description = `Every article by ${author.data.name} on mlsystems.dev — machine learning systems.`;
 
 const breadcrumbJsonLd = {
   '@context': 'https://schema.org',
@@ -57,11 +57,10 @@ const breadcrumbJsonLd = {
     <a href={`/authors/${author.id}`} class="article-back">← {author.data.name}</a>
 
     <header class="page-head">
-      <div class="eyebrow">{author.data.name}</div>
-      <h1 class="page-h1">All articles.</h1>
+      <h1 class="page-h1">Articles by {author.data.name}</h1>
       <p class="page-lede">
         {posts.length}
-        {posts.length === 1 ? 'article' : 'articles'}, newest first.
+        {posts.length === 1 ? 'article' : 'articles'}.
       </p>
     </header>
 
@@ -101,11 +100,11 @@ const breadcrumbJsonLd = {
   }
   .page-h1 {
     font-family: var(--font-display);
-    font-size: clamp(40px, 7vw, 72px);
+    font-size: clamp(26px, 4vw, 38px);
     font-weight: 400;
-    letter-spacing: -0.015em;
-    line-height: 1.02;
-    margin: 6px 0 0;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    margin: 0;
   }
   .page-lede {
     font-family: var(--font-mono);
