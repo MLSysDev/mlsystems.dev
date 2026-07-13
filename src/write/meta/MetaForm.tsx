@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { PostMeta } from '../serialize/toMdx';
 import { slugify } from '../serialize/validate';
+import { addAsset, getAssetUrl } from '../storage/assets';
 
 export type Option = { id: string; name: string };
 
@@ -8,10 +9,11 @@ type Props = {
   authors: Option[];
   topics: Option[];
   meta: PostMeta;
+  images: string[];
   onChange: (meta: PostMeta) => void;
 };
 
-export function MetaForm({ authors, topics, meta, onChange }: Props) {
+export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
   const [slugTouched, setSlugTouched] = useState(false);
   const [tagInput, setTagInput] = useState('');
 
@@ -153,6 +155,50 @@ export function MetaForm({ authors, topics, meta, onChange }: Props) {
             />
           </span>
         </label>
+      </div>
+
+      <div className="write-cover">
+        {meta.coverFileName ? (
+          <div className="write-cover-set">
+            <div className="write-cover-frame">
+              <img src={getAssetUrl(meta.coverFileName)} alt="" />
+              <button
+                type="button"
+                className="write-cover-remove"
+                title="Remove cover"
+                aria-label="Remove cover"
+                onClick={() => set({ coverFileName: '' })}
+              >
+                ✕
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="write-cover-pick">
+            {images.map((name) => (
+              <button
+                key={name}
+                type="button"
+                className="write-cover-thumb"
+                title="Use as cover"
+                onClick={() => set({ coverFileName: name })}
+              >
+                <img src={getAssetUrl(name)} alt="" />
+              </button>
+            ))}
+            <label className="write-cover-upload">
+              Cover image
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) set({ coverFileName: addAsset(file) });
+                }}
+              />
+            </label>
+          </div>
+        )}
       </div>
     </div>
   );

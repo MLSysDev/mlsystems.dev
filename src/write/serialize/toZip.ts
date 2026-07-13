@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import type { SerializedPost } from './toMdx';
+import { SOURCE_FILENAME } from './source';
 
 export type ZipInput = {
   serialized: SerializedPost;
@@ -8,6 +9,7 @@ export type ZipInput = {
   repoUrl: string;
   contactEmail: string;
   assets: { name: string; file: File }[];
+  sourceJson: string;
 };
 
 function submitNote(
@@ -56,7 +58,9 @@ export async function buildZip(input: ZipInput): Promise<Blob> {
   const folder = zip.folder(input.slug);
   if (!folder) throw new Error('zip folder creation failed');
   folder.file('index.mdx', input.serialized.mdx);
+  folder.file(SOURCE_FILENAME, input.sourceJson);
   const wanted = new Set(input.serialized.assetNames);
+  if (input.serialized.cover) wanted.add(input.serialized.cover);
   for (const { name, file } of input.assets) {
     if (wanted.has(name)) folder.file(name, file);
   }

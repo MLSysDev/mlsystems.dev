@@ -19,7 +19,9 @@ import { MetaForm, type Option } from './meta/MetaForm';
 import { serializePost, type PostMeta, type SBlock, type TableStyle } from './serialize/toMdx';
 import { validate } from './serialize/validate';
 import { buildZip } from './serialize/toZip';
-import { allAssets } from './storage/assets';
+import { buildSource } from './serialize/source';
+import { fetchExisting } from './serialize/fetchExisting';
+import { allAssets, clearAssets } from './storage/assets';
 import {
   clearDraft,
   clearStoredAssets,
@@ -64,6 +66,25 @@ type Props = {
   contactEmail: string;
 };
 
+function collectImages(blocks: SBlock[]): string[] {
+  const out: string[] = [];
+  const walk = (list: SBlock[]) => {
+    for (const b of list) {
+      if (b.type === 'figure' && b.props.fileName) out.push(String(b.props.fileName));
+      if (b.type === 'gallery') {
+        try {
+          out.push(...(JSON.parse(String(b.props.fileNames || '[]')) as string[]));
+        } catch {
+          // ignore a malformed gallery — it just won't offer cover options
+        }
+      }
+      if (b.children?.length) walk(b.children);
+    }
+  };
+  walk(blocks);
+  return [...new Set(out.filter(Boolean))];
+}
+
 function isEmptyDraft(meta: PostMeta, blocks: SBlock[]): boolean {
   const metaEmpty =
     !meta.title.trim() && !meta.summary.trim() && !meta.slug.trim() && meta.tags.length === 0;
@@ -99,8 +120,12 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [busy, setBusy] = useState(false);
   const [sentFile, setSentFile] = useState<string | null>(null);
   const [siteTheme, setSiteTheme] = useState<'light' | 'dark'>('light');
+  const [openError, setOpenError] = useState<string | null>(null);
+  const [openUrl, setOpenUrl] = useState('');
+  const [openDialog, setOpenDialog] = useState(false);
 
   const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
+  const images = collectImages(editor.document as unknown as SBlock[]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -199,6 +224,34 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     setRestore(null);
   };
 
+  const openExisting = async () => {
+    const input = openUrl.trim();
+    if (!input) return;
+    setOpenError(null);
+    setBusy(true);
+    try {
+      clearAssets();
+      const loaded = await fetchExisting(repoUrl, input);
+      await clearStoredAssets().catch(() => undefined);
+      setRestore(null);
+      setSentFile(null);
+      setIssues([]);
+      editor.replaceBlocks(editor.document, loaded.blocks as never);
+      setMeta({
+        ...emptyMeta(),
+        ...loaded.meta,
+        authors: Array.isArray(loaded.meta.authors) ? loaded.meta.authors : [],
+      });
+      setTableVariants(loaded.tableVariants ?? {});
+      setOpenUrl('');
+      setOpenDialog(false);
+    } catch (err) {
+      setOpenError(err instanceof Error ? err.message : 'That post could not be opened.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const download = async () => {
     const blocks = editor.document as unknown as SBlock[];
     const found = validate(meta, blocks);
@@ -214,6 +267,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         repoUrl,
         contactEmail,
         assets: allAssets(),
+        sourceJson: buildSource(meta, blocks, tableVariants),
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -268,10 +322,78 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
 
   return (
     <div className="write-portal">
+      <div className="write-topbar">
+        <button
+          type="button"
+          className="write-open-link"
+          onClick={() => {
+            setOpenError(null);
+            setOpenDialog(true);
+          }}
+        >
+          Edit a published post ↗
+        </button>
+      </div>
+
+      {openDialog && (
+        <div
+          className="write-modal-backdrop"
+          onClick={() => !busy && setOpenDialog(false)}
+          role="presentation"
+        >
+          <div
+            className="write-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Edit a published post"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>Edit a published post</h3>
+            <p>Paste the post’s URL.</p>
+            <input
+              type="text"
+              className="write-open-url"
+              placeholder="https://mlsystems.dev/blog/…"
+              aria-label="Post URL"
+              autoFocus
+              value={openUrl}
+              disabled={busy}
+              onChange={(e) => setOpenUrl(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  void openExisting();
+                }
+              }}
+            />
+            {openError && <p className="write-modal-error">{openError}</p>}
+            <div className="write-modal-actions">
+              <button
+                type="button"
+                className="write-ghost"
+                disabled={busy}
+                onClick={() => setOpenDialog(false)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="write-download"
+                disabled={busy || !openUrl.trim()}
+                onClick={() => void openExisting()}
+              >
+                {busy ? 'Loading…' : 'Open post'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <MetaForm
         authors={authors}
         topics={topics}
         meta={meta}
+        images={images}
         onChange={(m) => {
           setMeta(m);
           autosave();
