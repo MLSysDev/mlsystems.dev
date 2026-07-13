@@ -42,7 +42,7 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
       <textarea
         className="write-summary"
         rows={2}
-        placeholder="A one-sentence summary — shows under the title and on social cards"
+        placeholder="A brief summary of the blog — shows under the title"
         aria-label="Post summary"
         value={meta.summary}
         onChange={(e) => set({ summary: e.target.value })}

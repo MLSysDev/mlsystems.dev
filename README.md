@@ -58,6 +58,10 @@ Everything here (blog posts, learning materials, diagrams, images, code) is © i
 
 Contributors retain copyright on their own work.
 
+## Content removal
+
+We respect creators' rights. If you find any content on mlsystems.dev — text, images, code, or diagrams — that infringes your copyright, was published without proper credit, or that you believe should be removed for any reason, email **admin@mlsystems.dev** with a link to the content and a short explanation. We review every request and will correct attribution or take the material down promptly where warranted.
+
 ---
 
 ## Community

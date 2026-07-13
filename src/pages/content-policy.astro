@@ -1,0 +1,163 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/lib/site';
+
+const canonical = `${SITE.url}/content-policy`;
+---
+
+<BaseLayout
+  title="Content policy"
+  description="What gets published on mlsystems.dev and why — editorial standards, attribution, AI-assisted content, intellectual property, and how to request a correction or removal."
+  canonical={canonical}
+>
+  <div class="container policy-page">
+    <header class="page-head">
+      <div class="eyebrow">Policy</div>
+      <h1 class="page-h1">Content policy.</h1>
+      <p class="page-lede">Last updated July 2026</p>
+    </header>
+
+    <div class="article-body">
+      <p>
+        {SITE.name} publishes writing about ML systems from a community of engineers, researchers, and
+        students. This policy explains what we publish, the standards we hold it to, who owns it, and
+        how to ask us to correct or remove something.
+      </p>
+
+      <h2>Editorial standards</h2>
+      <p>
+        We aim for content that is accurate, original, and genuinely useful to people building ML
+        systems. Contributors are expected to:
+      </p>
+      <ul>
+        <li>Write from real understanding — explain, don't just assert.</li>
+        <li>Get the technical details right, and correct them when they're shown to be wrong.</li>
+        <li>Cite sources: link papers, prior work, benchmarks, and code you build on.</li>
+        <li>Make claims you can stand behind. Benchmarks should say how they were measured.</li>
+      </ul>
+
+      <h2>Attribution &amp; credit</h2>
+      <p>
+        Give credit where it's due. Quote sparingly and with a link, acknowledge collaborators, and
+        never present someone else's work — text, code, figures, or ideas — as your own. Diagrams
+        and images must be your own, properly licensed, or used with permission and credited.
+      </p>
+
+      <h2>AI-assisted content</h2>
+      <p>
+        Using AI tools to draft, edit, or generate figures is fine — but the human author is fully
+        responsible for what's published. That means every claim is verified, sources are real (not
+        hallucinated), and the piece reflects genuine understanding rather than unchecked model
+        output. Content that is mass-generated, misleading, or unverified will be removed.
+      </p>
+
+      <h2>Intellectual property</h2>
+      <p>
+        Everything here — posts, learning materials, diagrams, images, and code — is © its
+        respective author, and contributors retain copyright on their own work. You're welcome to
+        read, link, cite, and quote briefly with attribution; republishing full posts, commercial
+        use, or derivative works need the author's permission. See the <a
+          href={`${SITE.repoUrl}/blob/main/LICENSE`}
+          target="_blank"
+          rel="noreferrer">LICENSE</a
+        > for full terms.
+      </p>
+
+      <h2>Not allowed</h2>
+      <ul>
+        <li>Plagiarism or uncredited use of others' work</li>
+        <li>Spam, or promotional content disguised as a contribution</li>
+        <li>Malware, exploits shared to cause harm, or instructions intended for abuse</li>
+        <li>Publishing others' private information without consent</li>
+        <li>Harassment, hate speech, or discriminatory content</li>
+        <li>Anything unlawful, or content you don't have the right to publish</li>
+      </ul>
+
+      <h2>Community conduct</h2>
+      <p>
+        Discussion should be kind, patient, and about ideas rather than people. Beginner questions
+        are welcome — they're how the field grows. The full expectations live in our <a
+          href={`${SITE.repoUrl}/blob/main/CODE_OF_CONDUCT.md`}
+          target="_blank"
+          rel="noreferrer">Code of Conduct</a
+        >, which applies across the repository, this site, and all community spaces.
+      </p>
+
+      <h2>Corrections &amp; removal</h2>
+      <p>
+        We respect creators' rights and want to get things right. If you find anything on {
+          SITE.name
+        }
+        that infringes your copyright, was published without proper credit, contains an error, or that
+        you believe should be removed for any reason, tell us. We review every request and will correct,
+        re-attribute, or take the material down promptly where warranted.
+      </p>
+      <aside class="note-box">
+        Spotted content that shouldn't be here? Email <a href={`mailto:${SITE.pitchEmail}`}
+          >{SITE.pitchEmail}</a
+        > with a link and a short note — we'll review and act promptly.
+      </aside>
+
+      <h2>Enforcement</h2>
+      <p>
+        Maintainers may edit, unpublish, or remove content, and restrict accounts, to uphold this
+        policy. Where a fix preserves the work's value — a correction or added credit — we'll prefer
+        that over removal.
+      </p>
+
+      <p class="policy-source">
+        We may update this page as the site grows; material changes are reflected in the date above.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .policy-page {
+    padding-top: 24px;
+    padding-bottom: 80px;
+  }
+  .page-head {
+    padding: 20px 0 12px;
+  }
+  .page-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 7vw, 72px);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.02;
+    margin: 6px 0 0;
+  }
+  .page-lede {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 14px;
+  }
+  .policy-page .article-body {
+    max-width: 680px;
+  }
+  .policy-page .article-body ul {
+    padding-left: 1.2em;
+  }
+  .policy-page .article-body li {
+    margin: 6px 0;
+  }
+  .note-box {
+    display: block;
+    margin: 20px 0;
+    padding: 16px 18px;
+    background: var(--paper-2, var(--paper));
+    border: 1px solid var(--line-2);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    font-size: 15px;
+    color: var(--ink-2);
+  }
+  .policy-source {
+    margin-top: 32px;
+    font-size: 13px;
+    color: var(--ink-3);
+    font-style: italic;
+  }
+</style>
