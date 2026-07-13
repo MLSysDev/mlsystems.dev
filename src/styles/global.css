@@ -2650,3 +2650,37 @@ main {
     transform: scale(1);
   }
 }
+
+/* Theme-aware scrollbars for horizontal-scroll content (tables, math, code).
+   The default browser track is bright/white and cheapens the look. */
+.article-body .table-wrap,
+.article-body .katex-display {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+.article-body .table-wrap::-webkit-scrollbar,
+.article-body .katex-display::-webkit-scrollbar {
+  height: 8px;
+}
+.article-body .table-wrap::-webkit-scrollbar-track,
+.article-body .katex-display::-webkit-scrollbar-track,
+.article-body pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+.article-body .table-wrap::-webkit-scrollbar-thumb,
+.article-body .katex-display::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--radius-pill);
+}
+/* Code blocks are always dark → a light, low-opacity thumb reads better. */
+.article-body pre {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(225, 228, 232, 0.25) transparent;
+}
+.article-body pre::-webkit-scrollbar {
+  height: 8px;
+}
+.article-body pre::-webkit-scrollbar-thumb {
+  background: rgba(225, 228, 232, 0.25);
+  border-radius: var(--radius-pill);
+}
