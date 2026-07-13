@@ -15,6 +15,7 @@ type PostFile = { path: string; content: string; encoding: 'utf-8' | 'base64' };
 
 const DEFAULT_REPO = 'MLSysDev/mlsystems.dev';
 const DEFAULT_ORIGIN = 'https://mlsystems.dev';
+const CONTACT_EMAIL = 'admin@mlsystems.dev';
 const UA = 'mlsystems-write';
 
 function json(body: unknown, status = 200): Response {
@@ -180,7 +181,13 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     });
 
     const body = [
-      `## New blog post — ${title}`,
+      '```',
+      '╭──────────────────────────────────────────╮',
+      '│  NEW BLOG POST  ·  mlsystems.dev /write   │',
+      '╰──────────────────────────────────────────╯',
+      '```',
+      '',
+      `## ${title}`,
       '',
       'Opened automatically from the mlsystems.dev **/write** portal.',
       '',
@@ -190,6 +197,8 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       '> [!IMPORTANT]',
       '> **Please comment below to claim this post.** Commenting from your GitHub account already',
       '> tells us who you are — just say which **author name** it should be published under.',
+      '>',
+      `> Prefer not to comment here? Email this page's link to **${CONTACT_EMAIL}** instead.`,
       '',
       '> [!NOTE]',
       '> **Posting for the first time?** Also include your author details so we can set up your profile:',
