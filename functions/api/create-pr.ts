@@ -93,7 +93,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     return json({ error: 'Publishing is not configured on the server yet.' }, 500);
   }
 
-  let payload: { title?: string; slug?: string; files?: PostFile[] };
+  let payload: { title?: string; slug?: string; files?: PostFile[]; isEdit?: boolean };
   try {
     payload = (await request.json()) as typeof payload;
   } catch {
@@ -102,6 +102,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   const slug = (payload.slug ?? '').trim();
   const title = (payload.title ?? '').trim() || slug;
   const files = payload.files ?? [];
+  const isEdit = payload.isEdit === true;
   if (!slug || files.length === 0) return json({ error: 'Missing post data.' }, 400);
 
   const [owner, name] = (env.GH_REPO || DEFAULT_REPO).split('/');
@@ -112,6 +113,30 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       method: 'POST',
     })) as { token: string };
     const token = inst.token;
+
+    // A brand-new post must not silently overwrite an existing one at the same slug.
+    // Edits (loaded via the portal's "Open existing post") are meant to, so skip then.
+    if (!isEdit) {
+      const existing = await fetch(
+        `https://api.github.com/repos/${owner}/${name}/contents/${encodeURI(
+          `src/content/posts/${slug}/index.mdx`,
+        )}?ref=main`,
+        {
+          headers: {
+            accept: 'application/vnd.github+json',
+            authorization: `Bearer ${token}`,
+            'user-agent': UA,
+            'x-github-api-version': '2022-11-28',
+          },
+        },
+      );
+      if (existing.ok) {
+        return json(
+          { error: 'A post with this URL already exists. Change the URL slug and try again.' },
+          409,
+        );
+      }
+    }
 
     const ref = (await gh(`/repos/${owner}/${name}/git/ref/heads/main`, token)) as {
       object: { sha: string };
@@ -154,15 +179,38 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: commit.sha }),
     });
 
+    const body = [
+      `## New blog post — ${title}`,
+      '',
+      'Opened automatically from the mlsystems.dev **/write** portal.',
+      '',
+      '### Preview it',
+      "Once the Cloudflare check below finishes, a link to your post's preview page is posted here as a comment. Open it to see how the post will look once published.",
+      '',
+      '### Please comment your author details',
+      'So we know who wrote this and can credit you, please **comment below** with your name. **First time posting?** Also add a short bio and any links (website, GitHub, X/Twitter, LinkedIn) for your author profile.',
+      '',
+      '### Need to change something?',
+      'Just edit in the /write portal and submit again — it opens a fresh request. No need to touch this one.',
+      '',
+      `<!-- post-slug: ${slug} -->`,
+    ].join('\n');
+
     const pr = (await gh(`/repos/${owner}/${name}/pulls`, token, {
       method: 'POST',
-      body: JSON.stringify({
-        title: `New post: ${title}`,
-        head: branch,
-        base: 'main',
-        body: 'Submitted through the mlsystems.dev /write portal.\n\nPlease comment your author details (name, short bio, links) so a maintainer can review and publish.',
-      }),
+      body: JSON.stringify({ title: `New post: ${title}`, head: branch, base: 'main', body }),
     })) as { html_url: string; number: number };
+
+    // Best-effort label for triage. Needs Issues: write on the App + the label to
+    // exist; ignore failures so a missing permission never blocks the submission.
+    try {
+      await gh(`/repos/${owner}/${name}/issues/${pr.number}/labels`, token, {
+        method: 'POST',
+        body: JSON.stringify({ labels: ['blog-submission'] }),
+      });
+    } catch {
+      // labeling is optional
+    }
 
     return json({ url: pr.html_url, number: pr.number });
   } catch (err) {

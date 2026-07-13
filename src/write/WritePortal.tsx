@@ -130,6 +130,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [openUrl, setOpenUrl] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const githubEnabled = isGithubConfigured();
+  const [loadedSlug, setLoadedSlug] = useState<string | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
   const [publishStage, setPublishStage] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -137,6 +138,15 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
 
   const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
   const images = collectImages(editor.document as unknown as SBlock[]);
+
+  const oversizedIssues = (): string[] => {
+    const big = allAssets()
+      .filter((a) => a.file.size > 5 * 1024 * 1024)
+      .map((a) => a.name);
+    return big.length
+      ? [`These images are over 5 MB — please resize before publishing: ${big.join(', ')}`]
+      : [];
+  };
 
   useEffect(() => {
     const root = document.documentElement;
@@ -254,6 +264,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         authors: Array.isArray(loaded.meta.authors) ? loaded.meta.authors : [],
       });
       setTableVariants(loaded.tableVariants ?? {});
+      setLoadedSlug(loaded.meta.slug || null);
       setOpenUrl('');
       setOpenDialog(false);
     } catch (err) {
@@ -265,7 +276,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
 
   const download = async () => {
     const blocks = editor.document as unknown as SBlock[];
-    const found = validate(meta, blocks);
+    const found = [...validate(meta, blocks), ...oversizedIssues()];
     setIssues(found);
     if (found.length > 0) return;
     setBusy(true);
@@ -298,7 +309,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
 
   const openPublish = () => {
     const blocks = editor.document as unknown as SBlock[];
-    const found = validate(meta, blocks);
+    const found = [...validate(meta, blocks), ...oversizedIssues()];
     setIssues(found);
     if (found.length > 0) return;
     setPublishError(null);
@@ -319,6 +330,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         slug: meta.slug,
         title: meta.title || 'Untitled',
         files,
+        isEdit: loadedSlug !== null && loadedSlug === meta.slug,
       });
       setPrUrl(pr.url);
       setPublishStage('done');
@@ -592,14 +604,15 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           >
             {publishStage === 'done' ? (
               <>
-                <h3>Pull request opened ✓</h3>
+                <h3>Your post has been submitted ✓</h3>
                 <p>
-                  Your post is submitted as a pull request. A maintainer will review and publish it.
+                  Open the request to preview how your post will look, and add a comment with your
+                  author details (name, bio, links) so a maintainer can review and publish it.
                 </p>
                 <div className="write-modal-actions">
                   {prUrl && (
                     <a className="write-download" href={prUrl} target="_blank" rel="noreferrer">
-                      View pull request →
+                      Open my request →
                     </a>
                   )}
                   <button

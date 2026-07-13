@@ -413,6 +413,11 @@
   text-decoration: none;
 }
 
+.write-download:hover:not(:disabled) {
+  background: var(--accent-2, var(--accent));
+  border-color: var(--accent-2, var(--accent));
+  color: var(--paper);
+}
 .write-download:disabled {
   opacity: 0.6;
   cursor: default;
@@ -645,6 +650,7 @@
 
 .write-figure-frame {
   position: relative;
+  margin: 0 auto;
 }
 
 .write-figure-frame img,

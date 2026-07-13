@@ -54,13 +54,19 @@ export async function createPullRequest(opts: {
   slug: string;
   title: string;
   files: PublishFile[];
+  isEdit: boolean;
 }): Promise<PublishResult> {
   let data: { url?: string; number?: number; error?: string } = {};
   try {
     const res = await fetch('/api/create-pr', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ slug: opts.slug, title: opts.title, files: opts.files }),
+      body: JSON.stringify({
+        slug: opts.slug,
+        title: opts.title,
+        files: opts.files,
+        isEdit: opts.isEdit,
+      }),
     });
     data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || `Request failed (${res.status}).`);
