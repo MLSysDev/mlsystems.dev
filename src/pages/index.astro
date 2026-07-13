@@ -328,6 +328,7 @@ const featuredTools = allTools
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: thin;
+    scrollbar-color: var(--line-2) transparent;
     -webkit-overflow-scrolling: touch;
     padding: 4px 0 16px;
     margin-bottom: 24px;
@@ -335,11 +336,17 @@ const featuredTools = allTools
     scroll-snap-type: x proximity;
   }
   .topic-tabs::-webkit-scrollbar {
-    height: 4px;
+    height: 6px;
+  }
+  .topic-tabs::-webkit-scrollbar-track {
+    background: transparent;
   }
   .topic-tabs::-webkit-scrollbar-thumb {
     background: var(--line-2);
-    border-radius: 2px;
+    border-radius: var(--radius-pill);
+  }
+  .topic-tabs:hover::-webkit-scrollbar-thumb {
+    background: var(--ink-4);
   }
   .topic-tab {
     flex-shrink: 0;

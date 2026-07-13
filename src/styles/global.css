@@ -27,8 +27,8 @@ html {
 
 :root {
   /* Type */
-  --font-display: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
-  --font-sans: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   --font-read: 'Source Serif 4', 'Source Serif Pro', Georgia, Cambria, 'Times New Roman', serif;
 
@@ -277,12 +277,12 @@ body {
 
 /* Type pairing modes */
 [data-typeset='editorial'] {
-  --font-display: 'Instrument Serif', Georgia, serif;
-  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='modern'] {
-  --font-display: 'Geist', system-ui, sans-serif;
-  --font-sans: 'Geist', system-ui, sans-serif;
+  --font-display: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='terminal'] {
   --font-display: 'JetBrains Mono', monospace;
@@ -2649,4 +2649,38 @@ main {
   100% {
     transform: scale(1);
   }
+}
+
+/* Theme-aware scrollbars for horizontal-scroll content (tables, math, code).
+   The default browser track is bright/white and cheapens the look. */
+.article-body .table-wrap,
+.article-body .katex-display {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-2) transparent;
+}
+.article-body .table-wrap::-webkit-scrollbar,
+.article-body .katex-display::-webkit-scrollbar {
+  height: 8px;
+}
+.article-body .table-wrap::-webkit-scrollbar-track,
+.article-body .katex-display::-webkit-scrollbar-track,
+.article-body pre::-webkit-scrollbar-track {
+  background: transparent;
+}
+.article-body .table-wrap::-webkit-scrollbar-thumb,
+.article-body .katex-display::-webkit-scrollbar-thumb {
+  background: var(--line-2);
+  border-radius: var(--radius-pill);
+}
+/* Code blocks are always dark → a light, low-opacity thumb reads better. */
+.article-body pre {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(225, 228, 232, 0.25) transparent;
+}
+.article-body pre::-webkit-scrollbar {
+  height: 8px;
+}
+.article-body pre::-webkit-scrollbar-thumb {
+  background: rgba(225, 228, 232, 0.25);
+  border-radius: var(--radius-pill);
 }
