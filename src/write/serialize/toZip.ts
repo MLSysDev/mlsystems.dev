@@ -6,15 +6,22 @@ export type ZipInput = {
   slug: string;
   writerName: string;
   repoUrl: string;
+  contactEmail: string;
   assets: { name: string; file: File }[];
 };
 
-function submitNote(slug: string, writerName: string, repoUrl: string): string {
+function submitNote(
+  slug: string,
+  writerName: string,
+  repoUrl: string,
+  contactEmail: string,
+): string {
   return `# How to submit your article
 
 Written by: ${writerName || '(name not given)'}
 
 This ZIP contains a ready-to-publish post folder for mlsystems.dev.
+Pick whichever option is easiest for you.
 
 ## Option 1 — open a pull request
 
@@ -22,10 +29,23 @@ This ZIP contains a ready-to-publish post folder for mlsystems.dev.
 2. Copy the \`${slug}/\` folder into \`src/content/posts/\`
 3. Open a pull request — see CONTRIBUTING.md in the repo
 
-## Option 2 — let us do it
+## Option 2 — open an issue
 
 Open an issue at ${repoUrl}/issues, mention you have an article ready,
 and attach this ZIP. A maintainer will take it from there.
+
+## Option 3 — email it to us
+
+Email this ZIP to ${contactEmail} and we'll publish it for you.
+
+If this is your first article, include your author details so we can set up
+your profile page:
+
+- Display name
+- Short bio (1–2 sentences)
+- Any links you'd like shown: website, GitHub, X/Twitter, LinkedIn, Mastodon, Bluesky, email
+
+Share only what you want public — anything you leave out simply won't appear.
 
 Thanks for writing!
 `;
@@ -43,6 +63,9 @@ export async function buildZip(input: ZipInput): Promise<Blob> {
   for (const { fileName, source } of input.serialized.componentFiles) {
     folder.file(fileName, `${source.trimEnd()}\n`);
   }
-  zip.file('HOW-TO-SUBMIT.md', submitNote(input.slug, input.writerName, input.repoUrl));
+  zip.file(
+    'HOW-TO-SUBMIT.md',
+    submitNote(input.slug, input.writerName, input.repoUrl, input.contactEmail),
+  );
   return zip.generateAsync({ type: 'blob' });
 }

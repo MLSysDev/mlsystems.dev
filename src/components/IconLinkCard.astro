@@ -97,10 +97,10 @@ const external = !!href && href.startsWith('http');
   .ilc-action {
     grid-area: action;
     font-family: var(--font-display);
-    font-size: 20px;
+    font-size: clamp(15px, 4vw, 19px);
     color: var(--ink);
     line-height: 1.15;
-    word-break: break-word;
+    overflow-wrap: break-word;
     align-self: start;
     transition: color 0.15s ease;
   }

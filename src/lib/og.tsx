@@ -62,7 +62,7 @@ const SHELL_STYLE: React.CSSProperties = {
   background: C.paper,
   padding: '64px 72px',
   position: 'relative',
-  fontFamily: 'Fraunces',
+  fontFamily: 'Playfair Display',
 };
 
 const BORDER_STYLE: React.CSSProperties = {
@@ -111,7 +111,7 @@ function brandBar(): React.ReactElement {
         </span>
         <span
           style={{
-            fontFamily: 'Fraunces',
+            fontFamily: 'Playfair Display',
             fontStyle: 'italic',
             fontSize: 28,
             color: C.ink2,
@@ -141,7 +141,7 @@ function template(d: OgArticle): React.ReactElement {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', marginTop: 24 }}>
         <div
           style={{
-            fontFamily: 'Fraunces',
+            fontFamily: 'Playfair Display',
             fontSize: 76,
             lineHeight: 1.04,
             color: C.ink,
@@ -168,7 +168,7 @@ function pageTemplate(title: string): React.ReactElement {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', marginTop: 28 }}>
         <div
           style={{
-            fontFamily: 'Fraunces',
+            fontFamily: 'Playfair Display',
             fontSize: 132,
             lineHeight: 1.0,
             color: C.ink,
@@ -215,7 +215,7 @@ function authorTemplate(name: string, bio?: string, handle?: string): React.Reac
         </div>
         <div
           style={{
-            fontFamily: 'Fraunces',
+            fontFamily: 'Playfair Display',
             fontSize: 108,
             lineHeight: 1.0,
             color: C.ink,
@@ -229,7 +229,7 @@ function authorTemplate(name: string, bio?: string, handle?: string): React.Reac
         {bio && (
           <div
             style={{
-              fontFamily: 'Fraunces',
+              fontFamily: 'Playfair Display',
               fontStyle: 'italic',
               fontSize: 32,
               lineHeight: 1.3,
@@ -280,7 +280,7 @@ function toolTemplate(name: string, summary: string, tag: string): React.ReactEl
         </div>
         <div
           style={{
-            fontFamily: 'Fraunces',
+            fontFamily: 'Playfair Display',
             fontSize: 92,
             lineHeight: 1.0,
             color: C.ink,
@@ -294,7 +294,7 @@ function toolTemplate(name: string, summary: string, tag: string): React.ReactEl
         </div>
         <div
           style={{
-            fontFamily: 'Fraunces',
+            fontFamily: 'Playfair Display',
             fontStyle: 'italic',
             fontSize: 28,
             lineHeight: 1.35,
@@ -321,7 +321,7 @@ function defaultTemplate(): React.ReactElement {
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', marginTop: 28 }}>
         <div
           style={{
-            fontFamily: 'Fraunces',
+            fontFamily: 'Playfair Display',
             fontSize: 124,
             lineHeight: 1.0,
             color: C.ink,
@@ -341,14 +341,20 @@ function defaultTemplate(): React.ReactElement {
 
 async function renderToPng(node: React.ReactElement, context: string): Promise<Buffer> {
   try {
-    const serif = loadFont('@fontsource/fraunces/files/fraunces-latin-400-normal.woff');
+    const serif = loadFont(
+      '@fontsource/playfair-display/files/playfair-display-latin-400-normal.woff',
+    );
+    const serifItalic = loadFont(
+      '@fontsource/playfair-display/files/playfair-display-latin-400-italic.woff',
+    );
     const mono = loadFont('@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff');
 
     const svg = await satori(node, {
       width: 1200,
       height: 630,
       fonts: [
-        { name: 'Fraunces', data: serif, weight: 400, style: 'normal' },
+        { name: 'Playfair Display', data: serif, weight: 400, style: 'normal' },
+        { name: 'Playfair Display', data: serifItalic, weight: 400, style: 'italic' },
         { name: 'JetBrains Mono', data: mono, weight: 400, style: 'normal' },
       ],
     });

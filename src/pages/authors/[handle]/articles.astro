@@ -1,0 +1,130 @@
+---
+import { getCollection, getEntries } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate, sortPostsByDate, topicName } from '@/lib/data';
+import { SITE } from '@/lib/site';
+
+export async function getStaticPaths() {
+  const authors = await getCollection('authors');
+  return authors.map((author) => ({
+    params: { handle: author.id },
+    props: { author },
+  }));
+}
+
+interface Props {
+  author: CollectionEntry<'authors'>;
+}
+const { author } = Astro.props;
+
+const allRaw = await getCollection('posts', ({ data }) => !data.draft);
+const matching = allRaw.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
+const posts = (
+  await Promise.all(
+    matching.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
+  )
+).sort(sortPostsByDate);
+
+const canonical = `${SITE.url}/authors/${author.id}/articles`;
+const description = `Every article by ${author.data.name} on mlsystems.dev — machine learning systems.`;
+
+const breadcrumbJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    { '@type': 'ListItem', position: 2, name: 'Contributors', item: `${SITE.url}/authors` },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: author.data.name,
+      item: `${SITE.url}/authors/${author.id}`,
+    },
+    { '@type': 'ListItem', position: 4, name: 'Articles', item: canonical },
+  ],
+};
+---
+
+<BaseLayout
+  title={`All articles by ${author.data.name}`}
+  description={description}
+  canonical={canonical}
+  image={`/og/author/${author.id}.png`}
+  jsonLd={[breadcrumbJsonLd]}
+>
+  <div class="container author-archive" data-pagefind-body>
+    <a href={`/authors/${author.id}`} class="article-back">← {author.data.name}</a>
+
+    <header class="page-head">
+      <h1 class="page-h1">
+        <span class="page-h1-by">Articles by</span>
+        <a href={`/authors/${author.id}`} class="page-h1-name">{author.data.name}</a>
+      </h1>
+      <p class="page-lede">
+        {posts.length}
+        {posts.length === 1 ? 'article' : 'articles'}.
+      </p>
+    </header>
+
+    {
+      posts.length === 0 ? (
+        <p style="color: var(--ink-3); padding: 40px 0;">No published articles yet.</p>
+      ) : (
+        <div class="blog-list">
+          {posts.map((p) => (
+            <a href={`/blog/${p.id}`} class="blog-row" data-topic={p.data.topicId}>
+              <div class="blog-row-body">
+                <div class="blog-row-title-line">
+                  <h2 class="blog-row-title">{p.data.title}</h2>
+                  <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
+                </div>
+                <p class="blog-row-summary">{p.data.summary}</p>
+              </div>
+              <div class="blog-row-meta">
+                <strong>{formatDate(p.data.date.toISOString())}</strong>
+                <span>{p.data.readMin} min</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .author-archive {
+    padding-top: 24px;
+    padding-bottom: 80px;
+  }
+  .page-head {
+    padding: 20px 0 32px;
+  }
+  .page-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 4vw, 38px);
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .page-h1-by {
+    font-style: italic;
+    color: var(--ink-3);
+  }
+  .page-h1-name {
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  .page-h1-name:hover {
+    color: var(--accent);
+  }
+  .page-lede {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 14px;
+  }
+</style>

@@ -203,6 +203,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         slug: meta.slug,
         writerName: meta.writerName,
         repoUrl,
+        contactEmail,
         assets: allAssets(),
       });
       const url = URL.createObjectURL(blob);
@@ -391,7 +392,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           <span className="write-note-inline">Autosave is off — your browser blocked storage.</span>
         )}
         <button type="button" className="write-download" disabled={busy} onClick={download}>
-          {busy ? 'Packaging…' : 'Download post folder'}
+          {busy ? 'Packaging…' : 'Download post'}
         </button>
       </div>
     </div>

@@ -1,0 +1,108 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/lib/site';
+
+const canonical = `${SITE.url}/privacy`;
+---
+
+<BaseLayout
+  title="Privacy"
+  description="How mlsystems.dev handles data — analytics, cookies, and the in-browser writing tool. Plain language."
+  canonical={canonical}
+>
+  <div class="container privacy-page">
+    <header class="page-head">
+      <div class="eyebrow">Policy</div>
+      <h1 class="page-h1">Privacy.</h1>
+      <p class="page-lede">Last updated July 2026</p>
+    </header>
+
+    <div class="article-body">
+      <p>
+        This is a plain-language summary of how {SITE.name} handles your data. The short version: we collect
+        as little as possible, we don't sell anything, and there are no user accounts.
+      </p>
+
+      <h2>No accounts, no logins</h2>
+      <p>
+        You can read everything without signing in. The in-browser writing tool at <code
+          >/write</code
+        > runs entirely in your browser — what you type stays on your device, and nothing is sent to us
+        until you choose to download it and submit it by pull request, issue, or email.
+      </p>
+
+      <h2>Analytics</h2>
+      <p>
+        We use Google Analytics to understand aggregate traffic — which pages are read, roughly
+        where visitors come from, and what devices they use. It's loaded through Google's Consent
+        Mode, so analytics cookies are only set after you accept them. We use this to improve the
+        site, not to identify you personally, and we never sell or share this data.
+      </p>
+
+      <h2>Cookies</h2>
+      <p>
+        We store your consent choice so we don't ask on every visit. Analytics cookies are only set
+        if you accept. You can clear these at any time through your browser settings.
+      </p>
+
+      <h2>Third parties</h2>
+      <p>
+        The site is served as static files by our host, and fonts are self-hosted (no third-party
+        font requests). If comments or discussions are enabled, they are powered by GitHub and
+        subject to <a href="https://github.com/site/privacy" target="_blank" rel="noreferrer"
+          >GitHub's privacy policy</a
+        >. Google Analytics is subject to <a
+          href="https://policies.google.com/privacy"
+          target="_blank"
+          rel="noreferrer">Google's privacy policy</a
+        >.
+      </p>
+
+      <h2>Your author profile</h2>
+      <p>
+        If you contribute an article, the author details you choose to share — name, bio, and any
+        links — are published on your profile page. Share only what you want public; anything you
+        leave out simply won't appear.
+      </p>
+
+      <h2>Contact</h2>
+      <p>
+        Questions, or want your data or a contribution removed? Email <a
+          href={`mailto:${SITE.pitchEmail}`}>{SITE.pitchEmail}</a
+        >.
+      </p>
+
+      <p>
+        We may update this page as the site changes. Material changes will be reflected in the date
+        above.
+      </p>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .privacy-page {
+    padding-top: 24px;
+    padding-bottom: 80px;
+  }
+  .page-head {
+    padding: 20px 0 12px;
+  }
+  .page-h1 {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 7vw, 72px);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.02;
+    margin: 6px 0 0;
+  }
+  .page-lede {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    margin-top: 14px;
+  }
+  .privacy-page .article-body {
+    max-width: 680px;
+  }
+</style>
