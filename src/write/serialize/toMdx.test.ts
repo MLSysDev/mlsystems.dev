@@ -425,11 +425,26 @@ describe('frontmatter', () => {
     expect(fm).toContain("summary: 'A summary.'");
     expect(fm).toContain("authors: ['guest']");
     expect(fm).toContain("date: '2026-07-12'");
+    expect(fm).toContain("updated: '2026-07-12'");
     expect(fm).toContain('readMin: 2');
     expect(fm).toContain("topic: 'Inference & Serving'");
     expect(fm).toContain("topicId: 'inference'");
     expect(fm).toContain("tags: ['attention', 'kernels']");
     expect(fm).toContain("cover: './hero.png'");
+  });
+
+  it('preserves an existing write date and always stamps updated as today', () => {
+    const { mdx } = serializePost(
+      { ...meta, date: '2026-01-05' },
+      [block('paragraph', {}, [t('x')])],
+      {
+        tableVariants: {},
+        today,
+      },
+    );
+    const fm = mdx.split('---')[1];
+    expect(fm).toContain("date: '2026-01-05'");
+    expect(fm).toContain("updated: '2026-07-12'");
   });
 
   it('omits optional fields when unset and floors readMin at 1', () => {

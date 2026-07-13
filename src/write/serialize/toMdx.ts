@@ -367,11 +367,11 @@ function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptio
     `summary: ${yaml(meta.summary)}`,
     `authors: [${(meta.authors.length ? meta.authors : ['guest']).map(yaml).join(', ')}]`,
     `date: ${yaml(meta.date || todayStr)}`,
+    `updated: ${yaml(todayStr)}`,
     `readMin: ${readMin}`,
     `topic: ${yaml(meta.topicName)}`,
     `topicId: ${yaml(meta.topicId)}`,
   ];
-  if (meta.date && meta.date !== todayStr) lines.push(`updated: ${yaml(todayStr)}`);
   if (meta.tags.length > 0) lines.push(`tags: [${meta.tags.map(yaml).join(', ')}]`);
   if (meta.coverFileName) lines.push(`cover: ${yaml(`./${meta.coverFileName}`)}`);
   return `---\n${lines.join('\n')}\n---`;
