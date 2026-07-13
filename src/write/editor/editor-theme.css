@@ -418,6 +418,27 @@
   cursor: default;
 }
 
+.write-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.write-ghost-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.write-ghost-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 .write-done {
   margin-top: 24px;
   padding: 18px 20px;
