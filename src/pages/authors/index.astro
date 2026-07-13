@@ -1,7 +1,8 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { SITE } from '@/lib/site';
+
+const FILTER_THRESHOLD = 12;
 
 const authors = await getCollection('authors');
 const posts = await getCollection('posts', ({ data }) => !data.draft);
@@ -41,16 +42,32 @@ const contributors = authors
       <div class="eyebrow page-eyebrow">The People</div>
       <h1 class="page-h1">Contributors.</h1>
       <p class="page-lede">
-        {contributors.length} writers from labs, startups, and research groups working on the hard parts
-        of ML systems. Every article is attributed — and most of them are open to questions on{' '}
-        <a href={SITE.orgDiscussionsUrl} target="_blank" rel="noreferrer">Discussions</a>.
+        Engineers, researchers, and students writing about ML systems in the open — anyone learning
+        is welcome to join them.
       </p>
     </div>
+
+    {
+      contributors.length > FILTER_THRESHOLD && (
+        <div class="contributor-filter" data-contributor-filter>
+          <input
+            type="search"
+            placeholder="Filter by name…"
+            aria-label="Filter contributors by name"
+            data-contributor-input
+          />
+        </div>
+      )
+    }
 
     <div class="contributors-grid">
       {
         contributors.map((c) => (
-          <a href={`/authors/${c.id}`} class="card card--interactive contributor-card">
+          <a
+            href={`/authors/${c.id}`}
+            class="card card--interactive contributor-card"
+            data-name={c.data.name.toLowerCase()}
+          >
             <div class="contributor-avatar" aria-hidden="true">
               {c.data.avatar ? (
                 <img src={c.data.avatar} alt="" loading="lazy" decoding="async" />
@@ -77,7 +94,39 @@ const contributors = authors
   </div>
 </BaseLayout>
 
+<script>
+  const root = document.querySelector('[data-contributor-filter]');
+  const input = root?.querySelector<HTMLInputElement>('[data-contributor-input]');
+  const cards = Array.from(document.querySelectorAll<HTMLElement>('.contributor-card'));
+  input?.addEventListener('input', () => {
+    const q = input.value.trim().toLowerCase();
+    cards.forEach((c) => {
+      c.style.display = !q || (c.dataset.name ?? '').includes(q) ? '' : 'none';
+    });
+  });
+</script>
+
 <style>
+  .contributor-filter {
+    margin-top: 24px;
+  }
+  .contributor-filter input {
+    width: 100%;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--paper-2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+  }
+  .contributor-filter input::placeholder {
+    color: var(--ink-3);
+  }
+  .contributor-filter input:focus-visible {
+    outline: none;
+    border-color: var(--accent);
+  }
   .contributors-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

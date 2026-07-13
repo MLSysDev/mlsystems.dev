@@ -57,7 +57,10 @@ const breadcrumbJsonLd = {
     <a href={`/authors/${author.id}`} class="article-back">← {author.data.name}</a>
 
     <header class="page-head">
-      <h1 class="page-h1">Articles by {author.data.name}</h1>
+      <h1 class="page-h1">
+        <span class="page-h1-by">Articles by</span>
+        <a href={`/authors/${author.id}`} class="page-h1-name">{author.data.name}</a>
+      </h1>
       <p class="page-lede">
         {posts.length}
         {posts.length === 1 ? 'article' : 'articles'}.
@@ -105,6 +108,18 @@ const breadcrumbJsonLd = {
     letter-spacing: -0.01em;
     line-height: 1.1;
     margin: 0;
+  }
+  .page-h1-by {
+    font-style: italic;
+    color: var(--ink-3);
+  }
+  .page-h1-name {
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  .page-h1-name:hover {
+    color: var(--accent);
   }
   .page-lede {
     font-family: var(--font-mono);

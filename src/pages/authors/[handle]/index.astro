@@ -199,10 +199,13 @@ const breadcrumbJsonLd = {
       }
 
       {
-        posts.length > RECENT_LIMIT && (
-          <a href={`/authors/${author.id}/articles`} class="btn author-see-all">
-            See all {posts.length} articles →
-          </a>
+        posts.length > 0 && (
+          <div class="author-see-all-wrap">
+            <a href={`/authors/${author.id}/articles`} class="btn">
+              {' '}
+              See all articles →{' '}
+            </a>
+          </div>
         )
       }
     </section>
@@ -322,8 +325,10 @@ const breadcrumbJsonLd = {
   .author-articles .eyebrow {
     margin-bottom: 16px;
   }
-  .author-see-all {
-    margin-top: 28px;
+  .author-see-all-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
   }
 
   @media (max-width: 720px) {
