@@ -56,10 +56,7 @@ all.forEach((a) => {
                 <div class="blog-row-body">
                   <div class="blog-row-title-line">
                     <h3 class="blog-row-title">{a.data.title}</h3>
-                    <span class="blog-row-chip">{topicName(a.data.topicId)}</span>
-                    {a.data.tags?.slice(0, 2).map((t) => (
-                      <span class="blog-row-tag">#{t}</span>
-                    ))}
+                    <span class="chip chip--sm">{topicName(a.data.topicId)}</span>
                   </div>
                   <p class="blog-row-summary">{a.data.summary}</p>
                 </div>

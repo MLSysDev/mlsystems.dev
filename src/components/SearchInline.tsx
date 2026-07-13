@@ -232,7 +232,7 @@ export default function SearchInline() {
               <div className="search-section-label">Browse by topic</div>
               <div className="search-topic-chips">
                 {TOPICS.map((t) => (
-                  <a key={t.id} href={`/blog?topic=${t.id}`}>
+                  <a key={t.id} href={`/blog?topic=${t.id}`} className="chip chip--interactive">
                     {t.name}
                   </a>
                 ))}
@@ -242,7 +242,12 @@ export default function SearchInline() {
               <div className="search-section-label">Try searching</div>
               <div className="search-hint-terms">
                 {['attention', 'quantization', 'vLLM', 'FSDP', 'evals', 'agents'].map((t) => (
-                  <button key={t} type="button" onClick={() => setQuery(t)}>
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setQuery(t)}
+                    className="chip chip--interactive"
+                  >
                     {t}
                   </button>
                 ))}

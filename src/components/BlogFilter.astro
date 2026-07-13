@@ -14,14 +14,18 @@ const { activeTopic, allCount, topicCounts } = Astro.props;
 ---
 
 <div class="blog-filters" style="margin-bottom: 40px;" data-blog-filter>
-  <a href="/blog" class={`filter-chip ${activeTopic === 'all' ? 'active' : ''}`} data-topic="all">
+  <a
+    href="/blog"
+    class:list={['chip', 'chip--interactive', { 'is-active': activeTopic === 'all' }]}
+    data-topic="all"
+  >
     All ({allCount})
   </a>
   {
     TOPICS.map((t) => (
       <a
         href={`/blog?topic=${t.id}`}
-        class={`filter-chip ${activeTopic === t.id ? 'active' : ''}`}
+        class:list={['chip', 'chip--interactive', { 'is-active': activeTopic === t.id }]}
         data-topic={t.id}
       >
         {t.name} ({topicCounts[t.id] ?? 0})
@@ -46,7 +50,7 @@ const { activeTopic, allCount, topicCounts } = Astro.props;
     document
       .querySelectorAll<HTMLAnchorElement>('[data-blog-filter] a[data-topic]')
       .forEach((a) => {
-        a.classList.toggle('active', a.dataset.topic === topic);
+        a.classList.toggle('is-active', a.dataset.topic === topic);
       });
     // Trigger the filter script in blog/index.astro
     window.dispatchEvent(new PopStateEvent('popstate'));

@@ -106,7 +106,7 @@ const featuredTools = allTools
           featuredFinal.map((p) => (
             <a class="article-card" href={`/blog/${p.id}`}>
               <div class="article-meta">
-                <span class="article-topic">{topicName(p.data.topicId)}</span>
+                <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
               </div>
               <h3 class="article-title">{p.data.title}</h3>
               <p class="article-summary">{p.data.summary}</p>
@@ -142,14 +142,18 @@ const featuredTools = allTools
               {topicsWithPosts.map((t) => (
                 <button
                   type="button"
-                  class:list={['topic-tab', { active: t.id === defaultTopicId }]}
+                  class:list={[
+                    'chip',
+                    'chip--interactive',
+                    { 'is-active': t.id === defaultTopicId },
+                  ]}
                   role="tab"
                   aria-selected={t.id === defaultTopicId}
                   aria-controls={`topic-panel-${t.id}`}
                   data-topic={t.id}
                 >
                   {t.name}
-                  <span class="topic-tab-count">{t.totalCount}</span>
+                  <span class="chip__count">{t.totalCount}</span>
                 </button>
               ))}
             </div>
@@ -213,9 +217,7 @@ const featuredTools = allTools
               </div>
               <h3 class="tool-name">{tool.data.name}</h3>
               <p class="tool-desc">{tool.data.summary}</p>
-              <div class="tool-tag" style="color: var(--accent);">
-                · {tool.data.tag} ·
-              </div>
+              <span class="chip chip--sm chip--beta">{tool.data.tag}</span>
             </a>
           ))
         }
@@ -348,40 +350,13 @@ const featuredTools = allTools
   .topic-tabs:hover::-webkit-scrollbar-thumb {
     background: var(--ink-4);
   }
-  .topic-tab {
+  .topic-tabs .chip {
     flex-shrink: 0;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 14px;
-    background: transparent;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-pill);
-    color: var(--ink-2);
-    font: inherit;
-    font-size: 13px;
-    cursor: pointer;
-    white-space: nowrap;
     scroll-snap-align: start;
-    transition:
-      color 0.15s ease,
-      border-color 0.15s ease,
-      background 0.15s ease;
   }
-  .topic-tab:hover {
-    color: var(--accent);
-    border-color: var(--accent);
-  }
-  .topic-tab.active {
-    background: var(--accent);
-    color: var(--paper);
-    border-color: var(--accent);
-  }
-  .topic-tab-count {
-    font-family: var(--font-mono);
-    font-size: 10px;
-    opacity: 0.75;
-    padding-left: 2px;
+  .tool-card .chip {
+    margin-top: auto;
+    align-self: flex-start;
   }
 
   .topic-post-list {
@@ -496,7 +471,7 @@ const featuredTools = allTools
   });
 
   document.querySelectorAll<HTMLElement>('[data-topic-explorer]').forEach((root) => {
-    const tabs = root.querySelectorAll<HTMLButtonElement>('.topic-tab');
+    const tabs = root.querySelectorAll<HTMLButtonElement>('[role="tab"]');
     const panels = root.querySelectorAll<HTMLElement>('.topic-panel');
     tabs.forEach((tab) => {
       tab.addEventListener('click', () => {
@@ -504,7 +479,7 @@ const featuredTools = allTools
         root.dataset.activeTopic = topic;
         tabs.forEach((t) => {
           const isActive = t.dataset.topic === topic;
-          t.classList.toggle('active', isActive);
+          t.classList.toggle('is-active', isActive);
           t.setAttribute('aria-selected', String(isActive));
         });
         panels.forEach((p) => {
