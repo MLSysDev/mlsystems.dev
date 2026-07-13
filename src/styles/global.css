@@ -1501,6 +1501,10 @@ a.hashtag:hover {
   background: var(--paper-2);
   padding: 20px;
 }
+.article-body .inline-figure svg {
+  max-width: 100%;
+  height: auto;
+}
 .article-body .inline-figure-caption {
   font-family: var(--font-display);
   font-style: italic;

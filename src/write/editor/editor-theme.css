@@ -725,6 +725,100 @@
   border-radius: 6px;
 }
 
+.write-svg {
+  margin: 0;
+  width: 100%;
+  align-self: stretch;
+}
+.write-svg-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.write-svg-switch {
+  display: inline-flex;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.write-svg-switch button {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+  background: var(--paper);
+  border: none;
+  padding: 6px 18px;
+  cursor: pointer;
+}
+.write-svg-switch button + button {
+  border-left: 1px solid var(--line-2);
+}
+.write-svg-switch button.is-active {
+  background: var(--accent);
+  color: var(--paper);
+}
+.write-svg-switch button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.write-svg-clear {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.write-svg-clear:hover {
+  color: var(--accent);
+}
+.write-svg-code {
+  font-family: var(--font-mono) !important;
+  font-size: 12px !important;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+}
+.write-svg-preview {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 28px 24px;
+  text-align: center;
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.write-svg-preview svg {
+  display: block;
+  max-width: min(100%, 860px) !important;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+.write-svg .write-caption-input,
+.write-svg .write-block-form {
+  width: 100%;
+  box-sizing: border-box;
+}
+.write-svg-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+.write-svg-error strong {
+  color: var(--ink);
+}
+
 .bn-editor [data-content-type='table'] table {
   border-collapse: collapse;
   font-family: var(--font-sans, sans-serif);

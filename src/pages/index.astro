@@ -16,7 +16,8 @@ const allPosts = await Promise.all(
 const authors = await getCollection('authors');
 
 const featured = allPosts.filter((p) => p.data.featured).slice(0, 3);
-const featuredFinal = featured.length >= 3 ? featured : allPosts.slice(0, 3);
+const featuredIds = new Set(featured.map((p) => p.id));
+const recent = allPosts.filter((p) => !featuredIds.has(p.id)).slice(0, 6);
 
 const topicCounts = countPostsByTopic(allPosts);
 const articleCount = allPosts.length;
@@ -91,37 +92,75 @@ const featuredTools = allTools
     </div>
   </section>
 
-  <!-- LATEST -->
-  <section class="section" style="padding-top: 0;">
-    <div class="container">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Latest</div>
-          <h2 class="section-title">Recently published.</h2>
-        </div>
-        <a href="/blog" class="section-link">All articles →</a>
-      </div>
-      <div class="latest-grid">
-        {
-          featuredFinal.map((p) => (
-            <a class="article-card" href={`/blog/${p.id}`}>
-              <div class="article-meta">
-                <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
-              </div>
-              <h3 class="article-title">{p.data.title}</h3>
-              <p class="article-summary">{p.data.summary}</p>
-              <div class="article-foot">
-                <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
-                <span>
-                  {formatDate(p.data.date.toISOString())} · {p.data.readMin} min
-                </span>
-              </div>
+  {
+    featured.length > 0 && (
+      <section class="section" style="padding-top: 0;">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Featured</div>
+              <h2 class="section-title">Editors' picks.</h2>
+            </div>
+            <a href="/blog" class="section-link">
+              All articles →
             </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
+          </div>
+          <div class="latest-grid">
+            {featured.map((p) => (
+              <a class="article-card" href={`/blog/${p.id}`}>
+                <div class="article-meta">
+                  <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
+                </div>
+                <h3 class="article-title">{p.data.title}</h3>
+                <p class="article-summary">{p.data.summary}</p>
+                <div class="article-foot">
+                  <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
+                  <span>
+                    {formatDate(p.data.date.toISOString())} · {p.data.readMin} min
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    recent.length > 0 && (
+      <section class="section" style={featured.length > 0 ? undefined : 'padding-top: 0;'}>
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <div class="eyebrow">Latest</div>
+              <h2 class="section-title">Recently published.</h2>
+            </div>
+            <a href="/blog" class="section-link">
+              All articles →
+            </a>
+          </div>
+          <div class="latest-grid">
+            {recent.map((p) => (
+              <a class="article-card" href={`/blog/${p.id}`}>
+                <div class="article-meta">
+                  <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
+                </div>
+                <h3 class="article-title">{p.data.title}</h3>
+                <p class="article-summary">{p.data.summary}</p>
+                <div class="article-foot">
+                  <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
+                  <span>
+                    {formatDate(p.data.date.toISOString())} · {p.data.readMin} min
+                  </span>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   <!-- TOPICS -->
   <section class="section">
