@@ -27,7 +27,7 @@ html {
 
 :root {
   /* Type */
-  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-display: 'Newsreader', 'Iowan Old Style', Georgia, serif;
   --font-sans: 'Hanken Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
   --font-read: 'Source Serif 4', 'Source Serif Pro', Georgia, Cambria, 'Times New Roman', serif;
@@ -277,7 +277,7 @@ body {
 
 /* Type pairing modes */
 [data-typeset='editorial'] {
-  --font-display: 'Fraunces', Georgia, serif;
+  --font-display: 'Newsreader', Georgia, serif;
   --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='modern'] {
