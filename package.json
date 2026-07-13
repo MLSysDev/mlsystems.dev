@@ -41,7 +41,7 @@
     "@blocknote/react": "^0.51.4",
     "@fontsource/hanken-grotesk": "^5.2.8",
     "@fontsource/jetbrains-mono": "^5.2.8",
-    "@fontsource/newsreader": "^5.2.10",
+    "@fontsource/playfair-display": "^5.2.8",
     "@fontsource/source-serif-4": "^5.2.9",
     "@resvg/resvg-js": "^2.6.2",
     "astro": "^5.1.0",

@@ -4,6 +4,7 @@ import type { CollectionEntry } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { formatDate, sortPostsByDate, topicName } from '@/lib/data';
 import { SITE } from '@/lib/site';
+import { SOCIAL_ICONS } from '@/lib/socialIcons';
 
 export async function getStaticPaths() {
   const authors = await getCollection('authors');
@@ -18,6 +19,8 @@ interface Props {
 }
 const { author } = Astro.props;
 
+const RECENT_LIMIT = 5;
+
 const allRaw = await getCollection('posts', ({ data }) => !data.draft);
 const matching = allRaw.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
 const posts = (
@@ -25,6 +28,7 @@ const posts = (
     matching.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
   )
 ).sort(sortPostsByDate);
+const recent = posts.slice(0, RECENT_LIMIT);
 
 const topicCounts = posts.reduce<Record<string, number>>((acc, p) => {
   const name = topicName(p.data.topicId);
@@ -42,19 +46,26 @@ const initials = author.data.name
   .join('');
 const canonical = `${SITE.url}/authors/${author.id}`;
 
-const SOCIAL_FIELDS: { key: keyof typeof author.data; label: string; prefix?: string }[] = [
-  { key: 'github', label: 'GitHub' },
-  { key: 'twitter', label: 'Twitter' },
-  { key: 'linkedin', label: 'LinkedIn' },
-  { key: 'mastodon', label: 'Mastodon' },
-  { key: 'bluesky', label: 'Bluesky' },
-  { key: 'website', label: 'Website' },
-  { key: 'email', label: 'Email', prefix: 'mailto:' },
+const SOCIAL_FIELDS: { key: keyof typeof author.data; prefix?: string }[] = [
+  { key: 'github' },
+  { key: 'twitter' },
+  { key: 'linkedin' },
+  { key: 'mastodon' },
+  { key: 'bluesky' },
+  { key: 'website' },
+  { key: 'email', prefix: 'mailto:' },
 ];
 const socials = SOCIAL_FIELDS.flatMap((f) => {
   const value = author.data[f.key];
   if (!value || typeof value !== 'string') return [];
-  return [{ label: f.label, href: f.prefix ? `${f.prefix}${value}` : value }];
+  const icon = SOCIAL_ICONS[f.key as string];
+  return [
+    {
+      label: icon?.label ?? (f.key as string),
+      path: icon?.path ?? '',
+      href: f.prefix ? `${f.prefix}${value}` : value,
+    },
+  ];
 });
 const sameAs = socials.map((s) => s.href).filter((h) => h.startsWith('http'));
 
@@ -142,10 +153,14 @@ const breadcrumbJsonLd = {
               {socials.map((s) => (
                 <a
                   href={s.href}
+                  aria-label={s.label}
+                  title={s.label}
                   target={s.href.startsWith('mailto:') ? undefined : '_blank'}
                   rel={s.href.startsWith('mailto:') ? undefined : 'noreferrer'}
                 >
-                  {s.label} →
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d={s.path} />
+                  </svg>
                 </a>
               ))}
             </div>
@@ -156,7 +171,7 @@ const breadcrumbJsonLd = {
 
     <section class="author-articles">
       <div class="eyebrow">
-        {posts.length === 1 ? '1 article' : `${posts.length} articles`}
+        {posts.length > RECENT_LIMIT ? `Recent articles` : `${posts.length} articles`}
       </div>
 
       {
@@ -164,24 +179,30 @@ const breadcrumbJsonLd = {
           <p style="color: var(--ink-3); padding: 40px 0;">No published articles yet.</p>
         ) : (
           <div class="blog-list">
-            {posts.map((p) => (
+            {recent.map((p) => (
               <a href={`/blog/${p.id}`} class="blog-row" data-topic={p.data.topicId}>
-                <div>
-                  <h3 class="blog-row-title">{p.data.title}</h3>
+                <div class="blog-row-body">
+                  <div class="blog-row-title-line">
+                    <h3 class="blog-row-title">{p.data.title}</h3>
+                    <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
+                  </div>
                   <p class="blog-row-summary">{p.data.summary}</p>
                 </div>
-                <div class="blog-row-author">
-                  <strong>{p.authors.map((au) => au.data.name).join(' · ')}</strong>
-                  {topicName(p.data.topicId)}
-                </div>
-                <div class="blog-row-time">
-                  {formatDate(p.data.date.toISOString())}
-                  <br />
-                  {p.data.readMin} min
+                <div class="blog-row-meta">
+                  <strong>{formatDate(p.data.date.toISOString())}</strong>
+                  <span>{p.data.readMin} min</span>
                 </div>
               </a>
             ))}
           </div>
+        )
+      }
+
+      {
+        posts.length > RECENT_LIMIT && (
+          <a href={`/authors/${author.id}/articles`} class="btn author-see-all">
+            See all {posts.length} articles →
+          </a>
         )
       }
     </section>
@@ -269,20 +290,40 @@ const breadcrumbJsonLd = {
   }
   .author-links {
     display: flex;
-    gap: 18px;
+    gap: 10px;
     flex-wrap: wrap;
-    margin-top: 18px;
-    font-family: var(--font-mono);
-    font-size: 13px;
+    margin-top: 20px;
   }
   .author-links a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius-circle);
+    color: var(--ink-2);
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .author-links a:hover {
     color: var(--accent);
+    border-color: var(--accent);
+  }
+  .author-links svg {
+    width: 17px;
+    height: 17px;
+    fill: currentColor;
   }
   .author-articles {
     margin-top: 8px;
   }
   .author-articles .eyebrow {
     margin-bottom: 16px;
+  }
+  .author-see-all {
+    margin-top: 28px;
   }
 
   @media (max-width: 720px) {
