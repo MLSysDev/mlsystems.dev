@@ -31,7 +31,7 @@ const block = (
 const meta: PostMeta = {
   title: 'Test post',
   summary: 'A summary.',
-  author: 'guest',
+  authors: ['guest'],
   writerName: '',
   topicId: 'inference',
   topicName: 'Inference & Serving',
@@ -441,5 +441,18 @@ describe('frontmatter', () => {
     expect(fm).not.toContain('tags:');
     expect(fm).not.toContain('cover:');
     expect(fm).toContain('readMin: 1');
+  });
+
+  it('serializes multiple authors into the frontmatter array', () => {
+    const { mdx } = serializePost(
+      { ...meta, authors: ['dinesh', 'felix'] },
+      [block('paragraph', {}, [t('hi')])],
+      {
+        tableVariants: {},
+        today,
+      },
+    );
+    const line = mdx.split('\n').find((l) => l.startsWith('authors:'));
+    expect(line).toBe("authors: ['dinesh', 'felix']");
   });
 });

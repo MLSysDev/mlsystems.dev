@@ -17,7 +17,7 @@ export type SBlock = {
 export type PostMeta = {
   title: string;
   summary: string;
-  author: string;
+  authors: string[];
   writerName: string;
   topicId: string;
   topicName: string;
@@ -361,7 +361,7 @@ function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptio
   const lines = [
     `title: ${yaml(meta.title)}`,
     `summary: ${yaml(meta.summary)}`,
-    `authors: [${yaml(meta.author)}]`,
+    `authors: [${(meta.authors.length ? meta.authors : ['guest']).map(yaml).join(', ')}]`,
     `date: ${yaml(opts.today.toISOString().slice(0, 10))}`,
     `readMin: ${readMin}`,
     `topic: ${yaml(meta.topicName)}`,

@@ -48,16 +48,41 @@ export function MetaForm({ authors, topics, meta, onChange }: Props) {
 
       <div className="write-meta-row">
         <label>
-          Author
-          <select value={meta.author} onChange={(e) => set({ author: e.target.value })}>
-            {authors.map((a) => (
-              <option key={a.id} value={a.id}>
-                {a.name} (@{a.id})
-              </option>
-            ))}
-          </select>
+          Authors
+          <span className="write-authors">
+            {meta.authors.map((id) => {
+              const a = authors.find((x) => x.id === id);
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className="write-tag"
+                  title="Remove author"
+                  onClick={() => set({ authors: meta.authors.filter((x) => x !== id) })}
+                >
+                  {a ? a.name : id} ✕
+                </button>
+              );
+            })}
+            <select
+              value=""
+              aria-label="Add author"
+              onChange={(e) => {
+                if (e.target.value) set({ authors: [...meta.authors, e.target.value] });
+              }}
+            >
+              <option value="">Add author…</option>
+              {authors
+                .filter((a) => !meta.authors.includes(a.id))
+                .map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} (@{a.id})
+                  </option>
+                ))}
+            </select>
+          </span>
         </label>
-        {meta.author === 'guest' && (
+        {meta.authors.includes('guest') && (
           <label>
             Your name
             <input

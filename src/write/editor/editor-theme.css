@@ -110,6 +110,27 @@
   padding: 2px 8px;
   cursor: pointer;
 }
+.write-tag:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.write-authors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  padding: 5px 8px;
+  background: var(--paper-2, var(--paper));
+}
+.write-authors select {
+  border: none;
+  background: none;
+  min-width: 130px;
+  padding: 2px;
+}
 
 .write-banner {
   display: flex;

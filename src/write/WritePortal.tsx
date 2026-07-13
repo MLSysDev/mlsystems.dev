@@ -73,11 +73,11 @@ function isEmptyDraft(meta: PostMeta, blocks: SBlock[]): boolean {
   return metaEmpty && blocksEmpty;
 }
 
-function emptyMeta(defaultAuthor: string): PostMeta {
+function emptyMeta(): PostMeta {
   return {
     title: '',
     summary: '',
-    author: defaultAuthor,
+    authors: [],
     writerName: '',
     topicId: '',
     topicName: '',
@@ -89,7 +89,7 @@ function emptyMeta(defaultAuthor: string): PostMeta {
 
 export default function WritePortal({ authors, topics, repoUrl, contactEmail }: Props) {
   const editor = useCreateBlockNote({ schema });
-  const [meta, setMeta] = useState<PostMeta>(() => emptyMeta(authors[0]?.id ?? 'guest'));
+  const [meta, setMeta] = useState<PostMeta>(() => emptyMeta());
   const [tableVariants, setTableVariants] = useState<Record<string, TableStyle>>({});
   const [currentTableId, setCurrentTableId] = useState<string | null>(null);
   const [barPos, setBarPos] = useState<{ top: number; left: number } | null>(null);
@@ -178,7 +178,16 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     if (draft) {
       await restoreAssets().catch(() => setStorageOff(true));
       editor.replaceBlocks(editor.document, draft.blocks as never);
-      setMeta(draft.meta);
+      // Migrate legacy single-author drafts to the authors[] shape.
+      const legacy = draft.meta as PostMeta & { author?: string };
+      setMeta({
+        ...draft.meta,
+        authors: Array.isArray(draft.meta.authors)
+          ? draft.meta.authors
+          : legacy.author
+            ? [legacy.author]
+            : ['guest'],
+      });
       setTableVariants(draft.tableVariants ?? {});
     }
     setRestore(null);
