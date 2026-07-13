@@ -21,6 +21,11 @@ import { validate } from './serialize/validate';
 import { buildZip } from './serialize/toZip';
 import { buildSource } from './serialize/source';
 import { fetchExisting } from './serialize/fetchExisting';
+import {
+  assemblePostFiles,
+  createPullRequest,
+  isConfigured as isGithubConfigured,
+} from './publish/github';
 import { allAssets, clearAssets } from './storage/assets';
 import {
   clearDraft,
@@ -124,6 +129,11 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [openError, setOpenError] = useState<string | null>(null);
   const [openUrl, setOpenUrl] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const githubEnabled = isGithubConfigured();
+  const [publishOpen, setPublishOpen] = useState(false);
+  const [publishStage, setPublishStage] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [prUrl, setPrUrl] = useState<string | null>(null);
 
   const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
   const images = collectImages(editor.document as unknown as SBlock[]);
@@ -283,6 +293,40 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       setIssues(['Something went wrong while packaging your post. Please try downloading again.']);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const openPublish = () => {
+    const blocks = editor.document as unknown as SBlock[];
+    const found = validate(meta, blocks);
+    setIssues(found);
+    if (found.length > 0) return;
+    setPublishError(null);
+    setPrUrl(null);
+    setPublishStage('idle');
+    setPublishOpen(true);
+  };
+
+  const submitToGithub = async () => {
+    const blocks = editor.document as unknown as SBlock[];
+    setPublishStage('working');
+    setPublishError(null);
+    try {
+      const serialized = serializePost(meta, blocks, { tableVariants, today: new Date() });
+      const sourceJson = buildSource(meta, blocks, tableVariants);
+      const files = await assemblePostFiles(meta.slug, serialized, sourceJson, allAssets());
+      const pr = await createPullRequest({
+        slug: meta.slug,
+        title: meta.title || 'Untitled',
+        files,
+      });
+      setPrUrl(pr.url);
+      setPublishStage('done');
+      clearDraft();
+      await clearStoredAssets().catch(() => undefined);
+    } catch (err) {
+      setPublishStage('error');
+      setPublishError(err instanceof Error ? err.message : 'Could not create the pull request.');
     }
   };
 
@@ -523,10 +567,82 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         {storageOff && (
           <span className="write-note-inline">Autosave is off — your browser blocked storage.</span>
         )}
-        <button type="button" className="write-download" disabled={busy} onClick={download}>
+        <button type="button" className="write-ghost-btn" disabled={busy} onClick={download}>
           {busy ? 'Packaging…' : 'Download post'}
         </button>
+        {githubEnabled && (
+          <button type="button" className="write-download" disabled={busy} onClick={openPublish}>
+            Post to GitHub →
+          </button>
+        )}
       </div>
+
+      {publishOpen && (
+        <div
+          className="write-modal-backdrop"
+          onClick={() => publishStage !== 'working' && setPublishOpen(false)}
+          role="presentation"
+        >
+          <div
+            className="write-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Post to GitHub"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {publishStage === 'done' ? (
+              <>
+                <h3>Pull request opened ✓</h3>
+                <p>
+                  Your post is submitted as a pull request. A maintainer will review and publish it.
+                </p>
+                <div className="write-modal-actions">
+                  {prUrl && (
+                    <a className="write-download" href={prUrl} target="_blank" rel="noreferrer">
+                      View pull request →
+                    </a>
+                  )}
+                  <button
+                    type="button"
+                    className="write-ghost"
+                    onClick={() => setPublishOpen(false)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h3>Post to GitHub</h3>
+                <p>
+                  We’ll open a pull request with your post — images and all. After it’s created,
+                  comment your author details (name, short bio, links) so a maintainer can review
+                  and publish.
+                </p>
+                {publishError && <p className="write-modal-error">{publishError}</p>}
+                <div className="write-modal-actions">
+                  <button
+                    type="button"
+                    className="write-ghost"
+                    disabled={publishStage === 'working'}
+                    onClick={() => setPublishOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="write-download"
+                    disabled={publishStage === 'working'}
+                    onClick={() => void submitToGithub()}
+                  >
+                    {publishStage === 'working' ? 'Opening pull request…' : 'Create pull request'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

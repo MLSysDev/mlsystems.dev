@@ -33,6 +33,9 @@ export const SITE = {
   pitchEmail: 'admin@mlsystems.dev',
   // Used in nav, footer, etc.
   startYear: 2026,
+  // Shows the "Post to GitHub" button in /write. Flip to true once the GitHub App
+  // credentials are set in the Cloudflare Function env (see /api/create-pr).
+  githubPostEnabled: false,
 };
 
 export const APPEARANCE = {
