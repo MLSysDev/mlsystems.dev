@@ -17,7 +17,7 @@ jobs:
     # Only Cloudflare's deploy comment, and only on pull requests.
     if: >
       github.event.issue.pull_request &&
-      github.event.comment.user.login == 'cloudflare-workers-and-pages' &&
+      startsWith(github.event.comment.user.login, 'cloudflare-workers-and-pages') &&
       contains(github.event.comment.body, 'Deploy successful')
     runs-on: ubuntu-latest
     steps:

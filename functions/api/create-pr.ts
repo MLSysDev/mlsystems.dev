@@ -22,13 +22,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function box(lines: string[], minWidth = 0): string {
-  const width = Math.max(minWidth, ...lines.map((l) => l.length));
-  const bar = '─'.repeat(width + 2);
-  const rows = lines.map((l) => `│ ${l.padEnd(width)} │`);
-  return ['```', `╭${bar}╮`, ...rows, `╰${bar}╯`, '```'].join('\n');
-}
-
 function b64urlString(s: string): string {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -186,8 +179,18 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 
     const banner = (() => {
       const width = 52;
+      const bold = (s: string) =>
+        [...s]
+          .map((ch) => {
+            const c = ch.codePointAt(0) ?? 0;
+            if (c >= 65 && c <= 90) return String.fromCodePoint(0x1d5d4 + (c - 65));
+            if (c >= 97 && c <= 122) return String.fromCodePoint(0x1d5ee + (c - 97));
+            if (c >= 48 && c <= 57) return String.fromCodePoint(0x1d7ec + (c - 48));
+            return ch;
+          })
+          .join('');
       const center = (s: string) => {
-        const total = width - s.length;
+        const total = width - [...s].length;
         const left = Math.floor(total / 2);
         return ' '.repeat(left) + s + ' '.repeat(total - left);
       };
@@ -197,8 +200,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
         '```',
         `╔${bar}╗`,
         `║${blank}║`,
-        `║${center('M L S Y S T E M S . D E V')}║`,
-        `║${center('N E W   A R T I C L E')}║`,
+        `║${center(bold('M L S Y S T E M S . D E V'))}║`,
         `║${blank}║`,
         `╚${bar}╝`,
         '```',
@@ -210,35 +212,16 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       '',
       `## ${title}`,
       '',
-      'Submitted through the **/write** editor on mlsystems.dev.',
-      '',
-      '### Preview it',
-      "Once the Cloudflare check below finishes, a link to your post's preview page is posted here as a comment. Open it to see how the post will look once published.",
-      '',
       '> [!IMPORTANT]',
-      '> **Please comment below to claim this post** — tag yourself so we know who wrote it.',
-      '> Commenting from your GitHub account already identifies you; just say which **author name**',
-      '> it should be published under.',
+      '> **Claim this post** — comment below with the **author name** to publish under.',
+      '> Your GitHub comment already identifies you.',
       '',
-      box(
-        [
-          'NEW AUTHOR?',
-          '',
-          'Welcome to ML Systems — and thank you for contributing!',
-          'Please share your details so we can create your author profile:',
-          '',
-          '  - Short bio (1–2 sentences)',
-          '  - Links: website, GitHub, X/Twitter, LinkedIn',
-          '  - (optional) an email to show',
-          '',
-          'Prefer to email your details instead?',
-          `Send this page's link and the details above to ${CONTACT_EMAIL}`,
-        ],
-        64,
-      ),
+      '> [!NOTE]',
+      '> **New author?** Welcome 🎉 Add a short bio and links (site, GitHub, X, LinkedIn)',
+      `> in a comment so we can set up your author page — or email them to ${CONTACT_EMAIL}.`,
       '',
-      '### Need to change something?',
-      'Just edit in the /write portal and submit again — it opens a fresh request.',
+      '> [!TIP]',
+      '> **Preview** — a link to your post appears below once the Cloudflare check passes.',
       '',
       `<!-- post-slug: ${slug} -->`,
     ].join('\n');
