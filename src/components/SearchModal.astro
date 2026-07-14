@@ -1,8 +1,11 @@
 ---
-import { TOPICS } from '@/lib/data';
+import { TOPICS } from '@/lib/topics';
 
 const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
 ---
+
+<!-- Topics for the client-side quick matcher — collections aren't readable in the browser. -->
+<script type="application/json" data-search-topics set:html={JSON.stringify(TOPICS)} />
 
 <div
   class="search-modal"
@@ -104,8 +107,11 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
 </div>
 
 <script>
-  import { TOPICS } from '@/lib/data';
   import { loadPagefind } from '@/lib/pagefind';
+
+  const TOPICS: { id: string; name: string; desc: string }[] = JSON.parse(
+    document.querySelector('[data-search-topics]')?.textContent ?? '[]',
+  );
 
   type Group = 'topic' | 'article' | 'tool' | 'author' | 'page';
   type RowItem = { group: Group; url: string; title: string; excerpt?: string; meta?: string };

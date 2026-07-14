@@ -61,6 +61,24 @@ export function validate(meta: PostMeta, blocks: SBlock[]): string[] {
   return [...new Set(issues)];
 }
 
+// Non-blocking SEO/quality nudges shown in the publish dialog.
+export function suggest(meta: PostMeta): string[] {
+  const s: string[] = [];
+  const title = meta.title.trim().length;
+  if (title > 60) s.push(`Title is ${title} characters — search results cut off around 60.`);
+  const sum = meta.summary.trim().length;
+  if (sum > 160) {
+    s.push(`Summary is ${sum} characters — it doubles as the meta description; ~155 fits.`);
+  } else if (sum > 0 && sum < 50) {
+    s.push(
+      'Summary is one short phrase — a full sentence reads better in search and social cards.',
+    );
+  }
+  if (meta.tags.length === 0)
+    s.push('No tags yet — tags power tag pages and related-article matching.');
+  return s;
+}
+
 export function slugify(title: string): string {
   return title
     .toLowerCase()

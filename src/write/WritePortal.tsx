@@ -24,8 +24,10 @@ import {
 import { OpenExistingDialog } from './dialogs/OpenExistingDialog';
 import { PublishDialog, type PublishStage } from './dialogs/PublishDialog';
 import { MetaForm, type Option } from './meta/MetaForm';
+import { PreviewPane } from './preview/PreviewPane';
+import { usePasteImages } from './editor/usePasteImages';
 import { serializePost, type PostMeta, type SBlock, type TableStyle } from './serialize/toMdx';
-import { validate } from './serialize/validate';
+import { suggest, validate } from './serialize/validate';
 import { buildZip } from './serialize/toZip';
 import { buildSource } from './serialize/source';
 import { authorPath, buildAuthorJson } from './serialize/author';
@@ -99,9 +101,19 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [publishStage, setPublishStage] = useState<PublishStage>('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
   const [prUrl, setPrUrl] = useState<string | null>(null);
+  const [previewOn, setPreviewOn] = useState(false);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   // Single place for the BlockNote → serializer block-shape cast.
   const docBlocks = useCallback(() => editor.document as unknown as SBlock[], [editor]);
+
+  const bylineNames =
+    meta.authors
+      .map((id) => authors.find((a) => a.id === id)?.name ?? id)
+      .filter(Boolean)
+      .join(', ') ||
+    meta.writerName ||
+    'You';
 
   const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
   const images = useMemo(() => collectImages(docBlocks()), [docBlocks, editor.document]);
@@ -171,6 +183,20 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     if (isEmptyDraft(meta, docBlocks())) return;
     saveDraftDebounced(getDraft, () => setStorageOff(true));
   }, [getDraft, restore, editor, meta]);
+
+  usePasteImages(editor, autosave);
+
+  const continueWriting = () => {
+    const doc = editor.document;
+    const last = doc[doc.length - 1];
+    const lastIsEmptyParagraph =
+      last.type === 'paragraph' && (!Array.isArray(last.content) || last.content.length === 0);
+    const target = lastIsEmptyParagraph
+      ? last
+      : (editor.insertBlocks([{ type: 'paragraph' }], last, 'after')[0] ?? last);
+    editor.setTextCursorPosition(target, 'end');
+    editor.focus();
+  };
 
   useEditorSelectionChange(() => {
     try {
@@ -280,6 +306,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     const found = [...validate(meta, blocks), ...oversizedIssues()];
     setIssues(found);
     if (found.length > 0) return;
+    setSuggestions(suggest(meta));
     setPublishError(null);
     setPrUrl(null);
     setPublishStage('idle');
@@ -378,16 +405,27 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         onClose={() => setOpenDialog(false)}
       />
 
-      <MetaForm
-        authors={authors}
-        topics={topics}
-        meta={meta}
-        images={images}
-        onChange={(m) => {
-          setMeta(m);
-          autosave();
-        }}
-      />
+      {!previewOn && (
+        <MetaForm
+          authors={authors}
+          topics={topics}
+          meta={meta}
+          images={images}
+          onChange={(m) => {
+            setMeta(m);
+            autosave();
+          }}
+        />
+      )}
+
+      {previewOn && (
+        <PreviewPane
+          meta={meta}
+          blocks={docBlocks()}
+          tableVariants={tableVariants}
+          byline={bylineNames}
+        />
+      )}
 
       {currentTableId &&
         barPos &&
@@ -444,7 +482,11 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       )}
 
       <style>{variantCss}</style>
-      <div className="write-canvas" onKeyDownCapture={handleSelectAll}>
+      <div
+        className="write-canvas"
+        style={previewOn ? { display: 'none' } : undefined}
+        onKeyDownCapture={handleSelectAll}
+      >
         <BlockNoteView
           editor={editor}
           theme={siteTheme}
@@ -461,6 +503,17 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
             getItems={async (query) => filterSuggestionItems(slashItems, query)}
           />
         </BlockNoteView>
+        {!restore && (
+          <button type="button" className="write-continue" onClick={continueWriting}>
+            ＋ Continue writing — or type &lsquo;/&rsquo; for blocks
+          </button>
+        )}
+      </div>
+
+      <div className="write-preview-toggle-row">
+        <button type="button" className="write-preview-btn" onClick={() => setPreviewOn((v) => !v)}>
+          {previewOn ? '✕ Back to writing' : '◉ Preview'}
+        </button>
       </div>
 
       {issues.length > 0 && (
@@ -507,7 +560,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         </div>
       )}
 
-      <div className="write-actions">
+      <div className="write-actions" style={previewOn ? { display: 'none' } : undefined}>
         {storageOff && (
           <span className="write-note-inline">Autosave is off — your browser blocked storage.</span>
         )}
@@ -526,6 +579,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         stage={publishStage}
         error={publishError}
         prUrl={prUrl}
+        suggestions={suggestions}
         onSubmit={() => void submitToGithub()}
         onClose={() => setPublishOpen(false)}
       />

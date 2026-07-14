@@ -2,7 +2,8 @@ import rss from '@astrojs/rss';
 import { getCollection } from 'astro:content';
 import type { APIContext } from 'astro';
 import { SITE } from '@/lib/site';
-import { sortPostsByDate, topicName } from '@/lib/data';
+import { sortPostsByDate } from '@/lib/data';
+import { topicName } from '@/lib/topics';
 import { authorNames, resolvePostAuthors } from '@/lib/posts';
 
 export async function GET(context: APIContext) {

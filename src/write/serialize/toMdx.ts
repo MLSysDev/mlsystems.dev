@@ -78,7 +78,7 @@ export function escapeText(s: string): string {
     .replace(/^(\s{0,3})([>#+-])/, '$1\\$2');
 }
 
-const TEXT_COLORS: Record<string, string> = {
+export const TEXT_COLORS: Record<string, string> = {
   gray: '#9b9a97',
   brown: '#64473a',
   red: '#e03e3e',
@@ -90,7 +90,7 @@ const TEXT_COLORS: Record<string, string> = {
   pink: '#c14c8a',
 };
 
-const BG_COLORS: Record<string, string> = {
+export const BG_COLORS: Record<string, string> = {
   gray: '#ebeced',
   brown: '#e9e5e3',
   red: '#fbe4e4',

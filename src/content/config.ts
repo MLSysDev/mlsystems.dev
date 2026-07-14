@@ -1,6 +1,12 @@
+import { readdirSync } from 'node:fs';
 import { defineCollection, reference, z } from 'astro:content';
 import { glob } from 'astro/loaders';
-import { TOPIC_IDS } from '@/lib/data';
+
+// Topic ids come from the data files themselves, so post frontmatter is
+// validated against whatever topics exist — no code change to add one.
+const TOPIC_IDS = readdirSync(new URL('./topics', import.meta.url))
+  .filter((f) => f.endsWith('.json'))
+  .map((f) => f.replace(/\.json$/, '')) as [string, ...string[]];
 
 const authors = defineCollection({
   loader: glob({ pattern: '**/*.json', base: './src/content/authors' }),
@@ -66,4 +72,25 @@ const tools = defineCollection({
     }),
 });
 
-export const collections = { posts, authors, tools };
+const topics = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/topics' }),
+  schema: z.object({
+    order: z.number().int(),
+    name: z.string(),
+    desc: z.string(),
+  }),
+});
+
+const externalTools = defineCollection({
+  loader: glob({ pattern: '*.json', base: './src/content/external-tools' }),
+  schema: z.object({
+    order: z.number().int(),
+    name: z.string(),
+    source: z.string(),
+    desc: z.string(),
+    href: z.string().url(),
+    category: z.enum(['Tokenization', 'Memory & VRAM', 'Architecture', 'Training & Scaling']),
+  }),
+});
+
+export const collections = { posts, authors, tools, topics, externalTools };

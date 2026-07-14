@@ -1192,6 +1192,8 @@ a.hashtag:hover {
   gap: 16px;
   overflow-x: auto;
   scroll-snap-type: x proximity;
+  padding-top: 4px;
+  margin-top: -4px;
   padding-bottom: 10px;
   scrollbar-width: thin;
   scrollbar-color: var(--line-2) transparent;
@@ -1853,6 +1855,7 @@ a.hashtag:hover {
 .article-body table {
   width: max-content;
   max-width: 100%;
+  margin-inline: auto;
   border-collapse: collapse;
   font-family: var(--font-sans);
   font-size: 15px;

@@ -5,7 +5,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import BlogFilter from '@/components/BlogFilter.astro';
 import Pager from '@/components/Pager.astro';
 import PostRow from '@/components/PostRow.astro';
-import { TOPICS, formatMonth, sortPostsByDate } from '@/lib/data';
+import { formatMonth, sortPostsByDate } from '@/lib/data';
+import { TOPICS } from '@/lib/topics';
 import { resolvePostAuthors, type PostWithAuthors } from '@/lib/posts';
 
 export const getStaticPaths = (async ({ paginate }) => {
@@ -15,7 +16,7 @@ export const getStaticPaths = (async ({ paginate }) => {
   TOPICS.forEach((t) => {
     topicCounts[t.id] = all.filter((p) => p.data.topicId === t.id).length;
   });
-  return paginate(all, { pageSize: 24, props: { topicCounts } });
+  return paginate(all, { pageSize: 20, props: { topicCounts } });
 }) satisfies GetStaticPaths;
 
 interface Props {

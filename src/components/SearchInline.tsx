@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { TOPICS } from '@/lib/data';
 import { loadPagefind, type PagefindResultData } from '@/lib/pagefind';
+
+type Topic = { id: string; name: string; desc: string };
 
 type Group = 'topic' | 'article' | 'tool' | 'author' | 'page';
 
@@ -43,7 +44,7 @@ function buildMeta(group: Group, meta: PagefindResultData['meta']): string {
   return parts.join(' · ');
 }
 
-export default function SearchInline() {
+export default function SearchInline({ topics }: { topics: Topic[] }) {
   const [query, setQuery] = useState('');
   const [pageResults, setPageResults] = useState<PagefindResultData[]>([]);
   const [loading, setLoading] = useState(false);
@@ -69,9 +70,8 @@ export default function SearchInline() {
   const topicMatches = useMemo<RowItem[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return TOPICS.filter(
-      (t) => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q),
-    )
+    return topics
+      .filter((t) => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q))
       .slice(0, 3)
       .map((t) => ({
         group: 'topic' as const,
@@ -79,7 +79,7 @@ export default function SearchInline() {
         title: t.name,
         excerpt: t.desc,
       }));
-  }, [query]);
+  }, [query, topics]);
 
   const rows = useMemo<RowItem[]>(() => {
     const fromPagefind: RowItem[] = pageResults.map((r) => {
@@ -210,7 +210,7 @@ export default function SearchInline() {
             <div className="search-section">
               <div className="search-section-label">Browse by topic</div>
               <div className="search-topic-chips">
-                {TOPICS.map((t) => (
+                {topics.map((t) => (
                   <a key={t.id} href={`/topics/${t.id}`} className="chip chip--interactive">
                     {t.name}
                   </a>

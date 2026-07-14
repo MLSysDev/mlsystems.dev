@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { generateOgPng } from '@/lib/og';
 import { pngResponseWithFallback } from '@/lib/og-response';
-import { topicName } from '@/lib/data';
+import { topicName } from '@/lib/topics';
 
 // Per-post OG cards (title composited over the cover) render ONLY for posts that
 // opted in via `ogCard: true` + a cover. Everyone else uses the raw cover or the

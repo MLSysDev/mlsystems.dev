@@ -3,9 +3,11 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Playground from '@/components/Playground.tsx';
-import { EXTERNAL_TOOLS } from '@/lib/data';
-
 const allTools = await getCollection('tools', ({ data }) => !data.draft);
+
+const EXTERNAL_TOOLS = (await getCollection('externalTools'))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((e) => e.data);
 
 const TAG_ORDER: Record<string, number> = { Live: 0, Beta: 1, Experimental: 2, Soon: 3 };
 const coreTools = allTools

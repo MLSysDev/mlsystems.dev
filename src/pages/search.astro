@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import SearchInline from '@/components/SearchInline.tsx';
-import { TOPICS } from '@/lib/data';
+import { TOPICS } from '@/lib/topics';
 ---
 
 <BaseLayout
@@ -17,7 +17,7 @@ import { TOPICS } from '@/lib/data';
       <p class="page-lede">Articles, topics, tools, and authors — one box.</p>
     </div>
 
-    <SearchInline client:load />
+    <SearchInline topics={TOPICS} client:load />
 
     <noscript>
       <div class="search-noscript">

@@ -1,0 +1,8 @@
+{
+  "order": 4,
+  "name": "APXML VRAM Calculator",
+  "source": "APXML",
+  "desc": "Inference and fine-tuning VRAM calculator covering Nvidia GPUs and Apple Silicon. Good for picking hardware for a target model.",
+  "href": "https://apxml.com/tools/vram-calculator",
+  "category": "Memory & VRAM"
+}

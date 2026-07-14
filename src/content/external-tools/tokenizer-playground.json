@@ -1,0 +1,8 @@
+{
+  "order": 1,
+  "name": "The Tokenizer Playground",
+  "source": "Xenova · Hugging Face",
+  "desc": "Tokenize the same text with GPT-4, Claude, LLaMA, Mistral, Gemma, and more — switch tokenizers instantly, or load any Hugging Face tokenizer. Runs in the browser.",
+  "href": "https://huggingface.co/spaces/Xenova/the-tokenizer-playground",
+  "category": "Tokenization"
+}

@@ -5,6 +5,26 @@ interface Props {
   page: Page<unknown>;
 }
 const { page } = Astro.props;
+
+const base =
+  page.url.first ??
+  (page.currentPage === 1 ? page.url.current : page.url.current.replace(/\/\d+$/, ''));
+const urlFor = (n: number) => (n === 1 ? base : `${base}/${n}`);
+
+// First, last, and a one-page window around the current page; gaps become ellipses.
+const shown = [
+  ...new Set(
+    [1, page.currentPage - 1, page.currentPage, page.currentPage + 1, page.lastPage].filter(
+      (n) => n >= 1 && n <= page.lastPage,
+    ),
+  ),
+].sort((a, b) => a - b);
+
+const items: (number | '…')[] = [];
+shown.forEach((n, i) => {
+  if (i > 0 && n - shown[i - 1] > 1) items.push('…');
+  items.push(n);
+});
 ---
 
 {
@@ -17,8 +37,22 @@ const { page } = Astro.props;
       ) : (
         <span aria-hidden="true" />
       )}
-      <span class="pager-count">
-        {page.currentPage} / {page.lastPage}
+      <span class="pager-pages">
+        {items.map((it) =>
+          it === '…' ? (
+            <span class="pager-gap" aria-hidden="true">
+              …
+            </span>
+          ) : it === page.currentPage ? (
+            <span class="pager-num" aria-current="page">
+              {it}
+            </span>
+          ) : (
+            <a class="pager-num" href={urlFor(it)}>
+              {it}
+            </a>
+          ),
+        )}
       </span>
       {page.url.next ? (
         <a class="pager-link" href={page.url.next}>
@@ -48,8 +82,26 @@ const { page } = Astro.props;
   .pager-link:hover {
     text-decoration: underline;
   }
-  .pager-count {
+  .pager-pages {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pager-num {
+    min-width: 28px;
+    padding: 3px 6px;
+    text-align: center;
+    border-radius: var(--radius-pill);
     color: var(--ink-3);
-    letter-spacing: 0.08em;
+  }
+  a.pager-num:hover {
+    color: var(--accent);
+  }
+  .pager-num[aria-current='page'] {
+    color: var(--accent);
+    border: 1px solid var(--accent-soft);
+  }
+  .pager-gap {
+    color: var(--ink-3);
   }
 </style>
