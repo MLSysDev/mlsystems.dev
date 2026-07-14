@@ -615,7 +615,12 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           >
             {publishStage === 'done' ? (
               <>
-                <h3>Your post has been submitted ✓</h3>
+                <h3>
+                  Your post has been submitted{' '}
+                  <span className="write-celebrate" aria-hidden="true">
+                    🎉
+                  </span>
+                </h3>
                 <p>
                   Open the request and comment to claim it — that&rsquo;s how a maintainer knows
                   it&rsquo;s yours.
