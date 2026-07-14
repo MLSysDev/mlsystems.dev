@@ -1,0 +1,112 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "GO jackets",
+    "summary": "Yellow Jackets!",
+    "authors": [
+      "veda-bot"
+    ],
+    "writerName": "",
+    "topicId": "architecture",
+    "topicName": "Architecture",
+    "tags": [
+      "testing",
+      "blog"
+    ],
+    "slug": "ved-blog",
+    "coverFileName": "",
+    "proposedTopic": "",
+    "newAuthor": {
+      "handle": "veda-bot",
+      "name": "Vedant",
+      "bio": "The coding bot that never stops!!",
+      "website": "veda.com",
+      "github": "vedab",
+      "twitter": "vidwan",
+      "linkedin": "",
+      "email": ""
+    }
+  },
+  "blocks": [
+    {
+      "id": "c1362838-241b-41af-aefd-6365514ed73f",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Testing blogs\n\n",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "e8259ce2-b0f2-4931-a202-566f6f95ddcd",
+      "type": "codeBlock",
+      "props": {
+        "language": "python"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "# Greet the user\nprint(\"Welcome to Python!\")\n\n# Get input from the user\nname = input(\"What is your name? \")\nage = int(input(\"How old are you? \"))\n\n# Conditional logic based on input\nif age >= 18:\n    print(f\"Hello {name}, you are an adult.\")\nelse:\n    years_left = 18 - age\n    print(f\"Hello {name}, you will be an adult in {years_left} years.\")\n",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "54d51c20-b683-48c5-baa2-e037fd140c5e",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "\n",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "03e4d061-0ab1-47fd-9d09-4e06a8b32133",
+      "type": "figure",
+      "props": {
+        "fileName": "gatech-building.jpg",
+        "src": "",
+        "alt": "GATECH - the Best place",
+        "caption": "GATECH - the Best place",
+        "width": 620
+      },
+      "children": []
+    },
+    {
+      "id": "a43c6a22-84b9-4a55-ba16-213ec295837f",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "\nGo Jackets!!",
+          "styles": {}
+        }
+      ],
+      "children": []
+    }
+  ],
+  "tableVariants": {}
+}
