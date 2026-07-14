@@ -41,7 +41,8 @@ export const SITE = {
   ogCardOptIn: import.meta.env.PUBLIC_OG_CARD_OPTIN === 'true',
   // Google Form /formResponse URL + email field entry id.
   newsletter: {
-    formUrl: '',
+    formUrl:
+      'https://docs.google.com/forms/d/e/1FAIpQLSd77YBYKmLRnm0hjXM7TJqbcINNxKhzRvIZOUBKlaKzwXCGHw/formResponse',
     emailEntry: 'entry.999355293',
   },
 };
