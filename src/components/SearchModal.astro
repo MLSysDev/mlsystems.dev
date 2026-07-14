@@ -1,8 +1,11 @@
 ---
-import { TOPICS } from '@/lib/data';
+import { TOPICS } from '@/lib/topics';
 
 const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
 ---
+
+<!-- Topics for the client-side quick matcher — collections aren't readable in the browser. -->
+<script type="application/json" data-search-topics set:html={JSON.stringify(TOPICS)} />
 
 <div
   class="search-modal"
@@ -63,7 +66,7 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
           <div class="search-topic-chips">
             {
               TOPICS.map((t) => (
-                <a href={`/blog?topic=${t.id}`} class="chip chip--interactive">
+                <a href={`/topics/${t.id}`} class="chip chip--interactive">
                   {t.name}
                 </a>
               ))
@@ -104,8 +107,11 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
 </div>
 
 <script>
-  import { TOPICS } from '@/lib/data';
   import { loadPagefind } from '@/lib/pagefind';
+
+  const TOPICS: { id: string; name: string; desc: string }[] = JSON.parse(
+    document.querySelector('[data-search-topics]')?.textContent ?? '[]',
+  );
 
   type Group = 'topic' | 'article' | 'tool' | 'author' | 'page';
   type RowItem = { group: Group; url: string; title: string; excerpt?: string; meta?: string };
@@ -167,7 +173,7 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
         .slice(0, 3)
         .map((t) => ({
           group: 'topic' as const,
-          url: `/blog?topic=${t.id}`,
+          url: `/topics/${t.id}`,
           title: t.name,
           excerpt: t.desc,
         }));

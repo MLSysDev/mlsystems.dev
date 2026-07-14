@@ -1,0 +1,8 @@
+{
+  "order": 3,
+  "name": "LLM Model VRAM Calculator",
+  "source": "NyxKrage · Hugging Face",
+  "desc": "Widely-referenced inference VRAM estimator for popular open-source models with quantization and context-length sliders.",
+  "href": "https://huggingface.co/spaces/NyxKrage/LLM-Model-VRAM-Calculator",
+  "category": "Memory & VRAM"
+}

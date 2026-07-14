@@ -5,11 +5,20 @@ type Props = {
   stage: PublishStage;
   error: string | null;
   prUrl: string | null;
+  suggestions?: string[];
   onSubmit: () => void;
   onClose: () => void;
 };
 
-export function PublishDialog({ open, stage, error, prUrl, onSubmit, onClose }: Props) {
+export function PublishDialog({
+  open,
+  stage,
+  error,
+  prUrl,
+  suggestions = [],
+  onSubmit,
+  onClose,
+}: Props) {
   if (!open) return null;
   return (
     <div
@@ -59,6 +68,18 @@ export function PublishDialog({ open, stage, error, prUrl, onSubmit, onClose }: 
               We’ll submit your article via GitHub. Once it’s created, please add your name on the
               request to claim it — Admin will take it from there.
             </p>
+            {suggestions.length > 0 && (
+              <details className="write-suggest">
+                <summary>
+                  {suggestions.length} suggestion{suggestions.length > 1 ? 's' : ''} — optional
+                </summary>
+                <ul>
+                  {suggestions.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
             {error && (
               <p className="write-modal-error" role="alert">
                 {error}

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { createReactBlockSpec } from '@blocknote/react';
 import { addAsset, getAssetUrl, removeAsset } from '../../storage/assets';
+import { optimizeImage } from '../../storage/optimizeImage';
 
 // preview is a relative width so sizes stay distinct in the narrow editor column.
 const SIZES: { key: string; label: string; width: number; preview: string }[] = [
@@ -48,9 +49,9 @@ export const createFigureBlock = createReactBlockSpec(
             <input
               type="file"
               accept="image/*"
-              onChange={(e) => {
+              onChange={async (e) => {
                 const file = e.target.files?.[0];
-                if (file) setProps({ fileName: addAsset(file) });
+                if (file) setProps({ fileName: addAsset(await optimizeImage(file)) });
               }}
             />
             <div className="write-block-row" style={{ marginTop: 8 }}>

@@ -1,0 +1,5 @@
+{
+  "order": 6,
+  "name": "Retrieval & RAG",
+  "desc": "Embeddings, indexes, re-rankers, and pipeline systems."
+}

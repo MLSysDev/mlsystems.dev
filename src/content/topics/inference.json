@@ -1,0 +1,5 @@
+{
+  "order": 1,
+  "name": "Inference & Serving",
+  "desc": "vLLM, TGI, paged attention, continuous batching, speculative decoding."
+}

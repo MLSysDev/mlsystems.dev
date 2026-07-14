@@ -1,0 +1,8 @@
+{
+  "order": 6,
+  "name": "Chinchilla Scaling Calculator",
+  "source": "Nathan Godey",
+  "desc": "Enter a model size, get the Chinchilla-optimal training-token count per Hoffmann et al. 2022 — with an interactive params-vs-tokens chart.",
+  "href": "https://nathangodey.github.io/posts/scaling/",
+  "category": "Training & Scaling"
+}

@@ -1,0 +1,8 @@
+{
+  "order": 5,
+  "name": "LLM Visualization",
+  "source": "Brendan Bycroft",
+  "desc": "A 3D, animated walk through the entire forward pass of a nano-GPT model, layer by layer. The clearest mental model of how a transformer works.",
+  "href": "https://bbycroft.net/llm",
+  "category": "Architecture"
+}

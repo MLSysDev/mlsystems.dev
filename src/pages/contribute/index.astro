@@ -17,7 +17,7 @@ const STEPS = [
   {
     n: '03',
     title: 'Draft',
-    body: 'Write it your way. Use our in-browser editor at /write — no markdown needed — or write MDX directly if you prefer. Either way, add code, figures, equations, or links if they help.',
+    body: 'Write in the in-browser editor at /write — headings, images, tables, video, math, no markdown needed. One click submits it when you are done.',
   },
   {
     n: '04',
@@ -70,22 +70,22 @@ const STEPS = [
               Pitch on GitHub Discussions
             </a>
             <a href={`mailto:${SITE.pitchEmail}`} class="btn"> Email an idea </a>
-            <a href={SITE.pullsUrl} target="_blank" rel="noreferrer" class="btn"> Open a PR </a>
           </div>
         </div>
       </div>
 
       <div>
         <div class="side-panel" style="border-color: var(--accent);">
-          <h3 style="font-size: 20px; margin-bottom: 12px;">Two ways to write</h3>
+          <h3 style="font-size: 20px; margin-bottom: 12px;">Write in your browser</h3>
           <p style="font-size: 14px; color: var(--ink-2); line-height: 1.6; margin: 0 0 12px;">
-            New to this? Use the <a href="/write" style="color: var(--accent);">in-browser editor</a
-            > — add headings, images, tables, video, and math visually, then download a ready-to-publish
-            folder. No markdown, no setup.
+            The <a href="/write" style="color: var(--accent);">editor</a> handles everything — visual
+            writing, live preview, and one-click submission. No account, no markdown, no setup.
           </p>
-          <p style="font-size: 14px; color: var(--ink-2); line-height: 1.6; margin: 0;">
-            Comfortable with MDX? Write it directly. Either way, send it to us as a pull request or
-            by email and we'll take it from there.
+          <p style="font-size: 13px; color: var(--ink-3); line-height: 1.6; margin: 0;">
+            Prefer raw MDX? You can still write it by hand and open a
+            <a href={SITE.repoUrl} target="_blank" rel="noreferrer" style="color: var(--accent);"
+              >pull request</a
+            > yourself.
           </p>
         </div>
 

@@ -4,7 +4,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
 import Stat from '@/components/Stat.astro';
-import { TOPICS, countPostsByTopic, formatDate, sortPostsByDate, topicName } from '@/lib/data';
+import { formatDate, sortPostsByDate } from '@/lib/data';
+import { TOPICS, countPostsByTopic, topicName } from '@/lib/topics';
 import { resolvePostAuthors } from '@/lib/posts';
 import { SITE, SOCIALS } from '@/lib/site';
 
@@ -220,7 +221,7 @@ const featuredTools = allTools
                   </ul>
 
                   {t.totalCount > TOPIC_PREVIEW_LIMIT && (
-                    <a href={`/blog?topic=${t.id}`} class="topic-more-link">
+                    <a href={`/topics/${t.id}`} class="topic-more-link">
                       All {t.totalCount} articles in {t.name} →
                     </a>
                   )}

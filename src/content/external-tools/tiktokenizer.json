@@ -1,0 +1,8 @@
+{
+  "order": 2,
+  "name": "Tiktokenizer",
+  "source": "dqbd",
+  "desc": "OpenAI-focused tokenizer playground. Visualize cl100k, o200k, and legacy encodings with per-token highlights.",
+  "href": "https://tiktokenizer.vercel.app/",
+  "category": "Tokenization"
+}
