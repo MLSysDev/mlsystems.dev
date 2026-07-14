@@ -199,6 +199,10 @@ html {
 *::after {
   box-sizing: border-box;
 }
+/* The hidden attribute must win over any component display value (e.g. .search-modal's flex). */
+[hidden] {
+  display: none !important;
+}
 :where(a, button, input, textarea, select, summary, [tabindex]):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -2725,7 +2729,7 @@ a.hashtag:hover {
   }
 }
 
-/* ── Math (KaTeX) ── */
+/* Math (KaTeX) */
 .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
@@ -2736,7 +2740,7 @@ a.hashtag:hover {
   font-size: 1.05em;
 }
 
-/* ── Heading anchors ── */
+/* Heading anchors */
 .article-body :is(h1, h2, h3, h4) > a[href^='#'] {
   display: inline-flex;
   align-items: center;

@@ -150,8 +150,8 @@ export const EXTERNAL_TOOLS: ExternalTool[] = [
   },
 ];
 
-export function formatDate(iso: string): string {
-  const d = new Date(iso);
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 }
 
@@ -163,7 +163,7 @@ export function sortPostsByDate<T extends { id: string; data: { date: Date } }>(
   return d !== 0 ? d : a.id.localeCompare(b.id);
 }
 
-export function formatMonth(iso: string): string {
-  const d = new Date(iso);
+export function formatMonth(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }

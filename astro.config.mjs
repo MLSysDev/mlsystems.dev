@@ -163,7 +163,9 @@ export default defineConfig({
   output: 'static',
 
   build: {
-    inlineStylesheets: 'always',
+    // 'auto' inlines only small styles; the shared design-system sheet is emitted
+    // as one cacheable /_astro/*.css instead of being duplicated into every page.
+    inlineStylesheets: 'auto',
     // Flat files (blog/x.html) instead of blog/x/index.html, so URLs stay clean
     // with no trailing slash (pairs with trailingSlash: 'never'). Avoids
     // Cloudflare's directory-style 308 redirect that appended the slash.

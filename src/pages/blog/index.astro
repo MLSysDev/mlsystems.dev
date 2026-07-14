@@ -1,29 +1,25 @@
 ---
-import { getCollection, getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import BlogFilter from '@/components/BlogFilter.astro';
-import { TOPICS, formatDate, formatMonth, sortPostsByDate, topicName } from '@/lib/data';
+import PostRow from '@/components/PostRow.astro';
+import { TOPICS, formatMonth, sortPostsByDate } from '@/lib/data';
+import { resolvePostAuthors } from '@/lib/posts';
 
 const url = new URL(Astro.request.url);
 const activeTopic = url.searchParams.get('topic') || 'all';
 
 const allRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
+const all = await resolvePostAuthors(allRaw);
 
-// Resolve author references for each post so we can render names without async in templates
-const all = await Promise.all(
-  allRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
-);
-
-// Per-topic counts for the filter chips
 const topicCounts: Record<string, number> = {};
 TOPICS.forEach((t) => {
   topicCounts[t.id] = all.filter((p) => p.data.topicId === t.id).length;
 });
 
-// Group by month for display
 const grouped: Record<string, typeof all> = {};
 all.forEach((a) => {
-  const m = formatMonth(a.data.date.toISOString());
+  const m = formatMonth(a.data.date);
   if (!grouped[m]) grouped[m] = [];
   grouped[m].push(a);
 });
@@ -52,19 +48,7 @@ all.forEach((a) => {
           </div>
           <div class="blog-list">
             {items.map((a) => (
-              <a href={`/blog/${a.id}`} class="blog-row" data-topic={a.data.topicId}>
-                <div class="blog-row-body">
-                  <div class="blog-row-title-line">
-                    <h3 class="blog-row-title">{a.data.title}</h3>
-                    <span class="chip chip--sm">{topicName(a.data.topicId)}</span>
-                  </div>
-                  <p class="blog-row-summary">{a.data.summary}</p>
-                </div>
-                <div class="blog-row-meta">
-                  <strong>{a.authors.map((au) => au.data.name).join(' · ')}</strong>
-                  <span>{formatDate(a.data.date.toISOString())}</span>
-                </div>
-              </a>
+              <PostRow post={a} />
             ))}
           </div>
         </div>

@@ -1,0 +1,61 @@
+---
+interface Props {
+  measurementId?: string;
+}
+const { measurementId } = Astro.props;
+---
+
+{
+  measurementId && (
+    <aside class="analytics-consent" aria-label="Analytics consent" data-consent-banner hidden>
+      <button
+        type="button"
+        class="analytics-consent-close"
+        aria-label="Dismiss analytics prompt"
+        data-consent-choice="declined"
+      >
+        x
+      </button>
+      <div>
+        <div class="analytics-consent-title">Privacy preferences</div>
+        <p>We use optional analytics to understand readership and improve the site.</p>
+      </div>
+      <div class="analytics-consent-actions">
+        <button type="button" class="btn btn-primary" data-consent-choice="accepted">
+          Accept
+        </button>
+        <button type="button" class="btn" data-consent-choice="declined">
+          Decline
+        </button>
+      </div>
+    </aside>
+  )
+}
+
+<script>
+  const STORAGE_KEY = 'mlsystems-analytics-consent';
+  const banner = document.querySelector<HTMLElement>('[data-consent-banner]');
+
+  if (banner) {
+    let stored: string | null = null;
+    try {
+      stored = localStorage.getItem(STORAGE_KEY);
+    } catch {}
+
+    if (stored !== 'accepted' && stored !== 'declined') {
+      banner.hidden = false;
+      banner.querySelectorAll<HTMLButtonElement>('[data-consent-choice]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const choice = btn.dataset.consentChoice as 'accepted' | 'declined';
+          try {
+            localStorage.setItem(STORAGE_KEY, choice);
+          } catch {}
+          window.gtag?.('consent', 'update', {
+            analytics_storage: choice === 'accepted' ? 'granted' : 'denied',
+          });
+          banner.hidden = true;
+        });
+      });
+    }
+  }
+</script>

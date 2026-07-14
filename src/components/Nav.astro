@@ -26,7 +26,11 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
       <div class="nav-links" id="nav-menu">
         {
           LINKS.map((l) => (
-            <a href={l.path} class={isActive(l.path) ? 'active' : ''}>
+            <a
+              href={l.path}
+              class={isActive(l.path) ? 'active' : ''}
+              aria-current={isActive(l.path) ? 'page' : undefined}
+            >
               {l.label}
             </a>
           ))
@@ -78,7 +82,8 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
       <button
         type="button"
         class="theme-toggle"
-        aria-label="Toggle dark / light theme"
+        aria-label="Dark theme"
+        aria-pressed="false"
         title="Toggle theme"
         data-theme-toggle
       >
@@ -128,7 +133,8 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
 </nav>
 
 <script>
-  // Mobile hamburger
+  import { writePrefs } from '@/lib/prefs';
+
   const nav = document.getElementById('site-nav');
   const toggle = nav?.querySelector<HTMLButtonElement>('[data-nav-toggle]');
   toggle?.addEventListener('click', () => {
@@ -148,17 +154,18 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
   });
 
   const themeBtn = nav?.querySelector<HTMLButtonElement>('[data-theme-toggle]');
+  const reflectTheme = () => {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    themeBtn?.setAttribute('aria-pressed', String(dark));
+  };
+  reflectTheme();
   themeBtn?.addEventListener('click', () => {
     const current = document.documentElement.getAttribute('data-theme') || 'light';
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     const themeColor = document.querySelector('meta[name="theme-color"]');
     if (themeColor) themeColor.setAttribute('content', next === 'dark' ? '#0e0d0b' : '#f5f1e8');
-    try {
-      const raw = localStorage.getItem('mls.prefs');
-      const prefs = raw ? JSON.parse(raw) : {};
-      prefs.theme = next;
-      localStorage.setItem('mls.prefs', JSON.stringify(prefs));
-    } catch {}
+    reflectTheme();
+    writePrefs({ theme: next });
   });
 </script>

@@ -8,10 +8,10 @@ import ArticleActions from '@/components/ArticleActions.tsx';
 import Comments from '@/components/Comments.tsx';
 import Avatar from '@/components/Avatar.astro';
 import { formatDate, sortPostsByDate, topicName, tagSlug } from '@/lib/data';
+import { resolvePostAuthors } from '@/lib/posts';
 import { SITE } from '@/lib/site';
-import 'katex/dist/katex.min.css';
+import katexCssUrl from 'katex/dist/katex.min.css?url';
 
-// Pre-build a page for every published post.
 export async function getStaticPaths() {
   const posts = await getCollection('posts', ({ data }) => !data.draft);
   return posts.map((post) => ({
@@ -26,18 +26,18 @@ interface Props {
 const { post } = Astro.props;
 const { Content } = await render(post);
 
-// Resolve author references → full author entries
+// KaTeX CSS is ~24 KB — only load it on posts that actually contain math.
+const hasMath = (post.body ?? '').includes('$');
+
 const authors = await getEntries(post.data.authors);
 const authorNames = authors.map((a) => a.data.name).join(', ');
 
-// Related: same topic, sorted by date desc, skip self, take 3. Resolve their authors too.
 const all = await getCollection('posts', ({ data }) => !data.draft);
-const relatedRaw = all
-  .filter((a) => a.data.topicId === post.data.topicId && a.id !== post.id)
-  .sort(sortPostsByDate)
-  .slice(0, 3);
-const related = await Promise.all(
-  relatedRaw.map(async (r) => ({ ...r, authors: await getEntries(r.data.authors) })),
+const related = await resolvePostAuthors(
+  all
+    .filter((a) => a.data.topicId === post.data.topicId && a.id !== post.id)
+    .sort(sortPostsByDate)
+    .slice(0, 3),
 );
 
 const canonical = `${SITE.url}/blog/${post.id}`;
@@ -110,6 +110,7 @@ const breadcrumbJsonLd = {
   tags={post.data.tags}
   jsonLd={[articleJsonLd, breadcrumbJsonLd]}
 >
+  {hasMath && <link slot="head" rel="stylesheet" href={katexCssUrl} />}
   <article
     class="article-shell"
     data-pagefind-body
@@ -163,11 +164,11 @@ const breadcrumbJsonLd = {
       cover && (
         <figure class="article-cover">
           {typeof cover === 'string' ? (
-            <img src={cover} alt="" loading="eager" />
+            <img src={cover} alt={post.data.title} width="1200" height="630" loading="eager" />
           ) : (
             <Image
               src={cover}
-              alt=""
+              alt={post.data.title}
               widths={[620, 960, 1440]}
               sizes="(min-width: 960px) 960px, 100vw"
               loading="eager"
@@ -209,7 +210,7 @@ const breadcrumbJsonLd = {
                 <div class="article-foot">
                   <span>{r.authors.map((a) => a.data.name).join(', ')}</span>
                   <span>
-                    {formatDate(r.data.date.toISOString())} · {r.data.readMin} min
+                    {formatDate(r.data.date)} · {r.data.readMin} min
                   </span>
                 </div>
               </a>
@@ -251,26 +252,45 @@ const breadcrumbJsonLd = {
     if (zoomable.length) {
       const overlay = document.createElement('div');
       overlay.className = 'img-lightbox';
+      overlay.setAttribute('role', 'dialog');
+      overlay.setAttribute('aria-modal', 'true');
+      overlay.setAttribute('aria-label', 'Image viewer — press Escape to close');
       overlay.setAttribute('aria-hidden', 'true');
+      overlay.tabIndex = -1;
       const big = document.createElement('img');
       big.alt = '';
       overlay.appendChild(big);
       document.body.appendChild(overlay);
 
+      let opener: HTMLElement | null = null;
       const close = () => {
         overlay.classList.remove('is-open');
         overlay.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
         big.src = '';
+        opener?.focus();
+        opener = null;
+      };
+      const open = (img: HTMLImageElement) => {
+        opener = img;
+        big.src = img.currentSrc || img.src;
+        big.alt = img.alt;
+        overlay.classList.add('is-open');
+        overlay.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        overlay.focus();
       };
       zoomable.forEach((img) => {
         img.classList.add('is-zoomable');
-        img.addEventListener('click', () => {
-          big.src = img.currentSrc || img.src;
-          big.alt = img.alt;
-          overlay.classList.add('is-open');
-          overlay.setAttribute('aria-hidden', 'false');
-          document.body.style.overflow = 'hidden';
+        img.tabIndex = 0;
+        img.setAttribute('role', 'button');
+        img.setAttribute('aria-label', img.alt ? `Zoom image: ${img.alt}` : 'Zoom image');
+        img.addEventListener('click', () => open(img));
+        img.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            open(img);
+          }
         });
       });
       overlay.addEventListener('click', close);

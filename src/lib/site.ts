@@ -31,7 +31,6 @@ export const SITE = {
   discussionsUrl: `https://github.com/${GITHUB_REPO}/discussions`,
   orgDiscussionsUrl: `https://github.com/orgs/${GITHUB_ORG}/discussions`,
   pitchEmail: 'admin@mlsystems.dev',
-  // Used in nav, footer, etc.
   startYear: 2026,
   // Shows the "Post to GitHub" button in /write. Flip to true once the GitHub App
   // credentials are set in the Cloudflare Function env (see /api/create-pr).
