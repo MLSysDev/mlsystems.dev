@@ -54,7 +54,8 @@ const SKIP_PATTERNS = ['/write', '/search'];
 function priorityFor(path) {
   if (path === '/' || path === '') return 1.0;
   if (path === '/blog' || path === '/topics') return 0.9;
-  if (path === '/playground' || path === '/community' || path === '/contribute') return 0.8;
+  if (path === '/playground' || path === '/community' || path === '/contribute' || path === '/why')
+    return 0.8;
   if (path.startsWith('/blog/')) return 0.7;
   if (path.startsWith('/topics/') || path.startsWith('/tags/')) return 0.6;
   if (path.startsWith('/authors/')) return 0.6;

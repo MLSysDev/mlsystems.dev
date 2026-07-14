@@ -1510,6 +1510,13 @@ a.hashtag:hover {
   font-size: 11px;
   color: var(--ink-3);
 }
+.footer-why {
+  color: inherit;
+  text-decoration: none;
+}
+.footer-why:hover {
+  color: var(--accent);
+}
 
 /* Article view */
 .article-shell {
