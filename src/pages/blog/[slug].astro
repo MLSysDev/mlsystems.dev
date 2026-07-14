@@ -233,6 +233,74 @@ const breadcrumbJsonLd = {
       });
     });
 
+    const zoomable = document.querySelectorAll<HTMLImageElement>(
+      '.article-body .inline-figure img, .article-cover img',
+    );
+    if (zoomable.length) {
+      const overlay = document.createElement('div');
+      overlay.className = 'img-lightbox';
+      overlay.setAttribute('aria-hidden', 'true');
+      const big = document.createElement('img');
+      big.alt = '';
+      overlay.appendChild(big);
+      document.body.appendChild(overlay);
+
+      const close = () => {
+        overlay.classList.remove('is-open');
+        overlay.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        big.src = '';
+      };
+      zoomable.forEach((img) => {
+        img.classList.add('is-zoomable');
+        img.addEventListener('click', () => {
+          big.src = img.currentSrc || img.src;
+          big.alt = img.alt;
+          overlay.classList.add('is-open');
+          overlay.setAttribute('aria-hidden', 'false');
+          document.body.style.overflow = 'hidden';
+        });
+      });
+      overlay.addEventListener('click', close);
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && overlay.classList.contains('is-open')) close();
+      });
+    }
+
+    document.querySelectorAll<HTMLPreElement>('.article-body pre').forEach((pre) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'code-block';
+      pre.parentNode?.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+
+      const bar = document.createElement('div');
+      bar.className = 'code-toolbar';
+      const lang = pre.getAttribute('data-language');
+      if (lang && lang !== 'plaintext' && lang !== 'text') {
+        const tag = document.createElement('span');
+        tag.className = 'code-lang';
+        tag.textContent = lang;
+        bar.appendChild(tag);
+      }
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'code-copy';
+      btn.textContent = 'Copy';
+      btn.addEventListener('click', () => {
+        const code = pre.querySelector('code')?.innerText ?? pre.innerText;
+        navigator.clipboard?.writeText(code).then(() => {
+          btn.textContent = 'Copied';
+          btn.classList.add('is-copied');
+          setTimeout(() => {
+            btn.textContent = 'Copy';
+            btn.classList.remove('is-copied');
+          }, 1200);
+        });
+      });
+      bar.appendChild(btn);
+      wrap.appendChild(bar);
+    });
+
     const videoButtons = document.querySelectorAll<HTMLButtonElement>('.video-embed-play');
     videoButtons.forEach((btn) => {
       btn.addEventListener('click', () => {

@@ -2,16 +2,16 @@ import { useState } from 'react';
 import { createReactBlockSpec } from '@blocknote/react';
 import { addAsset, getAssetUrl, removeAsset } from '../../storage/assets';
 
-const SIZES: { key: string; label: string; width: number }[] = [
-  { key: 'small', label: 'Small', width: 360 },
-  { key: 'medium', label: 'Medium', width: 620 },
-  { key: 'large', label: 'Large', width: 960 },
+// preview is a relative width so sizes stay distinct in the narrow editor column.
+const SIZES: { key: string; label: string; width: number; preview: string }[] = [
+  { key: 'small', label: 'Small', width: 360, preview: '55%' },
+  { key: 'medium', label: 'Medium', width: 620, preview: '78%' },
+  { key: 'large', label: 'Large', width: 960, preview: '100%' },
 ];
 
-function widthToKey(width: string | number): string {
+function sizeFor(width: string | number) {
   const n = Number(width);
-  const match = SIZES.find((s) => s.width === n);
-  return match ? match.key : 'medium';
+  return SIZES.find((s) => s.width === n) ?? SIZES[0];
 }
 
 export const createFigureBlock = createReactBlockSpec(
@@ -22,7 +22,7 @@ export const createFigureBlock = createReactBlockSpec(
       src: { default: '' },
       alt: { default: '' },
       caption: { default: '' },
-      width: { default: 620 },
+      width: { default: 360 },
     },
     content: 'none',
   },
@@ -83,12 +83,12 @@ export const createFigureBlock = createReactBlockSpec(
       }
 
       const previewSrc = block.props.fileName ? getAssetUrl(block.props.fileName) : block.props.src;
-      const activeKey = widthToKey(block.props.width);
+      const active = sizeFor(block.props.width);
 
       return (
         <figure className="write-figure" contentEditable={false}>
-          <div className="write-figure-frame" style={{ maxWidth: `${block.props.width}px` }}>
-            <img src={previewSrc} alt={block.props.alt} />
+          <div className="write-figure-frame">
+            <img src={previewSrc} alt={block.props.alt} style={{ width: active.preview }} />
             <button
               type="button"
               className="write-remove"
@@ -121,7 +121,7 @@ export const createFigureBlock = createReactBlockSpec(
               <button
                 key={s.key}
                 type="button"
-                className={activeKey === s.key ? 'write-chip is-active' : 'write-chip'}
+                className={active.key === s.key ? 'write-chip is-active' : 'write-chip'}
                 onClick={() => setProps({ width: s.width })}
               >
                 {s.label}
