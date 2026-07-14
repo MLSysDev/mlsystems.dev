@@ -246,7 +246,7 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                 ✕
               </button>
             </div>
-            <span className="write-cover-tip">Best size: 1200×630</span>
+            <span className="write-cover-tip">Recommended: wide, landscape (1200×630)</span>
             {SITE.ogCardOptIn && (
               <label
                 className="write-ogcard-opt"
