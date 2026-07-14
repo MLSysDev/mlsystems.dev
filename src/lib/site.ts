@@ -36,6 +36,10 @@ export const SITE = {
   // Shows the "Post to GitHub" button in /write. Flip to true once the GitHub App
   // credentials are set in the Cloudflare Function env (see /api/create-pr).
   githubPostEnabled: true,
+  // Shows the "Designed share card" opt-in under a cover in /write. Off by default;
+  // set PUBLIC_OG_CARD_OPTIN=true to expose it. Opted-in posts render a per-post OG
+  // card at build (a small build-time cost), so keep it off unless you want it.
+  ogCardOptIn: import.meta.env.PUBLIC_OG_CARD_OPTIN === 'true',
 };
 
 export const APPEARANCE = {

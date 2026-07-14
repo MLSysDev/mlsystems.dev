@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { SITE } from '@/lib/site';
 import type { NewAuthor, PostMeta } from '../serialize/toMdx';
 import { slugify } from '../serialize/validate';
 import { addAsset, getAssetUrl } from '../storage/assets';
@@ -242,6 +243,23 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                 ✕
               </button>
             </div>
+            {SITE.ogCardOptIn && (
+              <label className="write-ogcard-opt">
+                <input
+                  type="checkbox"
+                  checked={!!meta.ogCard}
+                  onChange={(e) => set({ ogCard: e.target.checked })}
+                />
+                Designed share card
+                <span
+                  className="write-ogcard-info"
+                  title="Overlays your post title + brand on the cover for link previews (LinkedIn, X, Slack). Generated when you publish."
+                  aria-label="What is a designed share card?"
+                >
+                  ⓘ
+                </span>
+              </label>
+            )}
           </div>
         ) : (
           <div className="write-cover-pick">

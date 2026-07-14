@@ -111,6 +111,7 @@ function emptyMeta(): PostMeta {
     tags: [],
     slug: '',
     coverFileName: '',
+    ogCard: false,
     proposedTopic: '',
     newAuthor: null,
   };

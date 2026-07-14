@@ -45,10 +45,17 @@ const dateISO = post.data.date.toISOString();
 const modifiedISO = (post.data.updated ?? post.data.date).toISOString();
 const topicLabel = topicName(post.data.topicId);
 const cover = post.data.cover;
-// Cover posts share the raw cover; others share one prebuilt brand card. Per-post
-// OG generation is disabled (see src/pages/og/post/[slug].png.ts) to keep build
-// time flat regardless of post count — no render or file per post.
-const ogImage = cover ? (typeof cover === 'string' ? cover : cover.src) : '/og-default.png';
+// Opted-in posts (ogCard + cover) get a generated card; cover posts share the raw
+// cover; the rest share one prebuilt brand card. Per-post generation runs only for
+// the opted-in handful, keeping build time flat (see og/post/[slug].png.ts).
+const ogImage =
+  cover && post.data.ogCard
+    ? `/og/post/${post.id}.png`
+    : cover
+      ? typeof cover === 'string'
+        ? cover
+        : cover.src
+      : '/og-default.png';
 
 const articleJsonLd = {
   '@context': 'https://schema.org',

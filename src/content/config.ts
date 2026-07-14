@@ -38,6 +38,10 @@ const posts = defineCollection({
       tags: z.array(z.string()).optional(),
       updated: z.coerce.date().optional(),
       cover: z.union([image(), z.string().url()]).optional(),
+      // Opt in to a generated 1200×630 share card (post title over the cover).
+      // Only these posts render an OG card at build; everyone else uses the raw
+      // cover or the shared default, keeping build time flat.
+      ogCard: z.boolean().optional().default(false),
       featured: z.boolean().optional().default(false),
       draft: z.boolean().optional().default(false),
     }),
