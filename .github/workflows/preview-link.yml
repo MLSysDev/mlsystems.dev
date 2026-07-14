@@ -38,7 +38,7 @@ jobs:
             const link = match ? `${base}/blog/${match[1]}/` : base;
 
             const marker = '<!-- preview-link-bot -->';
-            const body = `${marker}\n📄 **Preview your post:** ${link}\n\n_Updates on each redeploy._`;
+            const body = `${marker}\n> [!TIP]\n> 📄 **[Preview your post →](${link})**`;
 
             const comments = await github.rest.issues.listComments({
               owner: context.repo.owner,

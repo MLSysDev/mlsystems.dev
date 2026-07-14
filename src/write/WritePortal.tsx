@@ -606,8 +606,8 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
               <>
                 <h3>Your post has been submitted ✓</h3>
                 <p>
-                  Open the request to preview how your post will look, and add a comment with your
-                  author details (name, bio, links) so a maintainer can review and publish it.
+                  Open the request and comment to claim it — that&rsquo;s how a maintainer knows
+                  it&rsquo;s yours.
                 </p>
                 <div className="write-modal-actions">
                   {prUrl && (
