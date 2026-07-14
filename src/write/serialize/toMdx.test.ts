@@ -119,6 +119,22 @@ describe('serializeInline', () => {
     expect(serializeInline([t('plain', { textColor: 'default' })])).toBe('plain');
   });
 
+  it('allows plain hex/rgb color values from pasted markup', () => {
+    expect(serializeInline([t('x', { textColor: '#a31515' })])).toBe(
+      '<span style="color: #a31515">x</span>',
+    );
+    expect(serializeInline([t('y', { backgroundColor: 'rgba(0, 0, 0, 0.1)' })])).toBe(
+      '<span style="background-color: rgba(0, 0, 0, 0.1)">y</span>',
+    );
+  });
+
+  it('drops a color value that could break out of the style attribute', () => {
+    expect(serializeInline([t('safe', { textColor: 'red"><script>alert(1)</script>' })])).toBe(
+      'safe',
+    );
+    expect(serializeInline([t('safe', { backgroundColor: 'x;} </style><script>1' })])).toBe('safe');
+  });
+
   it('layers underline and color over markdown emphasis', () => {
     expect(serializeInline([t('x', { bold: true, underline: true, textColor: 'blue' })])).toBe(
       '<span style="color: var(--tc-blue, #337ea9)"><u>**x**</u></span>',
