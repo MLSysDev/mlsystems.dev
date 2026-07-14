@@ -164,6 +164,10 @@ export default defineConfig({
 
   build: {
     inlineStylesheets: 'always',
+    // Flat files (blog/x.html) instead of blog/x/index.html, so URLs stay clean
+    // with no trailing slash (pairs with trailingSlash: 'never'). Avoids
+    // Cloudflare's directory-style 308 redirect that appended the slash.
+    format: 'file',
   },
 
   vite: {

@@ -35,7 +35,7 @@ jobs:
 
             const pr = context.payload.issue;
             const match = (pr.body || '').match(/<!--\s*post-slug:\s*([a-z0-9-]+)\s*-->/);
-            const link = match ? `${base}/blog/${match[1]}/` : base;
+            const link = match ? `${base}/blog/${match[1]}` : base;
 
             const marker = '<!-- preview-link-bot -->';
             const body = `${marker}\n> [!TIP]\n> 📄 **[Preview your post →](${link})**`;
