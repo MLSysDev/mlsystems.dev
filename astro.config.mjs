@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { readdirSync, readFileSync } from 'fs';
+import { createHash } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import react from '@astrojs/react';
@@ -12,6 +13,13 @@ import rehypeSlug from 'rehype-slug';
 import rehypeAutolinkHeadings from 'rehype-autolink-headings';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Cache-buster for social scrapers (Slack/LinkedIn cache og:image by URL):
+// hashing the card template means the URL changes exactly when the design does.
+const ogVersion = createHash('md5')
+  .update(readFileSync(join(__dirname, 'src/lib/og.tsx'), 'utf8'))
+  .digest('hex')
+  .slice(0, 8);
 
 const postLastmod = new Map();
 try {
@@ -174,6 +182,9 @@ export default defineConfig({
   },
 
   vite: {
+    define: {
+      __OG_VERSION__: JSON.stringify(ogVersion),
+    },
     resolve: {
       dedupe: ['react', 'react-dom'],
     },

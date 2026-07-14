@@ -63,7 +63,7 @@ const {
   title = `${SITE.name} — Open community blog on machine learning systems & infrastructure`,
   description = SITE.description,
   canonical = new URL(Astro.url.pathname, SITE.url).toString(),
-  image = '/og-default.png',
+  image = `/og-default.png?v=${__OG_VERSION__}`,
   ogType = 'website',
   publishedTime,
   modifiedTime,

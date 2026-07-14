@@ -55,7 +55,7 @@ const ogImage =
       ? typeof cover === 'string'
         ? cover
         : cover.src
-      : '/og-default.png';
+      : `/og-default.png?v=${__OG_VERSION__}`;
 
 const articleJsonLd = {
   '@context': 'https://schema.org',

@@ -28,6 +28,7 @@ export default [
       globals: {
         ...globals.browser,
         ...globals.node,
+        __OG_VERSION__: 'readonly',
       },
     },
     rules: {
