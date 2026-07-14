@@ -63,7 +63,7 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
           <div class="search-topic-chips">
             {
               TOPICS.map((t) => (
-                <a href={`/blog?topic=${t.id}`} class="chip chip--interactive">
+                <a href={`/topics/${t.id}`} class="chip chip--interactive">
                   {t.name}
                 </a>
               ))
@@ -167,7 +167,7 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
         .slice(0, 3)
         .map((t) => ({
           group: 'topic' as const,
-          url: `/blog?topic=${t.id}`,
+          url: `/topics/${t.id}`,
           title: t.name,
           excerpt: t.desc,
         }));

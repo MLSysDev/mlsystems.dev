@@ -1,5 +1,6 @@
 import { createReactBlockSpec } from '@blocknote/react';
 import { addAsset, getAssetUrl, removeAsset } from '../../storage/assets';
+import { optimizeImage } from '../../storage/optimizeImage';
 
 function parseList(value: string): string[] {
   try {
@@ -75,12 +76,13 @@ export const createGalleryBlock = createReactBlockSpec(
             type="file"
             accept="image/*"
             multiple
-            onChange={(e) => {
+            onChange={async (e) => {
               const files = [...(e.target.files ?? [])];
-              if (files.length === 0) return;
-              const added = files.map((f) => addAsset(f));
-              update([...fileNames, ...added], [...alts, ...added.map(() => '')]);
               e.target.value = '';
+              if (files.length === 0) return;
+              const optimized = await Promise.all(files.map(optimizeImage));
+              const added = optimized.map((f) => addAsset(f));
+              update([...fileNames, ...added], [...alts, ...added.map(() => '')]);
             }}
           />
         </div>

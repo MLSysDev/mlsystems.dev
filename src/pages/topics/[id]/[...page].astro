@@ -1,39 +1,38 @@
 ---
+import type { GetStaticPaths, Page } from 'astro';
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import Pager from '@/components/Pager.astro';
 import PostRow from '@/components/PostRow.astro';
 import { TOPICS, formatMonth, sortPostsByDate } from '@/lib/data';
-import { resolvePostAuthors } from '@/lib/posts';
+import { resolvePostAuthors, type PostWithAuthors } from '@/lib/posts';
 import { SITE } from '@/lib/site';
 
-export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
-  const active = new Set(posts.map((p) => p.data.topicId));
-  return TOPICS.filter((t) => active.has(t.id)).map((t) => ({
-    params: { id: t.id },
-    props: { topic: t },
-  }));
-}
+export const getStaticPaths = (async ({ paginate }) => {
+  const all = await getCollection('posts', ({ data }) => !data.draft);
+  const paths = [];
+  for (const topic of TOPICS) {
+    const raw = all.filter((p) => p.data.topicId === topic.id).sort(sortPostsByDate);
+    const posts = await resolvePostAuthors(raw);
+    paths.push(...paginate(posts, { params: { id: topic.id }, pageSize: 24, props: { topic } }));
+  }
+  return paths;
+}) satisfies GetStaticPaths;
 
 interface Props {
+  page: Page<PostWithAuthors>;
   topic: (typeof TOPICS)[number];
 }
-const { topic } = Astro.props;
+const { page, topic } = Astro.props;
 
-const allRaw = (await getCollection('posts', ({ data }) => !data.draft))
-  .filter((p) => p.data.topicId === topic.id)
-  .sort(sortPostsByDate);
-
-const posts = await resolvePostAuthors(allRaw);
-
-const grouped: Record<string, typeof posts> = {};
-posts.forEach((a) => {
+const grouped: Record<string, PostWithAuthors[]> = {};
+page.data.forEach((a) => {
   const m = formatMonth(a.data.date);
   if (!grouped[m]) grouped[m] = [];
   grouped[m].push(a);
 });
 
-const canonical = `${SITE.url}/topics/${topic.id}`;
+const canonical = `${SITE.url}${page.url.current}`;
 
 const collectionJsonLd = {
   '@context': 'https://schema.org',
@@ -44,9 +43,9 @@ const collectionJsonLd = {
   isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
   mainEntity: {
     '@type': 'ItemList',
-    itemListElement: posts.map((p, i) => ({
+    itemListElement: page.data.map((p, i) => ({
       '@type': 'ListItem',
-      position: i + 1,
+      position: page.start + i + 1,
       url: `${SITE.url}/blog/${p.id}`,
       name: p.data.title,
     })),
@@ -59,13 +58,18 @@ const breadcrumbJsonLd = {
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
     { '@type': 'ListItem', position: 2, name: 'Topics', item: `${SITE.url}/topics` },
-    { '@type': 'ListItem', position: 3, name: topic.name, item: canonical },
+    { '@type': 'ListItem', position: 3, name: topic.name, item: `${SITE.url}/topics/${topic.id}` },
   ],
 };
+
+const title =
+  page.currentPage > 1
+    ? `${topic.name}: guides, primers & case studies — page ${page.currentPage}`
+    : `${topic.name}: guides, primers & case studies`;
 ---
 
 <BaseLayout
-  title={`${topic.name}: guides, primers & case studies`}
+  title={title}
   description={`Guides, primers, and case studies on ${topic.name.toLowerCase()} — ${topic.desc}`}
   canonical={canonical}
   image="/og/page/topics.png"
@@ -79,7 +83,7 @@ const breadcrumbJsonLd = {
     </div>
 
     {
-      posts.length === 0 ? (
+      page.data.length === 0 ? (
         <div style="padding: 80px 0; text-align: center; color: var(--ink-3);">
           No articles in this topic yet. Be the first to{' '}
           <a href="/contribute" style="color: var(--accent);">
@@ -102,5 +106,7 @@ const breadcrumbJsonLd = {
         ))
       )
     }
+
+    <Pager page={page} />
   </div>
 </BaseLayout>

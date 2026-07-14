@@ -75,7 +75,7 @@ export default function SearchInline() {
       .slice(0, 3)
       .map((t) => ({
         group: 'topic' as const,
-        url: `/blog?topic=${t.id}`,
+        url: `/topics/${t.id}`,
         title: t.name,
         excerpt: t.desc,
       }));
@@ -211,7 +211,7 @@ export default function SearchInline() {
               <div className="search-section-label">Browse by topic</div>
               <div className="search-topic-chips">
                 {TOPICS.map((t) => (
-                  <a key={t.id} href={`/blog?topic=${t.id}`} className="chip chip--interactive">
+                  <a key={t.id} href={`/topics/${t.id}`} className="chip chip--interactive">
                     {t.name}
                   </a>
                 ))}

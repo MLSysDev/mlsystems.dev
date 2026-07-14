@@ -23,7 +23,7 @@ import { TOPICS } from '@/lib/data';
       <div class="search-noscript">
         <p>Interactive search needs JavaScript. Browse by topic instead:</p>
         <div class="search-topic-chips" style="margin-top: 12px;">
-          {TOPICS.map((t) => <a href={`/blog?topic=${t.id}`}>{t.name}</a>)}
+          {TOPICS.map((t) => <a href={`/topics/${t.id}`}>{t.name}</a>)}
         </div>
       </div>
     </noscript>

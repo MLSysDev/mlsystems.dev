@@ -1,0 +1,79 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import { getCollection } from 'astro:content';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import BlogFilter from '@/components/BlogFilter.astro';
+import Pager from '@/components/Pager.astro';
+import PostRow from '@/components/PostRow.astro';
+import { TOPICS, formatMonth, sortPostsByDate } from '@/lib/data';
+import { resolvePostAuthors, type PostWithAuthors } from '@/lib/posts';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const raw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
+  const all = await resolvePostAuthors(raw);
+  const topicCounts: Record<string, number> = {};
+  TOPICS.forEach((t) => {
+    topicCounts[t.id] = all.filter((p) => p.data.topicId === t.id).length;
+  });
+  return paginate(all, { pageSize: 24, props: { topicCounts } });
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<PostWithAuthors>;
+  topicCounts: Record<string, number>;
+}
+const { page, topicCounts } = Astro.props;
+
+const grouped: Record<string, PostWithAuthors[]> = {};
+page.data.forEach((a) => {
+  const m = formatMonth(a.data.date);
+  if (!grouped[m]) grouped[m] = [];
+  grouped[m].push(a);
+});
+---
+
+<BaseLayout
+  title={page.currentPage > 1 ? `All articles — page ${page.currentPage}` : 'All articles'}
+  description="The complete archive of ML Systems articles — long-form writing on inference, training, architecture, quantization, RAG, and more."
+  image="/og/page/blog.png"
+>
+  <div class="container blog-shell">
+    <div class="blog-head">
+      <div>
+        <div class="eyebrow page-eyebrow">The Archive</div>
+        <h1 class="blog-h1">All articles.</h1>
+      </div>
+    </div>
+
+    <BlogFilter allCount={page.total} topicCounts={topicCounts} />
+
+    {
+      Object.entries(grouped).map(([month, items]) => (
+        <div class="blog-month-group" style="margin-bottom: 40px;">
+          <div class="eyebrow" style="margin-bottom: 4px; color: var(--ink-3);">
+            {month}
+          </div>
+          <div class="blog-list">
+            {items.map((a) => (
+              <PostRow post={a} />
+            ))}
+          </div>
+        </div>
+      ))
+    }
+
+    {
+      page.data.length === 0 && (
+        <div style="padding: 80px 0; text-align: center; color: var(--ink-3);">
+          No articles yet. Be the first to{' '}
+          <a href="/contribute" style="color: var(--accent);">
+            write one
+          </a>
+          .
+        </div>
+      )
+    }
+
+    <Pager page={page} />
+  </div>
+</BaseLayout>

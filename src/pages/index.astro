@@ -220,7 +220,7 @@ const featuredTools = allTools
                   </ul>
 
                   {t.totalCount > TOPIC_PREVIEW_LIMIT && (
-                    <a href={`/blog?topic=${t.id}`} class="topic-more-link">
+                    <a href={`/topics/${t.id}`} class="topic-more-link">
                       All {t.totalCount} articles in {t.name} →
                     </a>
                   )}

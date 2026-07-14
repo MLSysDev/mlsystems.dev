@@ -487,4 +487,18 @@ const catalogTools = allTools.sort((a, b) => {
       if (empty) empty.hidden = visible > 0;
     });
   });
+
+  // Hand wheel scrolling off to the page when the catalog box hits an edge,
+  // so the pointer resting inside it never traps the user (macOS scroll latching).
+  document.querySelectorAll<HTMLElement>('.tools-catalog-scroll').forEach((box) => {
+    box.addEventListener(
+      'wheel',
+      (e) => {
+        const atTop = e.deltaY < 0 && box.scrollTop <= 0;
+        const atBottom = e.deltaY > 0 && box.scrollTop + box.clientHeight >= box.scrollHeight - 1;
+        if (atTop || atBottom) window.scrollBy(0, e.deltaY);
+      },
+      { passive: true },
+    );
+  });
 </script>

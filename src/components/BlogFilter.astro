@@ -1,57 +1,25 @@
 ---
-// Topic filter chips. Each chip is a real anchor — works for direct URLs,
-// crawlers, and JS-disabled clients. A small enhancement script intercepts
-// clicks for an instant in-page filter (no reload).
+// Topic chips — each links to its topic hub page; "All" is the paginated archive.
 
 import { TOPICS } from '@/lib/data';
 
 interface Props {
-  activeTopic: string;
   allCount: number;
   topicCounts: Record<string, number>;
 }
-const { activeTopic, allCount, topicCounts } = Astro.props;
+const { allCount, topicCounts } = Astro.props;
+
+// Topic pages are only generated for topics with posts — hide empty ones.
+const visibleTopics = TOPICS.filter((t) => (topicCounts[t.id] ?? 0) > 0);
 ---
 
-<div class="blog-filters" style="margin-bottom: 40px;" data-blog-filter>
-  <a
-    href="/blog"
-    class:list={['chip', 'chip--interactive', { 'is-active': activeTopic === 'all' }]}
-    data-topic="all"
-  >
-    All ({allCount})
-  </a>
+<div class="blog-filters" style="margin-bottom: 40px;">
+  <a href="/blog" class="chip chip--interactive is-active">All ({allCount})</a>
   {
-    TOPICS.map((t) => (
-      <a
-        href={`/blog?topic=${t.id}`}
-        class:list={['chip', 'chip--interactive', { 'is-active': activeTopic === t.id }]}
-        data-topic={t.id}
-      >
+    visibleTopics.map((t) => (
+      <a href={`/topics/${t.id}`} class="chip chip--interactive">
         {t.name} ({topicCounts[t.id] ?? 0})
       </a>
     ))
   }
 </div>
-
-<script>
-  // Enhancement: intercept chip clicks, update URL + active state without reload.
-  // Falls back to plain navigation if JS is disabled.
-  document.addEventListener('click', (e) => {
-    const link = (e.target as HTMLElement).closest<HTMLAnchorElement>(
-      '[data-blog-filter] a[data-topic]',
-    );
-    if (!link) return;
-    e.preventDefault();
-    const topic = link.dataset.topic!;
-    const newUrl = topic === 'all' ? '/blog' : `/blog?topic=${topic}`;
-    history.pushState(null, '', newUrl);
-    document
-      .querySelectorAll<HTMLAnchorElement>('[data-blog-filter] a[data-topic]')
-      .forEach((a) => {
-        a.classList.toggle('is-active', a.dataset.topic === topic);
-      });
-    // Trigger the filter script in blog/index.astro
-    window.dispatchEvent(new PopStateEvent('popstate'));
-  });
-</script>
