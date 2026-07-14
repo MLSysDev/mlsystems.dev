@@ -1,19 +1,66 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SITE } from '@/lib/site';
 
 export default function ArticleActions({
+  slug,
   title,
   author,
   date,
 }: {
+  slug: string;
   title: string;
   author: string;
   date: string;
 }) {
   const [liked, setLiked] = useState(false);
-  const [bookmarked, setBookmarked] = useState(false);
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    const key = `mlsys-liked-${slug}`;
+    try {
+      setLiked(localStorage.getItem(key) === '1');
+    } catch {
+      /* storage blocked */
+    }
+    let alive = true;
+    fetch(`/api/likes/${slug}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d: { count?: number } | null) => {
+        if (alive && d && typeof d.count === 'number') setCount(d.count);
+      })
+      .catch(() => {
+        /* no backend yet — keep the button working without a number */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [slug]);
+
+  const toggleLike = async () => {
+    const next = !liked;
+    setLiked(next);
+    setCount((c) => (c === null ? c : Math.max(0, c + (next ? 1 : -1))));
+    try {
+      localStorage.setItem(`mlsys-liked-${slug}`, next ? '1' : '0');
+    } catch {
+      /* storage blocked */
+    }
+    try {
+      const r = await fetch(`/api/likes/${slug}`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ op: next ? 'like' : 'unlike' }),
+      });
+      if (r.ok) {
+        const d = (await r.json()) as { count?: number };
+        if (typeof d.count === 'number') setCount(d.count);
+      }
+    } catch {
+      /* offline / no backend — optimistic state stays, nothing breaks */
+    }
+  };
 
   return (
     <div
@@ -33,23 +80,15 @@ export default function ArticleActions({
       <div style={{ display: 'flex', gap: 8 }}>
         <button
           className="btn"
-          onClick={() => setLiked((v) => !v)}
+          onClick={toggleLike}
+          aria-pressed={liked}
           style={{
             color: liked ? 'var(--accent)' : 'inherit',
             borderColor: liked ? 'var(--accent)' : 'var(--line-2)',
           }}
         >
-          {liked ? '♥' : '♡'} {liked ? '128' : '127'}
-        </button>
-        <button
-          className="btn"
-          onClick={() => setBookmarked((v) => !v)}
-          style={{
-            color: bookmarked ? 'var(--accent)' : 'inherit',
-            borderColor: bookmarked ? 'var(--accent)' : 'var(--line-2)',
-          }}
-        >
-          {bookmarked ? '★' : '☆'} Bookmark
+          {liked ? '♥' : '♡'}
+          {count !== null && ` ${count}`}
         </button>
         <button
           className="btn"

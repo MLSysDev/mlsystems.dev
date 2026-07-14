@@ -45,22 +45,7 @@ export const mdxComponents = {
   }) => (
     <div className="inline-figure" style={cssVar('--fig-w', width)}>
       <div>{children}</div>
-      {caption && (
-        <div className="inline-figure-caption">
-          <span
-            style={{
-              fontStyle: 'normal',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 11,
-              color: 'var(--ink-3)',
-              marginRight: 8,
-            }}
-          >
-            FIG.
-          </span>
-          {caption}
-        </div>
-      )}
+      {caption && <div className="inline-figure-caption">{caption}</div>}
     </div>
   ),
   Gallery: ({ children, min }: { children: ReactNode; min?: string | number }) => (
