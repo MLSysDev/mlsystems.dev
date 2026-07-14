@@ -45,10 +45,10 @@ const dateISO = post.data.date.toISOString();
 const modifiedISO = (post.data.updated ?? post.data.date).toISOString();
 const topicLabel = topicName(post.data.topicId);
 const cover = post.data.cover;
-// Always share the generated 1200×630 card — it composites the cover (any shape)
-// with a legibility scrim, so previews never crop awkwardly. The raw cover still
-// renders as the in-article hero below.
-const ogImage = `/og/post/${post.id}.png`;
+// Cover posts share the raw cover; others share one prebuilt brand card. Per-post
+// OG generation is disabled (see src/pages/og/post/[slug].png.ts) to keep build
+// time flat regardless of post count — no render or file per post.
+const ogImage = cover ? (typeof cover === 'string' ? cover : cover.src) : '/og-default.png';
 
 const articleJsonLd = {
   '@context': 'https://schema.org',
@@ -99,6 +99,7 @@ const breadcrumbJsonLd = {
   publishedTime={dateISO}
   modifiedTime={modifiedISO}
   section={topicLabel}
+  author={authorNames}
   tags={post.data.tags}
   jsonLd={[articleJsonLd, breadcrumbJsonLd]}
 >

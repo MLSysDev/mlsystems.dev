@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { getCollection, getEntries } from 'astro:content';
+import { getEntries } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -7,12 +7,17 @@ import { generateOgPng } from '@/lib/og';
 import { pngResponseWithFallback } from '@/lib/og-response';
 import { topicName } from '@/lib/data';
 
+// Per-post OG cards (title/cover composited into a 1200×630 card) are preserved
+// here as an opt-in feature but NOT generated — one render + one file per post
+// doesn't scale (Cloudflare Pages caps a deploy at 20k files) and adds build
+// time that delays the PR preview link. Posts share the raw cover or the single
+// prebuilt /og-default.png instead (see src/pages/blog/[slug].astro).
+//
+// To re-enable: restore the getCollection import and return the mapped posts,
+// then repoint ogImage in blog/[slug].astro back to `/og/post/${post.id}.png`.
+// Best paired with edge/on-demand caching so cards render once, not per build.
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
-  return posts.map((post) => ({
-    params: { slug: post.id },
-    props: { post },
-  }));
+  return [] as { params: { slug: string }; props: { post: CollectionEntry<'posts'> } }[];
 }
 
 const MIME: Record<string, string> = {
