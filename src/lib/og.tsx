@@ -448,20 +448,45 @@ function defaultTemplate(): React.ReactElement {
   return (
     <div style={SHELL_STYLE}>
       <div style={BORDER_STYLE} />
+      {/* faint on-brand square motif, bottom-right, behind the text */}
+      <div
+        style={{
+          position: 'absolute',
+          right: -64,
+          bottom: -64,
+          width: 300,
+          height: 300,
+          border: `2px solid ${C.line}`,
+          borderRadius: 18,
+          display: 'flex',
+        }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          right: 72,
+          bottom: 72,
+          width: 200,
+          height: 200,
+          border: `2px solid ${C.line}`,
+          borderRadius: 14,
+          display: 'flex',
+        }}
+      />
       {brandBar()}
       <div style={{ flex: 1, display: 'flex', alignItems: 'center', marginTop: 28 }}>
         <div
           style={{
             fontFamily: 'Playfair Display',
-            fontSize: 124,
+            fontSize: 104,
             lineHeight: 1.0,
             color: C.ink,
             letterSpacing: -2,
             display: 'flex',
-            maxWidth: 1040,
+            maxWidth: 1000,
           }}
         >
-          An open archive.
+          Machine learning systems.
         </div>
       </div>
       <div style={ACCENT_RULE_STYLE} />
