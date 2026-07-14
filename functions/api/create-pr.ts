@@ -25,6 +25,15 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
+// Wraps lines in an aligned ASCII box inside a code fence (renders monospace on
+// GitHub). Padding is computed, so the box is always square regardless of content.
+function box(lines: string[], minWidth = 0): string {
+  const width = Math.max(minWidth, ...lines.map((l) => l.length));
+  const bar = '─'.repeat(width + 2);
+  const rows = lines.map((l) => `│ ${l.padEnd(width)} │`);
+  return ['```', `╭${bar}╮`, ...rows, `╰${bar}╯`, '```'].join('\n');
+}
+
 function b64urlString(s: string): string {
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -182,32 +191,42 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 
     const body = [
       '```',
-      '╭──────────────────────────────────────────╮',
-      '│  NEW BLOG POST  ·  mlsystems.dev /write   │',
-      '╰──────────────────────────────────────────╯',
+      '╔══════════════════════════════╗',
+      '║  ML SYSTEMS  —  NEW ARTICLE  ║',
+      '╚══════════════════════════════╝',
       '```',
       '',
       `## ${title}`,
       '',
-      'Opened automatically from the mlsystems.dev **/write** portal.',
+      'Submitted through the **/write** editor on mlsystems.dev.',
       '',
       '### Preview it',
       "Once the Cloudflare check below finishes, a link to your post's preview page is posted here as a comment. Open it to see how the post will look once published.",
       '',
       '> [!IMPORTANT]',
-      '> **Please comment below to claim this post.** Commenting from your GitHub account already',
-      '> tells us who you are — just say which **author name** it should be published under.',
-      '>',
-      `> Prefer not to comment here? Email this page's link to **${CONTACT_EMAIL}** instead.`,
+      '> **Please comment below to claim this post** — tag yourself so we know who wrote it.',
+      '> Commenting from your GitHub account already identifies you; just say which **author name**',
+      '> it should be published under.',
       '',
-      '> [!NOTE]',
-      '> **Posting for the first time?** Also include your author details so we can set up your profile:',
-      '> - Short bio (1–2 sentences)',
-      '> - Links to show on your profile: website, GitHub, X/Twitter, LinkedIn',
-      '> - _(optional)_ an email, if you want one shown',
+      box(
+        [
+          'NEW AUTHOR?',
+          '',
+          'Welcome to ML Systems — and thank you for contributing!',
+          'Please share your details so we can create your author profile:',
+          '',
+          '  - Short bio (1–2 sentences)',
+          '  - Links: website, GitHub, X/Twitter, LinkedIn',
+          '  - (optional) an email to show',
+          '',
+          'Prefer to email your details instead?',
+          `Send this page's link and the details above to ${CONTACT_EMAIL}`,
+        ],
+        64,
+      ),
       '',
       '### Need to change something?',
-      'Just edit in the /write portal and submit again — it opens a fresh request. No need to touch this one.',
+      'Just edit in the /write portal and submit again — it opens a fresh request.',
       '',
       `<!-- post-slug: ${slug} -->`,
     ].join('\n');
