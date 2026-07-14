@@ -1176,6 +1176,33 @@ a.hashtag:hover {
   color: var(--accent);
 }
 
+/* Newsletter CTA */
+.newsletter-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px 32px;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper-2);
+  padding: 24px 28px;
+  margin-top: 64px;
+}
+.newsletter-cta-body .eyebrow {
+  margin-bottom: 6px;
+}
+.newsletter-cta-body p {
+  margin: 0;
+  font-size: 15px;
+  color: var(--ink-2);
+}
+.newsletter-cta--compact {
+  margin: 0 0 40px;
+  padding: 18px 22px;
+  background: transparent;
+}
+
 /* Footer */
 .footer {
   border-top: 1px solid var(--line);

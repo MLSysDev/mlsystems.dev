@@ -1,6 +1,7 @@
 ---
 import { SITE, SOCIALS } from '@/lib/site';
 import { SOCIAL_ICONS } from '@/lib/socialIcons';
+import NewsletterCta from '@/components/NewsletterCta.astro';
 const currentYear = new Date().getFullYear();
 
 const socialIcons = (['discord', 'github', 'twitter', 'linkedin'] as const).map((key) => ({
@@ -89,6 +90,8 @@ const socialIcons = (['discord', 'github', 'twitter', 'linkedin'] as const).map(
         </div>
       </div>
     </div>
+
+    <NewsletterCta variant="compact" />
 
     <div class="footer-bottom">
       <span>© {currentYear} {SITE.name}</span>

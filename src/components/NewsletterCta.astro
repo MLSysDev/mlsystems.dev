@@ -1,0 +1,29 @@
+---
+import { SITE } from '@/lib/site';
+
+interface Props {
+  /** compact renders the slimmer footer variant */
+  variant?: 'card' | 'compact';
+}
+const { variant = 'card' } = Astro.props;
+---
+
+{
+  SITE.newsletterUrl && (
+    <aside class:list={['newsletter-cta', { 'newsletter-cta--compact': variant === 'compact' }]}>
+      <div class="newsletter-cta-body">
+        <div class="eyebrow">Newsletter</div>
+        <p>New articles in your inbox. No spam, ever.</p>
+      </div>
+      <a
+        class="btn btn-primary"
+        href={SITE.newsletterUrl}
+        target="_blank"
+        rel="noreferrer"
+        data-newsletter-cta
+      >
+        Subscribe <span class="btn-arrow">→</span>
+      </a>
+    </aside>
+  )
+}
