@@ -1,19 +1,22 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
-function useAnimationFrame() {
+function useAnimationFrame(active: boolean) {
   const [t, setT] = useState(0);
+  const tRef = useRef(0);
   useEffect(() => {
+    if (!active) return;
     let raf: number;
-    const start = performance.now();
+    const start = performance.now() - tRef.current * 1000;
     const tick = (now: number) => {
-      setT((now - start) / 1000);
+      tRef.current = (now - start) / 1000;
+      setT(tRef.current);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [active]);
   return t;
 }
 
@@ -556,19 +559,45 @@ export default function HeroFigure() {
   ];
 
   const [idx, setIdx] = useState(0);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [reducedMotion] = useState(
+    () =>
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  const [pageVisible, setPageVisible] = useState(true);
+  const [onScreen, setOnScreen] = useState(true);
 
   useEffect(() => {
+    const onVisibility = () => setPageVisible(!document.hidden);
+    onVisibility();
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting));
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const active = !reducedMotion && pageVisible && onScreen;
+
+  useEffect(() => {
+    if (!active) return;
     const cycleMs = 9000;
     const interval = setInterval(() => setIdx((i) => (i + 1) % FIGS.length), cycleMs);
     return () => clearInterval(interval);
-  }, [FIGS.length]);
+  }, [active, FIGS.length]);
 
-  const t = useAnimationFrame();
+  const t = useAnimationFrame(active);
   const current = FIGS[idx];
   const Comp = current.Comp;
 
   return (
-    <div className="figure">
+    <div className="figure" ref={rootRef}>
       <div className="figure-head">
         <div className="figure-head-tabs">
           {FIGS.map((f, i) => (

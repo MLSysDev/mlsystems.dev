@@ -1,3 +1,6 @@
+import { useRef } from 'react';
+import { useDialogFocus } from '../lib/useDialogFocus';
+
 type Props = {
   open: boolean;
   busy: boolean;
@@ -17,10 +20,13 @@ export function OpenExistingDialog({
   onSubmit,
   onClose,
 }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(open, panelRef, onClose, !busy);
   if (!open) return null;
   return (
     <div className="write-modal-backdrop" onClick={() => !busy && onClose()} role="presentation">
       <div
+        ref={panelRef}
         className="write-modal"
         role="dialog"
         aria-modal="true"

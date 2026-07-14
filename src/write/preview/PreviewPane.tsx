@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import katex from 'katex';
 import { mdxComponents as C } from '@/components/MDXComponents';
 import { getAssetUrl } from '../storage/assets';
+import { sanitizeSvg } from '../lib/sanitizeSvg';
 import {
   BG_COLORS,
   TEXT_COLORS,
@@ -18,10 +19,15 @@ import {
 function styledRun(run: { text: string; styles: Record<string, boolean | string> }, key: number) {
   const { text, styles } = run;
   let node: ReactNode = text;
-  if (styles.code) node = <code>{node}</code>;
-  if (styles.bold) node = <strong>{node}</strong>;
-  if (styles.italic) node = <em>{node}</em>;
-  if (styles.strike) node = <s>{node}</s>;
+  // Mirror toMdx.wrapStyles: inline code publishes as plain backticks, so
+  // bold/italic/strike are dropped with it — the preview must not show them.
+  if (styles.code) {
+    node = <code>{node}</code>;
+  } else {
+    if (styles.bold) node = <strong>{node}</strong>;
+    if (styles.italic) node = <em>{node}</em>;
+    if (styles.strike) node = <s>{node}</s>;
+  }
   if (styles.underline) node = <u>{node}</u>;
   const style: CSSProperties = {};
   if (typeof styles.textColor === 'string' && styles.textColor && styles.textColor !== 'default') {
@@ -144,7 +150,11 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
     case 'toggleListItem':
       return detailsFor(block, variants);
     case 'quote':
-      return <blockquote key={block.id}>{runs(block.content)}</blockquote>;
+      return (
+        <blockquote key={block.id} style={alignStyle(block)}>
+          {runs(block.content)}
+        </blockquote>
+      );
     case 'codeBlock':
       return (
         <pre key={block.id} className="write-preview-code">
@@ -184,11 +194,10 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
       );
     }
     case 'svg': {
-      const code = String(block.props.code ?? '').trim();
+      const code = sanitizeSvg(String(block.props.code ?? '')).trim();
       if (!code) return null;
       return (
         <C.Figure key={block.id} caption={String(block.props.caption ?? '') || undefined}>
-          {/* Editor-sanitized SVG markup (scripts stripped in SvgBlock). */}
           <div dangerouslySetInnerHTML={{ __html: code }} />
         </C.Figure>
       );

@@ -3,6 +3,7 @@
 // Pages set their own title/description via props; everything else is sensible defaults.
 
 import { APPEARANCE, SITE, SOCIALS } from '@/lib/site';
+import { PREFS_KEY, ACCENTS } from '@/lib/prefs';
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
 import NewsletterStrip from '@/components/NewsletterStrip.astro';
@@ -83,13 +84,13 @@ const imageUrl = image.startsWith('http') ? image : new URL(image, SITE.url).toS
 const currentPath = Astro.url.pathname;
 const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 
-const ALT_NAMES = ['Machine Learning Systems', 'MLSystems', 'MLSys', 'mlsystems.dev'];
+const ALT_NAMES = ['ML Systems', 'MLSystems', 'MLSys', 'mlsystems.dev'];
 
 const siteJsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: SITE.name,
+    name: SITE.fullName,
     alternateName: ALT_NAMES,
     url: SITE.url,
     logo: new URL('/favicon-96x96.png', SITE.url).toString(),
@@ -99,11 +100,11 @@ const siteJsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: SITE.name,
+    name: SITE.fullName,
     alternateName: ALT_NAMES,
     url: SITE.url,
     description: SITE.description,
-    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    publisher: { '@type': 'Organization', name: SITE.fullName, url: SITE.url },
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -125,18 +126,19 @@ const siteJsonLd = [
   data-bg={APPEARANCE.background}
   data-density={APPEARANCE.density}
 >
-  <!-- Pre-paint: applies persisted theme + accent before <body> to avoid FOUC. -->
-  <script is:inline>
+  <!-- Pre-paint: applies persisted theme + accent before <body> to avoid FOUC.
+       Constants come from lib/prefs.ts via define:vars so the two never drift. -->
+  <script is:inline define:vars={{ PREFS_KEY, ACCENTS }}>
     (function () {
       try {
         const root = document.documentElement;
-        const raw = localStorage.getItem('mls.prefs');
+        const raw = localStorage.getItem(PREFS_KEY);
         let prefs = raw ? JSON.parse(raw) : null;
         if (!prefs) {
           const legacyTheme = localStorage.getItem('theme');
           if (legacyTheme === 'light' || legacyTheme === 'dark') {
             prefs = { theme: legacyTheme };
-            localStorage.setItem('mls.prefs', JSON.stringify(prefs));
+            localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
             localStorage.removeItem('theme');
           }
         }
@@ -145,8 +147,7 @@ const siteJsonLd = [
         } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
           root.setAttribute('data-theme', 'dark');
         }
-        const validAccents = ['oxide', 'indigo', 'emerald'];
-        if (prefs && validAccents.indexOf(prefs.accent) !== -1) {
+        if (prefs && ACCENTS.indexOf(prefs.accent) !== -1) {
           root.setAttribute('data-accent', prefs.accent);
         }
         const theme = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
@@ -181,7 +182,7 @@ const siteJsonLd = [
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content={imageAlt ?? fullTitle} />
-  <meta property="og:site_name" content={SITE.name} />
+  <meta property="og:site_name" content={SITE.fullName} />
   <meta property="og:locale" content="en_US" />
   {publishedTime && <meta property="article:published_time" content={publishedTime} />}
   {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}

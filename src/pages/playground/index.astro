@@ -3,38 +3,22 @@ import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Playground from '@/components/Playground.tsx';
+import { pickCoreTools, rankTools } from '@/lib/tools';
 const allTools = await getCollection('tools', ({ data }) => !data.draft);
 
 const EXTERNAL_TOOLS = (await getCollection('externalTools'))
   .sort((a, b) => a.data.order - b.data.order)
   .map((e) => e.data);
 
-const TAG_ORDER: Record<string, number> = { Live: 0, Beta: 1, Experimental: 2, Soon: 3 };
-const coreTools = allTools
-  .filter((t) => t.data.core)
-  .sort((a, b) => {
-    const ta = TAG_ORDER[a.data.tag] ?? 99;
-    const tb = TAG_ORDER[b.data.tag] ?? 99;
-    if (ta !== tb) return ta - tb;
-    if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
-    return a.data.name.localeCompare(b.data.name);
-  })
-  .slice(0, 6)
-  .map((t) => ({
-    id: t.id,
-    name: t.data.name,
-    desc: t.data.summary,
-    tag: t.data.tag,
-    available: t.data.tag === 'Live',
-  }));
+const coreTools = pickCoreTools(allTools).map((t) => ({
+  id: t.id,
+  name: t.data.name,
+  desc: t.data.summary,
+  tag: t.data.tag,
+  available: t.data.tag === 'Live',
+}));
 
-const catalogTools = allTools.sort((a, b) => {
-  const ta = TAG_ORDER[a.data.tag] ?? 99;
-  const tb = TAG_ORDER[b.data.tag] ?? 99;
-  if (ta !== tb) return ta - tb;
-  if (a.data.featured !== b.data.featured) return a.data.featured ? -1 : 1;
-  return a.data.name.localeCompare(b.data.name);
-});
+const catalogTools = rankTools(allTools);
 ---
 
 <BaseLayout
@@ -209,29 +193,6 @@ const catalogTools = allTools.sort((a, b) => {
     margin: 8px 0 12px;
     color: var(--ink);
   }
-  .more-tools-lede {
-    font-size: 16px;
-    color: var(--ink-2);
-    line-height: 1.55;
-    margin: 0;
-  }
-  .more-tools-cta {
-    color: var(--accent);
-    border-bottom: 1px solid var(--accent-soft);
-  }
-  .more-tools-cta:hover {
-    border-color: var(--accent);
-  }
-  .more-tools-empty {
-    padding: 48px 0;
-    color: var(--ink-3);
-    text-align: center;
-    font-size: 15px;
-  }
-  .more-tools-empty a {
-    color: var(--accent);
-  }
-
   .tools-card-grid {
     list-style: none;
     padding: 0;

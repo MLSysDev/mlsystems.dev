@@ -2,47 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { loadPagefind, type PagefindResultData } from '@/lib/pagefind';
+import {
+  GROUP_LABEL,
+  buildMeta,
+  classifyUrl,
+  sortRows,
+  topicMatches as matchTopics,
+  type SearchRow,
+} from '@/lib/search';
 
 type Topic = { id: string; name: string; desc: string };
-
-type Group = 'topic' | 'article' | 'tool' | 'author' | 'page';
-
-type RowItem = {
-  group: Group;
-  url: string;
-  title: string;
-  excerpt?: string;
-  meta?: string;
-};
-
-function classifyUrl(url: string): Group {
-  if (url.startsWith('/blog/')) return 'article';
-  if (url.startsWith('/playground/')) return 'tool';
-  if (url.startsWith('/authors/')) return 'author';
-  return 'page';
-}
-
-const GROUP_LABEL: Record<Group, string> = {
-  topic: 'Topics',
-  article: 'Articles',
-  tool: 'Tools',
-  author: 'Authors',
-  page: 'Pages',
-};
-
-function buildMeta(group: Group, meta: PagefindResultData['meta']): string {
-  const parts: string[] = [];
-  if (group === 'article') {
-    if (meta.topic) parts.push(meta.topic);
-    if (meta.read) parts.push(meta.read);
-    if (meta.authors) parts.push(meta.authors);
-  } else if (group === 'tool') {
-    parts.push('Tool');
-  } else if (group === 'author') {
-    parts.push('Contributor');
-  }
-  return parts.join(' · ');
-}
 
 export default function SearchInline({ topics }: { topics: Topic[] }) {
   const [query, setQuery] = useState('');
@@ -67,22 +36,14 @@ export default function SearchInline({ topics }: { topics: Topic[] }) {
     window.history.replaceState({}, '', url.toString());
   }, [query]);
 
-  const topicMatches = useMemo<RowItem[]>(() => {
+  const topicRows = useMemo<SearchRow[]>(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return topics
-      .filter((t) => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q))
-      .slice(0, 3)
-      .map((t) => ({
-        group: 'topic' as const,
-        url: `/topics/${t.id}`,
-        title: t.name,
-        excerpt: t.desc,
-      }));
+    return matchTopics(topics, q);
   }, [query, topics]);
 
-  const rows = useMemo<RowItem[]>(() => {
-    const fromPagefind: RowItem[] = pageResults.map((r) => {
+  const rows = useMemo<SearchRow[]>(() => {
+    const fromPagefind: SearchRow[] = pageResults.map((r) => {
       const g = classifyUrl(r.url);
       return {
         group: g,
@@ -92,10 +53,8 @@ export default function SearchInline({ topics }: { topics: Topic[] }) {
         meta: buildMeta(g, r.meta),
       };
     });
-    const merged = [...topicMatches, ...fromPagefind];
-    const order: Group[] = ['topic', 'article', 'tool', 'author', 'page'];
-    return merged.sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group));
-  }, [topicMatches, pageResults]);
+    return sortRows([...topicRows, ...fromPagefind]);
+  }, [topicRows, pageResults]);
 
   useEffect(() => {
     let cancelled = false;

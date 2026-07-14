@@ -1,13 +1,8 @@
 import { useMemo, useState } from 'react';
 import { createReactBlockSpec } from '@blocknote/react';
+import { sanitizeSvg } from '../../lib/sanitizeSvg';
 
 const looksLikeSvg = (s: string): boolean => /<svg[\s>]/i.test(s);
-
-// The SVG lives in the author's own browser and is reviewed before publish, but
-// strip scripts so the in-editor preview can never execute pasted markup.
-function stripScripts(svg: string): string {
-  return svg.replace(/<script[\s\S]*?<\/script>/gi, '');
-}
 
 type Check =
   | { state: 'empty' }
@@ -17,7 +12,7 @@ type Check =
 // Strict XML parsing mirrors what MDX/JSX needs to build (closed tags, quoted
 // attrs, escaped &), so a preview that passes here won't break the published page.
 function checkSvg(raw: string): Check {
-  const code = stripScripts(raw).trim();
+  const code = sanitizeSvg(raw).trim();
   if (!code) return { state: 'empty' };
   if (!looksLikeSvg(code))
     return { state: 'error', message: 'The markup must contain an <svg> element.' };

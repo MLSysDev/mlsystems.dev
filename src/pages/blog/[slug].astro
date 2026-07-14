@@ -28,7 +28,8 @@ const { post } = Astro.props;
 const { Content } = await render(post);
 
 // KaTeX CSS is ~24 KB — only load it on posts that actually contain math.
-const hasMath = (post.body ?? '').includes('$');
+// Match remark-math's triggers ($$…$$ or $…$) so a stray '$' (prices, shell) doesn't pull in KaTeX CSS.
+const hasMath = /\$\$[\s\S]+?\$\$|\$[^\n$]+?\$/.test(post.body ?? '');
 
 const authors = await getEntries(post.data.authors);
 const authorNames = authors.map((a) => a.data.name).join(', ');
@@ -165,7 +166,7 @@ const breadcrumbJsonLd = {
       cover && (
         <figure class="article-cover">
           {typeof cover === 'string' ? (
-            <img src={cover} alt={post.data.title} width="1200" height="630" loading="eager" />
+            <img src={cover} alt={post.data.title} loading="eager" fetchpriority="high" />
           ) : (
             <Image
               src={cover}
@@ -173,6 +174,7 @@ const breadcrumbJsonLd = {
               widths={[620, 960, 1440]}
               sizes="(min-width: 960px) 960px, 100vw"
               loading="eager"
+              fetchpriority="high"
             />
           )}
         </figure>

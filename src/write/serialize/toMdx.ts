@@ -1,3 +1,5 @@
+import { sanitizeSvg } from '../lib/sanitizeSvg';
+
 export type InlineRun =
   | { type: 'text'; text: string; styles: Record<string, boolean | string> }
   | {
@@ -102,6 +104,22 @@ export const BG_COLORS: Record<string, string> = {
   pink: '#f4dfeb',
 };
 
+// Resolve a color to a value safe to inline in a style attribute. Named palette
+// entries become CSS vars; free-form values (from pasted markup) are allowed only
+// if they're a plain hex/rgb(a)/keyword — otherwise dropped, so a crafted value
+// like `red"><script>` can never break out of the attribute.
+function safeColor(
+  name: string,
+  palette: Record<string, string>,
+  varPrefix: string,
+): string | null {
+  if (palette[name]) return `var(--${varPrefix}-${name}, ${palette[name]})`;
+  if (/^#[0-9a-f]{3,8}$/i.test(name)) return name;
+  if (/^rgba?\([0-9.,%\s/]+\)$/i.test(name)) return name;
+  if (/^[a-z]+$/i.test(name)) return name;
+  return null;
+}
+
 function wrapStyles(text: string, styles: Record<string, boolean | string>): string {
   let out: string;
   if (styles.code) {
@@ -114,14 +132,12 @@ function wrapStyles(text: string, styles: Record<string, boolean | string>): str
   }
   if (styles.underline) out = `<u>${out}</u>`;
   if (typeof styles.textColor === 'string' && styles.textColor && styles.textColor !== 'default') {
-    const name = styles.textColor;
-    const color = TEXT_COLORS[name] ? `var(--tc-${name}, ${TEXT_COLORS[name]})` : name;
-    out = `<span style="color: ${color}">${out}</span>`;
+    const color = safeColor(styles.textColor, TEXT_COLORS, 'tc');
+    if (color) out = `<span style="color: ${color}">${out}</span>`;
   }
   if (typeof styles.backgroundColor === 'string' && styles.backgroundColor !== 'default') {
-    const name = styles.backgroundColor;
-    const bg = BG_COLORS[name] ? `var(--mark-${name}, ${BG_COLORS[name]})` : name;
-    out = `<span style="background-color: ${bg}">${out}</span>`;
+    const bg = safeColor(styles.backgroundColor, BG_COLORS, 'mark');
+    if (bg) out = `<span style="background-color: ${bg}">${out}</span>`;
   }
   return out;
 }
@@ -244,7 +260,7 @@ function serializeFigure(block: SBlock, ctx: Ctx): string {
 }
 
 function serializeSvg(block: SBlock): string {
-  const code = String(block.props.code ?? '').trim();
+  const code = sanitizeSvg(String(block.props.code ?? '')).trim();
   if (!code) return '';
   const caption = String(block.props.caption ?? '');
   const captionAttr = caption ? ` ${attr('caption', caption)}` : '';

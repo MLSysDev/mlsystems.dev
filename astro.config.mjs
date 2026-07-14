@@ -55,6 +55,16 @@ try {
 /** @type {string[]} */
 const SKIP_PATTERNS = ['/write', '/search'];
 
+// Paginated listing pages (/blog/2, /topics/x/2, /tags/x/2, /authors/x/articles/2)
+// are secondary — keep them below their first page and below real articles.
+/**
+ * @param {string} path
+ * @returns {boolean}
+ */
+function isPaginatedListing(path) {
+  return /\/\d+$/.test(path);
+}
+
 /**
  * @param {string} path
  * @returns {number}
@@ -64,6 +74,7 @@ function priorityFor(path) {
   if (path === '/blog' || path === '/topics') return 0.9;
   if (path === '/playground' || path === '/community' || path === '/contribute' || path === '/why')
     return 0.8;
+  if (isPaginatedListing(path)) return 0.4;
   if (path.startsWith('/blog/')) return 0.7;
   if (path.startsWith('/topics/') || path.startsWith('/tags/')) return 0.6;
   if (path.startsWith('/authors/')) return 0.6;
@@ -76,6 +87,7 @@ function priorityFor(path) {
  */
 function changefreqFor(path) {
   if (path === '/' || path === '/blog' || path === '/topics') return 'daily';
+  if (isPaginatedListing(path)) return 'weekly';
   if (path.startsWith('/blog/') || path.startsWith('/authors/')) return 'monthly';
   return 'weekly';
 }
