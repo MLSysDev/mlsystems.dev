@@ -16,6 +16,19 @@ export default function ArticleActions({
 }) {
   const [liked, setLiked] = useState(false);
   const [count, setCount] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const citation = `${author.split(' ').reverse().join(', ')}. "${title.split(':')[0]}." ${SITE.domain}, ${date}.`;
+
+  const copyCitation = async () => {
+    try {
+      await navigator.clipboard.writeText(`${citation} ${window.location.href}`);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    } catch {
+      /* clipboard blocked */
+    }
+  };
 
   useEffect(() => {
     const key = `mlsys-liked-${slug}`;
@@ -116,9 +129,63 @@ export default function ArticleActions({
           ↗ Share
         </button>
       </div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-3)' }}>
-        Cite as: {author.split(' ').reverse().join(', ')}. &quot;{title.split(':')[0]}.&quot;{' '}
-        {SITE.domain}, {date}.
+      <div
+        style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: 12,
+          color: 'var(--ink-3)',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 6,
+          flexWrap: 'wrap',
+        }}
+      >
+        <span>Cite as: {citation}</span>
+        <button
+          type="button"
+          onClick={copyCitation}
+          aria-label={copied ? 'Citation copied' : 'Copy citation with link'}
+          title="Copy citation with link"
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 2,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            color: copied ? 'var(--accent)' : 'inherit',
+          }}
+        >
+          {copied ? (
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          ) : (
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
+        </button>
       </div>
     </div>
   );
