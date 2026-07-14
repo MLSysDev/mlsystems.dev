@@ -380,8 +380,8 @@
   position: relative;
   display: block;
   line-height: 0;
-  width: 340px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 640px;
   aspect-ratio: 1200 / 630;
   border-radius: 8px;
   border: 1px solid var(--line-2);
@@ -398,7 +398,6 @@
   font-size: 11px;
   color: var(--ink-3);
   text-align: center;
-  max-width: 340px;
 }
 .write-cover-remove {
   position: absolute;

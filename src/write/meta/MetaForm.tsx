@@ -243,9 +243,7 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                 ✕
               </button>
             </div>
-            <span className="write-cover-tip">
-              This is the crop shown in link previews. Best at 1200×630 (landscape).
-            </span>
+            <span className="write-cover-tip">Best size: 1200×630</span>
             {SITE.ogCardOptIn && (
               <label
                 className="write-ogcard-opt"
