@@ -168,7 +168,7 @@ function coverTemplate(d: OgArticle, coverUrl: string): React.ReactElement {
           height: 630,
           display: 'flex',
           background:
-            'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0.84) 100%)',
+            'linear-gradient(180deg, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.28) 34%, rgba(0,0,0,0.84) 100%)',
         }}
       />
       <div
@@ -185,25 +185,43 @@ function coverTemplate(d: OgArticle, coverUrl: string): React.ReactElement {
         <div
           style={{
             position: 'absolute',
-            top: 60,
+            top: 58,
             left: 68,
             display: 'flex',
             alignItems: 'center',
-            gap: 16,
+            gap: 18,
           }}
         >
-          <img src={logo} width={52} height={52} style={{ borderRadius: 8 }} alt="" />
-          <span
-            style={{
-              fontFamily: 'JetBrains Mono',
-              fontSize: 20,
-              letterSpacing: 3,
-              color: '#ffffff',
-              fontWeight: 600,
-            }}
-          >
-            MLSYSTEMS.DEV
-          </span>
+          <img src={logo} width={56} height={56} style={{ borderRadius: 8 }} alt="" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span
+              style={{
+                fontFamily: 'JetBrains Mono',
+                fontSize: 20,
+                letterSpacing: 3,
+                color: '#ffffff',
+                fontWeight: 600,
+              }}
+            >
+              MLSYSTEMS.DEV
+            </span>
+            <span
+              style={{
+                fontFamily: 'Playfair Display',
+                fontStyle: 'italic',
+                fontSize: 25,
+                color: '#ece7db',
+                letterSpacing: -0.5,
+                display: 'flex',
+              }}
+            >
+              Machine learning, from{' '}
+              <span style={{ color: '#e0794f', display: 'flex', marginLeft: 7, marginRight: 7 }}>
+                kernels
+              </span>{' '}
+              to clusters.
+            </span>
+          </div>
         </div>
         <div
           style={{

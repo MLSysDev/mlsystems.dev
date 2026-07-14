@@ -7,8 +7,15 @@ import { generateOgPng } from '@/lib/og';
 import { pngResponseWithFallback } from '@/lib/og-response';
 import { topicName } from '@/lib/data';
 
+// Per-post OG cards (title composited over the cover) render ONLY for posts that
+// opted in via `ogCard: true` + a cover. Everyone else uses the raw cover or the
+// shared /og-default.png (see blog/[slug].astro), so build time stays flat: one
+// render/file only for the handful that ask for it.
 export async function getStaticPaths() {
-  const posts = await getCollection('posts', ({ data }) => !data.draft);
+  const posts = await getCollection(
+    'posts',
+    ({ data }) => !data.draft && data.ogCard && !!data.cover,
+  );
   return posts.map((post) => ({
     params: { slug: post.id },
     props: { post },

@@ -35,6 +35,9 @@ export type PostMeta = {
   tags: string[];
   slug: string;
   coverFileName: string;
+  // Opt in to a generated share card (title over the cover) instead of the raw
+  // cover. Only meaningful when a cover is set.
+  ogCard?: boolean;
   // Set only when editing an existing post; preserves its original publish date.
   date?: string;
   // A topic the writer proposes that isn't in the list yet — a maintainer (or, later,
@@ -404,6 +407,7 @@ function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptio
   if (meta.tags.length > 0) lines.push(`tags: [${meta.tags.map(yaml).join(', ')}]`);
   if (meta.proposedTopic?.trim()) lines.push(`proposedTopic: ${yaml(meta.proposedTopic.trim())}`);
   if (meta.coverFileName) lines.push(`cover: ${yaml(`./${meta.coverFileName}`)}`);
+  if (meta.coverFileName && meta.ogCard) lines.push('ogCard: true');
   return `---\n${lines.join('\n')}\n---`;
 }
 
