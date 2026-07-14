@@ -1729,21 +1729,9 @@ a.hashtag:hover {
   padding-left: 0.5em;
 }
 
+/* Only visual media breaks out wider than the text column; code and tables stay
+   contained (and scroll inside if long). */
 @media (min-width: 1000px) {
-  .article-body pre,
-  .article-body .code-block,
-  .article-body .table-wrap {
-    width: fit-content;
-    max-width: min(var(--breakout-w), 92vw);
-    margin-left: 50%;
-    transform: translateX(-50%);
-  }
-  .article-body .code-block pre {
-    width: auto;
-    max-width: none;
-    margin-left: 0;
-    transform: none;
-  }
   .article-body .inline-figure {
     width: min(var(--fig-w, 560px), 92vw);
     max-width: min(var(--breakout-w), 92vw);
