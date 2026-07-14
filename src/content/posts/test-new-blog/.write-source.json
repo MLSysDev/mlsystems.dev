@@ -1,0 +1,70 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "Test Blog 2",
+    "summary": "Testing Another blog",
+    "authors": [
+      "guest"
+    ],
+    "writerName": "David",
+    "topicId": "training",
+    "topicName": "Training Systems",
+    "tags": [
+      "kernels",
+      "memory"
+    ],
+    "slug": "test-new-blog",
+    "coverFileName": "18084626-2.jpg",
+    "proposedTopic": "Memory Systems"
+  },
+  "blocks": [
+    {
+      "id": "815dbda3-3f21-4c49-a0bd-f5ae222af6b3",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "testing blogs",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "2b309d1a-2290-44fc-891c-042279d598eb",
+      "type": "figure",
+      "props": {
+        "fileName": "gatech-building.jpg",
+        "src": "",
+        "alt": "GATECH - The Great!",
+        "caption": "GATECH - The Great!",
+        "width": 620
+      },
+      "children": []
+    },
+    {
+      "id": "9d1171ea-7d90-491d-af3a-81caa28e23e8",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Nice!",
+          "styles": {}
+        }
+      ],
+      "children": []
+    }
+  ],
+  "tableVariants": {}
+}
