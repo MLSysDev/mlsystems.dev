@@ -20,6 +20,7 @@ import { serializePost, type PostMeta, type SBlock, type TableStyle } from './se
 import { validate } from './serialize/validate';
 import { buildZip } from './serialize/toZip';
 import { buildSource } from './serialize/source';
+import { authorPath, buildAuthorJson } from './serialize/author';
 import { fetchExisting } from './serialize/fetchExisting';
 import {
   assemblePostFiles,
@@ -111,6 +112,7 @@ function emptyMeta(): PostMeta {
     slug: '',
     coverFileName: '',
     proposedTopic: '',
+    newAuthor: null,
   };
 }
 
@@ -290,6 +292,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         contactEmail,
         assets: allAssets(),
         sourceJson: buildSource(meta, blocks, tableVariants),
+        newAuthor: meta.newAuthor ?? null,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -326,9 +329,17 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       const serialized = serializePost(meta, blocks, { tableVariants, today: new Date() });
       const sourceJson = buildSource(meta, blocks, tableVariants);
       const files = await assemblePostFiles(meta.slug, serialized, sourceJson, allAssets());
+      if (meta.newAuthor?.handle) {
+        files.push({
+          path: authorPath(meta.newAuthor.handle),
+          content: buildAuthorJson(meta.newAuthor),
+          encoding: 'utf-8',
+        });
+      }
       const pr = await createPullRequest({
         slug: meta.slug,
         title: meta.title || 'Untitled',
+        summary: meta.summary,
         files,
         isEdit: loadedSlug !== null && loadedSlug === meta.slug,
       });
@@ -629,8 +640,8 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
               <>
                 <h3>Ready to post?</h3>
                 <p>
-                  We’ll submit your article via GitHub. Once it’s created, just add your name on the
-                  request to claim it — a maintainer takes it from there.
+                  We’ll submit your article via GitHub. Once it’s created, please add your name on
+                  the request to claim it — Admin will take it from there.
                 </p>
                 {publishError && (
                   <p className="write-modal-error" role="alert">

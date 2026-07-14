@@ -53,6 +53,7 @@ export async function assemblePostFiles(
 export async function createPullRequest(opts: {
   slug: string;
   title: string;
+  summary?: string;
   files: PublishFile[];
   isEdit: boolean;
 }): Promise<PublishResult> {
@@ -64,6 +65,7 @@ export async function createPullRequest(opts: {
       body: JSON.stringify({
         slug: opts.slug,
         title: opts.title,
+        summary: opts.summary,
         files: opts.files,
         isEdit: opts.isEdit,
       }),

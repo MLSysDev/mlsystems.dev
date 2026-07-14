@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import type { PostMeta } from '../serialize/toMdx';
+import type { NewAuthor, PostMeta } from '../serialize/toMdx';
 import { slugify } from '../serialize/validate';
 import { addAsset, getAssetUrl } from '../storage/assets';
+import { AuthorModal } from './AuthorModal';
 
 export type Option = { id: string; name: string };
 
@@ -17,8 +18,24 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
   const [slugTouched, setSlugTouched] = useState(false);
   const [tagInput, setTagInput] = useState('');
   const [proposing, setProposing] = useState(!!meta.proposedTopic);
+  const [authorModal, setAuthorModal] = useState(false);
 
   const set = (patch: Partial<PostMeta>) => onChange({ ...meta, ...patch });
+
+  const saveNewAuthor = (author: NewAuthor) => {
+    const kept = meta.authors.filter((id) => id !== meta.newAuthor?.handle);
+    set({
+      newAuthor: author,
+      authors: kept.includes(author.handle) ? kept : [...kept, author.handle],
+    });
+    setAuthorModal(false);
+  };
+
+  const removeNewAuthor = () =>
+    set({
+      newAuthor: null,
+      authors: meta.authors.filter((id) => id !== meta.newAuthor?.handle),
+    });
 
   const slugLocked = slugTouched || (!!meta.slug && meta.slug !== slugify(meta.title));
 
@@ -54,16 +71,22 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
           Authors
           <span className="write-authors">
             {meta.authors.map((id) => {
+              const isNew = id === meta.newAuthor?.handle;
               const a = authors.find((x) => x.id === id);
+              const label = isNew ? `${meta.newAuthor?.name} · new author` : a ? a.name : id;
               return (
                 <button
                   key={id}
                   type="button"
-                  className="write-tag"
-                  title="Remove author"
-                  onClick={() => set({ authors: meta.authors.filter((x) => x !== id) })}
+                  className={isNew ? 'write-tag write-tag-new' : 'write-tag'}
+                  title={isNew ? 'Edit or remove' : 'Remove author'}
+                  onClick={() =>
+                    isNew
+                      ? setAuthorModal(true)
+                      : set({ authors: meta.authors.filter((x) => x !== id) })
+                  }
                 >
-                  {a ? a.name : id} ✕
+                  {label} {isNew ? '✎' : '✕'}
                 </button>
               );
             })}
@@ -83,6 +106,15 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                   </option>
                 ))}
             </select>
+            {!meta.newAuthor && (
+              <button
+                type="button"
+                className="write-author-add"
+                onClick={() => setAuthorModal(true)}
+              >
+                ＋ Join as author
+              </button>
+            )}
           </span>
         </label>
         {meta.authors.includes('guest') && (
@@ -238,6 +270,16 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
           </div>
         )}
       </div>
+
+      {authorModal && (
+        <AuthorModal
+          existingHandles={authors.map((a) => a.id)}
+          initial={meta.newAuthor ?? null}
+          onSave={saveNewAuthor}
+          onRemove={meta.newAuthor ? removeNewAuthor : undefined}
+          onCancel={() => setAuthorModal(false)}
+        />
+      )}
     </div>
   );
 }

@@ -14,6 +14,17 @@ export type SBlock = {
   children?: SBlock[];
 };
 
+export type NewAuthor = {
+  handle: string;
+  name: string;
+  bio?: string;
+  website?: string;
+  github?: string;
+  twitter?: string;
+  linkedin?: string;
+  email?: string;
+};
+
 export type PostMeta = {
   title: string;
   summary: string;
@@ -29,6 +40,9 @@ export type PostMeta = {
   // A topic the writer proposes that isn't in the list yet — a maintainer (or, later,
   // automation) reads this from the frontmatter and creates it or remaps topicId.
   proposedTopic?: string;
+  // Set when the writer registers themselves as a new author; shipped as an
+  // authors/<handle>.json file alongside the post.
+  newAuthor?: NewAuthor | null;
 };
 
 export type TableStyle = { border: 'rule' | 'lined' | 'plain'; zebra: boolean };

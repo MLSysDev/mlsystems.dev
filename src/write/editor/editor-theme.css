@@ -131,6 +131,56 @@
   min-width: 130px;
   padding: 2px;
 }
+.write-author-add {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  background: none;
+  border: 1px dashed var(--line-2);
+  border-radius: 99px;
+  padding: 2px 10px;
+  cursor: pointer;
+}
+.write-author-add:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.write-tag-new {
+  color: var(--paper);
+  background: var(--accent);
+}
+
+.write-author-modal .write-author-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.write-author-modal .write-author-field input,
+.write-author-modal .write-author-field textarea {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink);
+  border: 1px solid var(--line-2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: var(--paper);
+}
+.write-author-hint {
+  color: var(--ink-4);
+}
+.write-author-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 12px;
+}
+.write-author-remove {
+  margin-right: auto;
+  color: var(--tc-red);
+}
 
 .write-topbar {
   display: flex;
@@ -386,6 +436,22 @@
 .write-ghost,
 .write-chip {
   background: none;
+}
+.write-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.write-ghost:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .write-chip.is-active {

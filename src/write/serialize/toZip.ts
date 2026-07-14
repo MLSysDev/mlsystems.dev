@@ -1,6 +1,7 @@
 import JSZip from 'jszip';
-import type { SerializedPost } from './toMdx';
+import type { NewAuthor, SerializedPost } from './toMdx';
 import { SOURCE_FILENAME } from './source';
+import { authorPath, buildAuthorJson } from './author';
 
 export type ZipInput = {
   serialized: SerializedPost;
@@ -10,6 +11,7 @@ export type ZipInput = {
   contactEmail: string;
   assets: { name: string; file: File }[];
   sourceJson: string;
+  newAuthor?: NewAuthor | null;
 };
 
 function submitNote(
@@ -66,6 +68,9 @@ export async function buildZip(input: ZipInput): Promise<Blob> {
   }
   for (const { fileName, source } of input.serialized.componentFiles) {
     folder.file(fileName, `${source.trimEnd()}\n`);
+  }
+  if (input.newAuthor?.handle) {
+    zip.file(authorPath(input.newAuthor.handle), buildAuthorJson(input.newAuthor));
   }
   zip.file(
     'HOW-TO-SUBMIT.md',

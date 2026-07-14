@@ -91,7 +91,13 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     return json({ error: 'Publishing is not configured on the server yet.' }, 500);
   }
 
-  let payload: { title?: string; slug?: string; files?: PostFile[]; isEdit?: boolean };
+  let payload: {
+    title?: string;
+    slug?: string;
+    summary?: string;
+    files?: PostFile[];
+    isEdit?: boolean;
+  };
   try {
     payload = (await request.json()) as typeof payload;
   } catch {
@@ -99,6 +105,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   }
   const slug = (payload.slug ?? '').trim();
   const title = (payload.title ?? '').trim() || slug;
+  const summary = (payload.summary ?? '').trim();
   const files = payload.files ?? [];
   const isEdit = payload.isEdit === true;
   if (!slug || files.length === 0) return json({ error: 'Missing post data.' }, 400);
@@ -131,6 +138,28 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       if (existing.ok) {
         return json(
           { error: 'A post with this URL already exists. Change the URL slug and try again.' },
+          409,
+        );
+      }
+    }
+
+    // A newly registered author must not overwrite an existing profile at the same handle.
+    const authorFile = files.find((f) => f.path.startsWith('src/content/authors/'));
+    if (authorFile) {
+      const existing = await fetch(
+        `https://api.github.com/repos/${owner}/${name}/contents/${encodeURI(authorFile.path)}?ref=main`,
+        {
+          headers: {
+            accept: 'application/vnd.github+json',
+            authorization: `Bearer ${token}`,
+            'user-agent': UA,
+            'x-github-api-version': '2022-11-28',
+          },
+        },
+      );
+      if (existing.ok) {
+        return json(
+          { error: 'That author handle is already taken. Pick another handle and try again.' },
           409,
         );
       }
@@ -207,21 +236,34 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       ].join('\n');
     })();
 
+    const welcomeNote = authorFile
+      ? [
+          '',
+          '> [!NOTE]',
+          '> **Welcome to MLSystems.dev** 🎉 Thank you for joining us and sharing your',
+          '> knowledge with the community — we’re thrilled to have you here. Your author',
+          '> profile is included in this request and goes live together with your post.',
+        ]
+      : [];
+
     const body = [
       banner,
       '',
       `## ${title}`,
+      ...(summary ? ['', `_${summary}_`] : []),
+      '',
+      '---',
       '',
       '> [!IMPORTANT]',
-      '> **Claim this post** — comment below with the **author name** to publish under.',
-      '> Your GitHub comment already identifies you.',
-      '',
-      '> [!NOTE]',
-      '> **New author?** Welcome 🎉 Add a short bio and links (site, GitHub, X, LinkedIn)',
-      `> in a comment so we can set up your author page — or email them to ${CONTACT_EMAIL}.`,
+      '> To confirm your identity, please **comment below with your name**.',
+      ...welcomeNote,
       '',
       '> [!TIP]',
       '> **Preview** — a link to your post appears below once the Cloudflare check passes.',
+      '',
+      '---',
+      '',
+      `> Questions or issues? Email [${CONTACT_EMAIL}](mailto:${CONTACT_EMAIL}) with this PR link.`,
       '',
       `<!-- post-slug: ${slug} -->`,
     ].join('\n');
