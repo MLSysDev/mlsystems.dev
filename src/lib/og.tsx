@@ -130,6 +130,119 @@ function brandBar(): React.ReactElement {
   );
 }
 
+function coverTemplate(d: OgArticle, coverUrl: string): React.ReactElement {
+  const title = d.title.length > 100 ? d.title.slice(0, 97) + '…' : d.title;
+  const meta = [d.authorNames, d.topic].filter(Boolean).join('  ·  ');
+  const logo = loadLogoDataUrl();
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        position: 'relative',
+        fontFamily: 'Playfair Display',
+      }}
+    >
+      <img
+        src={coverUrl}
+        width={1200}
+        height={630}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 1200,
+          height: 630,
+          objectFit: 'cover',
+        }}
+        alt=""
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: 1200,
+          height: 630,
+          display: 'flex',
+          background:
+            'linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.35) 42%, rgba(0,0,0,0.84) 100%)',
+        }}
+      />
+      <div
+        style={{
+          position: 'relative',
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-end',
+          padding: '60px 68px',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: 60,
+            left: 68,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 16,
+          }}
+        >
+          <img src={logo} width={52} height={52} style={{ borderRadius: 8 }} alt="" />
+          <span
+            style={{
+              fontFamily: 'JetBrains Mono',
+              fontSize: 20,
+              letterSpacing: 3,
+              color: '#ffffff',
+              fontWeight: 600,
+            }}
+          >
+            MLSYSTEMS.DEV
+          </span>
+        </div>
+        <div
+          style={{
+            fontFamily: 'Playfair Display',
+            fontSize: 72,
+            lineHeight: 1.05,
+            color: '#ffffff',
+            letterSpacing: -1.2,
+            display: 'flex',
+            maxWidth: 1040,
+          }}
+        >
+          {title}
+        </div>
+        <div
+          style={{
+            width: 64,
+            height: 3,
+            background: C.accent,
+            margin: '22px 0 18px',
+            display: 'flex',
+          }}
+        />
+        <div
+          style={{
+            fontFamily: 'JetBrains Mono',
+            fontSize: 22,
+            color: '#ece7db',
+            letterSpacing: 0.4,
+            display: 'flex',
+          }}
+        >
+          {meta}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function template(d: OgArticle): React.ReactElement {
   const title = d.title.length > 110 ? d.title.slice(0, 107) + '…' : d.title;
   const meta = [d.authorNames, d.topic].filter(Boolean).join('  ·  ');
@@ -369,8 +482,9 @@ async function renderToPng(node: React.ReactElement, context: string): Promise<B
   }
 }
 
-export async function generateOgPng(article: OgArticle): Promise<Buffer> {
-  return renderToPng(template(article), `article:${article.title}`);
+export async function generateOgPng(article: OgArticle, coverDataUrl?: string): Promise<Buffer> {
+  const node = coverDataUrl ? coverTemplate(article, coverDataUrl) : template(article);
+  return renderToPng(node, `article:${article.title}`);
 }
 
 export async function generateDefaultOgPng(): Promise<Buffer> {
