@@ -1,0 +1,67 @@
+---
+title: 'Testing Final Blog'
+summary: 'Blog testing Write portal!'
+authors: ['felix', 'new-dev']
+date: '2026-07-14'
+updated: '2026-07-14'
+readMin: 1
+topic: 'Architecture'
+topicId: 'architecture'
+tags: ['kernels']
+---
+
+Testing blog
+
+
+
+
+
+```python
+import random
+
+
+def run_guessing_game():
+    """A simple interactive game to demonstrate Python fundamentals."""
+    print("Welcome to the Number Guessing Game!")
+
+    # 1. Variables and Data Types
+    secret_number = random.randint(1, 10)
+    attempts = 0
+    max_attempts = 3
+
+    # 2. Loops (While Loop)
+    while attempts < max_attempts:
+        # 3. User Input and Type Conversion
+        user_input = input(f"Guess a number between 1 and 10 (Attempts left: {max_attempts - attempts}): ")
+
+        # Validate input is a number
+        if not user_input.isdigit():
+            print("Please enter a valid whole number.")
+            continue
+
+        guess = int(user_input)
+        attempts += 1
+
+        # 4. Conditional Logic (If-Elif-Else)
+        if guess == secret_number:
+            print(
+                f"🎉 Congratulations! You guessed it in {attempts} attempt(s)!"
+            )
+            return  # Exit the function early
+        elif guess < secret_number:
+            print("Too low! Try a higher number.")
+        else:
+            print("Too high! Try a lower number.")
+
+    # Game over scenario
+    print(f"❌ Game over! The correct number was {secret_number}.")
+
+
+# 5. Function Execution
+if __name__ == "__main__":
+    run_guessing_game()
+
+```
+
+
+nice!
