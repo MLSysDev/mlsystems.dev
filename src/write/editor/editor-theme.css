@@ -193,9 +193,14 @@
   border-color: var(--accent);
 }
 .write-modal-error {
-  color: var(--accent);
+  margin: 14px 0 0 !important;
+  padding: 10px 12px;
   font-size: 13px;
-  margin: 12px 0 0 !important;
+  color: #e5484d;
+  background: color-mix(in srgb, #e5484d 12%, transparent);
+  border: 1px solid color-mix(in srgb, #e5484d 40%, transparent);
+  border-left: 3px solid #e5484d;
+  border-radius: 8px;
 }
 .write-modal-actions {
   display: flex;

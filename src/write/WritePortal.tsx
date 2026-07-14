@@ -626,13 +626,16 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
               </>
             ) : (
               <>
-                <h3>Post to GitHub</h3>
+                <h3>Ready to post?</h3>
                 <p>
-                  We’ll open a pull request with your post — images and all. After it’s created,
-                  comment your author details (name, short bio, links) so a maintainer can review
-                  and publish.
+                  We’ll submit your article via GitHub. Once it’s created, just add your name on the
+                  request to claim it — a maintainer takes it from there.
                 </p>
-                {publishError && <p className="write-modal-error">{publishError}</p>}
+                {publishError && (
+                  <p className="write-modal-error" role="alert">
+                    {publishError}
+                  </p>
+                )}
                 <div className="write-modal-actions">
                   <button
                     type="button"
