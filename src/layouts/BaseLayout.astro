@@ -5,8 +5,9 @@
 import { APPEARANCE, SITE, SOCIALS } from '@/lib/site';
 import Nav from '@/components/Nav.astro';
 import Footer from '@/components/Footer.astro';
-import AnalyticsConsent from '@/components/AnalyticsConsent.tsx';
-import SearchModal from '@/components/SearchModal.tsx';
+import NewsletterStrip from '@/components/NewsletterStrip.astro';
+import AnalyticsConsent from '@/components/AnalyticsConsent.astro';
+import SearchModal from '@/components/SearchModal.astro';
 import '@/styles/global.css';
 
 // Self-hosted fonts (latin subset). No third-party request; @fontsource sets font-display: swap.
@@ -25,6 +26,11 @@ import '@fontsource/source-serif-4/latin-400-italic.css';
 import '@fontsource/jetbrains-mono/latin-400.css';
 import '@fontsource/jetbrains-mono/latin-500.css';
 import '@fontsource/jetbrains-mono/latin-600.css';
+
+// Above-the-fold faces on every page — preloaded to avoid the first-paint font swap.
+import playfairWoff2 from '@fontsource/playfair-display/files/playfair-display-latin-400-normal.woff2?url';
+import hankenWoff2 from '@fontsource/hanken-grotesk/files/hanken-grotesk-latin-400-normal.woff2?url';
+import monoWoff2 from '@fontsource/jetbrains-mono/files/jetbrains-mono-latin-400-normal.woff2?url';
 
 interface Props {
   title?: string;
@@ -82,7 +88,7 @@ const siteJsonLd = [
     url: SITE.url,
     logo: new URL('/favicon-96x96.png', SITE.url).toString(),
     description: SITE.description,
-    sameAs: [SOCIALS.github, SOCIALS.twitter, SOCIALS.linkedin].filter(Boolean),
+    sameAs: [SOCIALS.github, SOCIALS.twitter, SOCIALS.linkedin, SOCIALS.discord].filter(Boolean),
   },
   {
     '@context': 'https://schema.org',
@@ -90,6 +96,7 @@ const siteJsonLd = [
     name: SITE.name,
     url: SITE.url,
     description: SITE.description,
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -128,6 +135,8 @@ const siteJsonLd = [
         }
         if (prefs && (prefs.theme === 'light' || prefs.theme === 'dark')) {
           root.setAttribute('data-theme', prefs.theme);
+        } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          root.setAttribute('data-theme', 'dark');
         }
         const validAccents = ['oxide', 'indigo', 'emerald'];
         if (prefs && validAccents.indexOf(prefs.accent) !== -1) {
@@ -178,10 +187,14 @@ const siteJsonLd = [
   <meta name="twitter:title" content={fullTitle} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={imageUrl} />
+  <meta name="twitter:image:alt" content={imageAlt ?? fullTitle} />
   <meta name="twitter:site" content={SITE.twitter} />
   <meta name="twitter:creator" content={SITE.twitter} />
 
   <!-- Fonts are self-hosted via @fontsource (imported in this layout's frontmatter). -->
+  <link rel="preload" as="font" type="font/woff2" href={playfairWoff2} crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href={hankenWoff2} crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href={monoWoff2} crossorigin />
 
   <!-- Favicons -->
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -195,6 +208,8 @@ const siteJsonLd = [
 
   <!-- Sitemap -->
   <link rel="sitemap" href="/sitemap-index.xml" />
+
+  <slot name="head" />
 
   <!-- JSON-LD structured data: site-wide Organization + WebSite -->
   <script is:inline type="application/ld+json" set:html={JSON.stringify(siteJsonLd)} />
@@ -239,9 +254,10 @@ const siteJsonLd = [
       <slot />
     </main>
     <div data-pagefind-ignore>
+      <NewsletterStrip />
       <Footer />
     </div>
-    <SearchModal client:idle />
-    <AnalyticsConsent measurementId={gaMeasurementId} client:idle />
+    <SearchModal />
+    <AnalyticsConsent measurementId={gaMeasurementId} />
   </body>
 </html>

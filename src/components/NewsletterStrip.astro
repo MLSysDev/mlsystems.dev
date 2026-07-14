@@ -1,0 +1,112 @@
+---
+
+---
+
+<button type="button" class="nl-strip" data-nl-open>
+  <span class="nl-strip-inner">
+    <span class="eyebrow">Newsletter</span>
+    <span class="nl-strip-copy">New articles in your inbox. No spam, ever.</span>
+    <span class="nl-strip-cta">
+      Subscribe <span class="btn-arrow">→</span>
+    </span>
+  </span>
+</button>
+
+<div
+  class="nl-modal"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Subscribe to the newsletter"
+  data-nl-modal
+  hidden
+>
+  <button type="button" class="nl-backdrop" aria-label="Close" data-nl-close></button>
+  <div class="nl-panel">
+    <h3>Get new articles by email</h3>
+    <p class="nl-sub">One email per publication. No spam, unsubscribe anytime.</p>
+    <form data-nl-form novalidate>
+      <input
+        type="email"
+        name="email"
+        placeholder="you@example.com"
+        aria-label="Email address"
+        autocomplete="email"
+        required
+        data-nl-email
+      />
+      <button type="submit" class="btn btn-primary" data-nl-submit>Subscribe</button>
+    </form>
+    <p class="nl-error" role="alert" data-nl-error hidden></p>
+    <div class="nl-done" data-nl-done hidden>
+      <span class="nl-done-check" aria-hidden="true">✓</span>
+      You're in. Watch your inbox.
+    </div>
+  </div>
+</div>
+
+<script>
+  import { SITE } from '@/lib/site';
+
+  const openBtn = document.querySelector<HTMLButtonElement>('[data-nl-open]');
+  const modal = document.querySelector<HTMLElement>('[data-nl-modal]');
+
+  if (openBtn && modal) {
+    const form = modal.querySelector<HTMLFormElement>('[data-nl-form]')!;
+    const emailInput = modal.querySelector<HTMLInputElement>('[data-nl-email]')!;
+    const submitBtn = modal.querySelector<HTMLButtonElement>('[data-nl-submit]')!;
+    const errorEl = modal.querySelector<HTMLElement>('[data-nl-error]')!;
+    const doneEl = modal.querySelector<HTMLElement>('[data-nl-done]')!;
+
+    const open = () => {
+      modal.hidden = false;
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => emailInput.focus(), 30);
+    };
+
+    const close = () => {
+      modal.hidden = true;
+      document.body.style.overflow = '';
+      openBtn.focus();
+    };
+
+    openBtn.addEventListener('click', open);
+    modal.querySelector('[data-nl-close]')?.addEventListener('click', close);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.hidden) close();
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.hidden = true;
+
+      const email = emailInput.value.trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        errorEl.textContent = 'Please enter a valid email address.';
+        errorEl.hidden = false;
+        emailInput.focus();
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Subscribing…';
+      try {
+        if (!SITE.newsletter.formUrl) throw new Error('not configured');
+        // Google Forms accepts cross-origin POSTs but returns an opaque
+        // response — no-cors means "no exception" is our success signal.
+        await fetch(SITE.newsletter.formUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'content-type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({ [SITE.newsletter.emailEntry]: email }),
+        });
+        form.hidden = true;
+        doneEl.hidden = false;
+      } catch {
+        errorEl.textContent = 'Could not subscribe right now — please try again later.';
+        errorEl.hidden = false;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Subscribe';
+      }
+    });
+  }
+</script>

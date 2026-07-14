@@ -1,18 +1,13 @@
 import rss from '@astrojs/rss';
-import { getCollection, getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
 import type { APIContext } from 'astro';
 import { SITE } from '@/lib/site';
 import { sortPostsByDate, topicName } from '@/lib/data';
+import { authorNames, resolvePostAuthors } from '@/lib/posts';
 
 export async function GET(context: APIContext) {
   const postsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
-
-  const posts = await Promise.all(
-    postsRaw.map(async (p) => ({
-      ...p,
-      authorNames: (await getEntries(p.data.authors)).map((a) => a.data.name).join(', '),
-    })),
-  );
+  const posts = await resolvePostAuthors(postsRaw);
 
   return rss({
     title: SITE.name,
@@ -22,10 +17,10 @@ export async function GET(context: APIContext) {
       title: p.data.title,
       description: p.data.summary,
       pubDate: p.data.date,
-      link: `/blog/${p.id}/`,
-      author: p.authorNames,
+      link: `/blog/${p.id}`,
+      author: authorNames(p),
       categories: [topicName(p.data.topicId), ...(p.data.tags ?? [])],
-      customData: `<author>${escapeXml(p.authorNames)}</author>`,
+      customData: `<author>${escapeXml(authorNames(p))}</author>`,
     })),
     customData: `<language>en-us</language>`,
   });

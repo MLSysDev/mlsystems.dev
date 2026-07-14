@@ -1,7 +1,9 @@
 ---
-import { getCollection, getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { TOPICS, formatDate, formatMonth, sortPostsByDate } from '@/lib/data';
+import PostRow from '@/components/PostRow.astro';
+import { TOPICS, formatMonth, sortPostsByDate } from '@/lib/data';
+import { resolvePostAuthors } from '@/lib/posts';
 import { SITE } from '@/lib/site';
 
 export async function getStaticPaths() {
@@ -22,13 +24,11 @@ const allRaw = (await getCollection('posts', ({ data }) => !data.draft))
   .filter((p) => p.data.topicId === topic.id)
   .sort(sortPostsByDate);
 
-const posts = await Promise.all(
-  allRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
-);
+const posts = await resolvePostAuthors(allRaw);
 
 const grouped: Record<string, typeof posts> = {};
 posts.forEach((a) => {
-  const m = formatMonth(a.data.date.toISOString());
+  const m = formatMonth(a.data.date);
   if (!grouped[m]) grouped[m] = [];
   grouped[m].push(a);
 });
@@ -95,18 +95,7 @@ const breadcrumbJsonLd = {
             </div>
             <div class="blog-list">
               {items.map((a) => (
-                <a href={`/blog/${a.id}`} class="blog-row" data-topic={a.data.topicId}>
-                  <div class="blog-row-body">
-                    <div class="blog-row-title-line">
-                      <h3 class="blog-row-title">{a.data.title}</h3>
-                    </div>
-                    <p class="blog-row-summary">{a.data.summary}</p>
-                  </div>
-                  <div class="blog-row-meta">
-                    <strong>{a.authors.map((au) => au.data.name).join(' · ')}</strong>
-                    <span>{formatDate(a.data.date.toISOString())}</span>
-                  </div>
-                </a>
+                <PostRow post={a} showChip={false} />
               ))}
             </div>
           </div>

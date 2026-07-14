@@ -1,8 +1,10 @@
 ---
-import { getCollection, getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import { formatDate, sortPostsByDate, topicName } from '@/lib/data';
+import PostRow from '@/components/PostRow.astro';
+import { sortPostsByDate } from '@/lib/data';
+import { resolvePostAuthors } from '@/lib/posts';
 import { SITE } from '@/lib/site';
 
 export async function getStaticPaths() {
@@ -20,11 +22,7 @@ const { author } = Astro.props;
 
 const allRaw = await getCollection('posts', ({ data }) => !data.draft);
 const matching = allRaw.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
-const posts = (
-  await Promise.all(
-    matching.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
-  )
-).sort(sortPostsByDate);
+const posts = (await resolvePostAuthors(matching)).sort(sortPostsByDate);
 
 const canonical = `${SITE.url}/authors/${author.id}/articles`;
 const description = `Every article by ${author.data.name} on mlsystems.dev — machine learning systems.`;
@@ -73,19 +71,7 @@ const breadcrumbJsonLd = {
       ) : (
         <div class="blog-list">
           {posts.map((p) => (
-            <a href={`/blog/${p.id}`} class="blog-row" data-topic={p.data.topicId}>
-              <div class="blog-row-body">
-                <div class="blog-row-title-line">
-                  <h2 class="blog-row-title">{p.data.title}</h2>
-                  <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
-                </div>
-                <p class="blog-row-summary">{p.data.summary}</p>
-              </div>
-              <div class="blog-row-meta">
-                <strong>{formatDate(p.data.date.toISOString())}</strong>
-                <span>{p.data.readMin} min</span>
-              </div>
-            </a>
+            <PostRow post={p} heading="h2" meta="readtime" />
           ))}
         </div>
       )

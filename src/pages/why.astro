@@ -1,0 +1,222 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { SITE } from '@/lib/site';
+
+const canonical = `${SITE.url}/why`;
+
+const pageJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Why this exists',
+  description:
+    'Why learning machine learning systems matters: intelligence is moving to personal, local devices — and the systems layer decides how fast we get there.',
+  url: canonical,
+  isPartOf: { '@type': 'WebSite', name: SITE.name, url: SITE.url },
+};
+---
+
+<BaseLayout
+  title="Why this exists"
+  description="Intelligence is moving from datacenters to personal devices. Getting there is a systems problem — and that's why an open commons for ML systems knowledge matters."
+  canonical={canonical}
+  jsonLd={pageJsonLd}
+>
+  <div class="container why-shell">
+    <header class="page-head">
+      <div class="eyebrow page-eyebrow">Why</div>
+      <h1 class="page-h1">Why this exists.</h1>
+    </header>
+
+    <div class="why-layout">
+      <div class="why-body">
+        <p class="why-lede">
+          Every important technology ends up boring. Electricity, databases, GPS — miracles that
+          became plumbing. Machine intelligence is on the same path, and we are living through its
+          plumbing years. This site is about those years, and the people doing the work.
+        </p>
+
+        <section>
+          <h2>Most "model progress" is systems progress</h2>
+          <p>
+            Ask what actually changed between the demo that amazed you and the product you use every
+            day: tokens got cheaper, first tokens got faster, contexts got longer, models started
+            fitting on hardware you own. Almost none of that came from smarter weights. It came from
+            quantization, batching, caches, kernels, schedulers — the unglamorous layer underneath.
+            The distance between a demo and a product is measured in milliseconds and megabytes, and
+            systems engineers are the ones who close it.
+          </p>
+        </section>
+
+        <section>
+          <h2>Computing always moves closer to you</h2>
+          <p>
+            Mainframe to desktop, desktop to pocket, cloud to edge — every generation of computing
+            ends up nearer to the person using it, because latency, cost, and privacy all pull the
+            same way. Intelligence is on the same road. The endpoint is a model that runs on devices
+            you own, tuned on your own context — your notes, your work, your family's routines — a
+            private intelligence layer that answers to you and no one else. A model that knows you
+            that well shouldn't live in someone else's building. The datacenter era of AI is its
+            mainframe era, and the people who understand inference at the edge are the ones who will
+            end it.
+          </p>
+        </section>
+
+        <section>
+          <h2>The fundamentals outlast the headlines</h2>
+          <p>
+            Architectures churn monthly; the systems layer barely moves. Memory hierarchies,
+            arithmetic intensity, batching tradeoffs, the cost of moving a byte versus computing on
+            it — these were true before transformers and will be true after them. Learning ML
+            systems is learning the invariants: knowledge that compounds for decades while the
+            leaderboards reshuffle.
+          </p>
+        </section>
+
+        <section>
+          <h2>The bottleneck is people</h2>
+          <p>
+            The knowledge that makes all of this work is concentrated in a handful of infrastructure
+            teams and scattered across conference talks and half-finished blog posts. That scarcity
+            is the real constraint on how fast the local, personal future arrives. The fix is old
+            and reliable: write things down, in the open, where anyone can learn them. A field grows
+            exactly as fast as its commons.
+          </p>
+        </section>
+
+        <section>
+          <h2>So we write</h2>
+          <p>
+            Articles, primers, and tools from practitioners — honest, technically grounded, free to
+            read, open to anyone who has figured something out and is willing to pass it on. If the
+            future we described sounds right to you, help build the commons that gets us there
+            sooner.
+          </p>
+        </section>
+
+        <div class="why-cta">
+          <a href="/blog" class="btn btn-primary"
+            >Read the archive <span class="btn-arrow">→</span></a
+          >
+          <a href="/write" class="btn">Write with us</a>
+        </div>
+      </div>
+
+      <aside class="why-aside" aria-hidden="true">
+        <svg class="why-art" viewBox="0 0 220 150" fill="none">
+          <path d="M28 128h172M28 128V16" stroke="var(--line-2)" stroke-width="1.5"></path>
+          <path d="M28 108 118 42h74" stroke="var(--accent)" stroke-width="2"></path>
+          <circle cx="118" cy="42" r="3.5" fill="var(--accent)"></circle>
+          <circle cx="66" cy="96" r="3" fill="var(--ink-3)"></circle>
+          <circle cx="88" cy="78" r="3" fill="var(--ink-3)"></circle>
+          <circle cx="146" cy="62" r="3" fill="var(--ink-3)"></circle>
+          <circle cx="172" cy="74" r="3" fill="var(--ink-3)"></circle>
+        </svg>
+
+        <svg class="why-art" viewBox="0 0 220 150" fill="none">
+          <path
+            d="M36 40 C 80 40, 90 72, 122 88 S 180 108, 192 116"
+            stroke="var(--line-2)"
+            stroke-width="1.5"
+            stroke-dasharray="3 5"></path>
+          <rect x="14" y="16" width="46" height="46" rx="3" stroke="var(--ink-3)" stroke-width="1.5"
+          ></rect>
+          <rect x="86" y="62" width="30" height="30" rx="3" stroke="var(--ink-3)" stroke-width="1.5"
+          ></rect>
+          <rect
+            x="146"
+            y="92"
+            width="18"
+            height="18"
+            rx="2"
+            stroke="var(--ink-3)"
+            stroke-width="1.5"></rect>
+          <rect x="188" y="112" width="9" height="9" rx="1.5" fill="var(--accent)"></rect>
+        </svg>
+
+        <svg class="why-art" viewBox="0 0 220 150" fill="none">
+          <g stroke="var(--line-2)" stroke-width="1.2">
+            <path
+              d="M38 34 104 78M104 78 60 122M104 78 174 40M104 78 182 112M174 40 182 112M38 34 60 122"
+            ></path>
+          </g>
+          <circle cx="38" cy="34" r="5" stroke="var(--ink-3)" stroke-width="1.5"></circle>
+          <circle cx="174" cy="40" r="5" stroke="var(--ink-3)" stroke-width="1.5"></circle>
+          <circle cx="60" cy="122" r="5" stroke="var(--ink-3)" stroke-width="1.5"></circle>
+          <circle cx="182" cy="112" r="5" stroke="var(--ink-3)" stroke-width="1.5"></circle>
+          <circle cx="104" cy="78" r="7" fill="var(--accent)"></circle>
+        </svg>
+      </aside>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .why-shell {
+    padding-top: 24px;
+    padding-bottom: 80px;
+  }
+  .why-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 680px);
+    gap: 72px;
+  }
+  .why-body {
+    max-width: 680px;
+  }
+  .why-aside {
+    display: none;
+  }
+  @media (min-width: 1150px) {
+    .why-layout {
+      grid-template-columns: minmax(0, 680px) 330px;
+      justify-content: space-between;
+    }
+    .why-aside {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: sticky;
+      top: 84px;
+      align-self: start;
+      margin-top: 0;
+      padding-right: 8px;
+    }
+  }
+  .why-art {
+    display: block;
+    width: 100%;
+    height: auto;
+    opacity: 0.85;
+  }
+  .why-lede {
+    font-family: var(--font-read);
+    font-style: italic;
+    font-size: 21px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 8px 0 0;
+  }
+  .why-body section {
+    margin-top: 48px;
+  }
+  .why-body h2 {
+    font-family: var(--font-display);
+    font-size: 28px;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+    margin: 0 0 14px;
+  }
+  .why-body p {
+    font-family: var(--font-read);
+    font-size: 18px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  .why-cta {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 56px;
+  }
+</style>

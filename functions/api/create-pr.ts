@@ -80,6 +80,26 @@ async function gh(
   return res.status === 204 ? {} : ((await res.json()) as Record<string, unknown>);
 }
 
+async function fileExistsOnMain(
+  owner: string,
+  name: string,
+  path: string,
+  token: string,
+): Promise<boolean> {
+  const res = await fetch(
+    `https://api.github.com/repos/${owner}/${name}/contents/${encodeURI(path)}?ref=main`,
+    {
+      headers: {
+        accept: 'application/vnd.github+json',
+        authorization: `Bearer ${token}`,
+        'user-agent': UA,
+        'x-github-api-version': '2022-11-28',
+      },
+    },
+  );
+  return res.ok;
+}
+
 export async function onRequestPost(context: { request: Request; env: Env }): Promise<Response> {
   const { request, env } = context;
 
@@ -121,48 +141,23 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 
     // A brand-new post must not silently overwrite an existing one at the same slug.
     // Edits (loaded via the portal's "Open existing post") are meant to, so skip then.
-    if (!isEdit) {
-      const existing = await fetch(
-        `https://api.github.com/repos/${owner}/${name}/contents/${encodeURI(
-          `src/content/posts/${slug}/index.mdx`,
-        )}?ref=main`,
-        {
-          headers: {
-            accept: 'application/vnd.github+json',
-            authorization: `Bearer ${token}`,
-            'user-agent': UA,
-            'x-github-api-version': '2022-11-28',
-          },
-        },
+    if (
+      !isEdit &&
+      (await fileExistsOnMain(owner, name, `src/content/posts/${slug}/index.mdx`, token))
+    ) {
+      return json(
+        { error: 'A post with this URL already exists. Change the URL slug and try again.' },
+        409,
       );
-      if (existing.ok) {
-        return json(
-          { error: 'A post with this URL already exists. Change the URL slug and try again.' },
-          409,
-        );
-      }
     }
 
     // A newly registered author must not overwrite an existing profile at the same handle.
     const authorFile = files.find((f) => f.path.startsWith('src/content/authors/'));
-    if (authorFile) {
-      const existing = await fetch(
-        `https://api.github.com/repos/${owner}/${name}/contents/${encodeURI(authorFile.path)}?ref=main`,
-        {
-          headers: {
-            accept: 'application/vnd.github+json',
-            authorization: `Bearer ${token}`,
-            'user-agent': UA,
-            'x-github-api-version': '2022-11-28',
-          },
-        },
+    if (authorFile && (await fileExistsOnMain(owner, name, authorFile.path, token))) {
+      return json(
+        { error: 'That author handle is already taken. Pick another handle and try again.' },
+        409,
       );
-      if (existing.ok) {
-        return json(
-          { error: 'That author handle is already taken. Pick another handle and try again.' },
-          409,
-        );
-      }
     }
 
     const ref = (await gh(`/repos/${owner}/${name}/git/ref/heads/main`, token)) as {

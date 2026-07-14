@@ -15,6 +15,14 @@ import '@blocknote/mantine/style.css';
 import 'katex/dist/katex.min.css';
 import { schema } from './editor/schema';
 import { getSlashItems } from './editor/slashMenu';
+import {
+  BORDER_VARIANTS,
+  DEFAULT_TABLE_STYLE,
+  collectImages,
+  tableVariantCss,
+} from './editor/docUtils';
+import { OpenExistingDialog } from './dialogs/OpenExistingDialog';
+import { PublishDialog, type PublishStage } from './dialogs/PublishDialog';
 import { MetaForm, type Option } from './meta/MetaForm';
 import { serializePost, type PostMeta, type SBlock, type TableStyle } from './serialize/toMdx';
 import { validate } from './serialize/validate';
@@ -37,59 +45,12 @@ import {
 } from './storage/drafts';
 import './editor/editor-theme.css';
 
-const BORDER_VARIANTS: TableStyle['border'][] = ['rule', 'lined', 'plain'];
-const DEFAULT_TABLE_STYLE: TableStyle = { border: 'rule', zebra: false };
-
-function tableVariantCss(variants: Record<string, TableStyle>): string {
-  return Object.entries(variants)
-    .map(([id, style]) => {
-      if (!style || typeof style !== 'object') return '';
-      const sel = `.bn-editor [data-id="${id}"] [data-content-type='table']`;
-      const rules: string[] = [];
-      if (style.border === 'lined') {
-        rules.push(
-          `${sel} :is(td, th) { border: 1px solid var(--line); padding-left: 12px; padding-right: 12px; }`,
-        );
-      }
-      if (style.border === 'plain') {
-        rules.push(`${sel} tr:not(:first-child) > * { border-bottom: none; }`);
-      }
-      if (style.zebra) {
-        rules.push(
-          `${sel} tr:not(:first-child):nth-child(odd) > * { background: var(--paper-2); }`,
-        );
-      }
-      return rules.join('\n');
-    })
-    .filter(Boolean)
-    .join('\n');
-}
-
 type Props = {
   authors: Option[];
   topics: Option[];
   repoUrl: string;
   contactEmail: string;
 };
-
-function collectImages(blocks: SBlock[]): string[] {
-  const out: string[] = [];
-  const walk = (list: SBlock[]) => {
-    for (const b of list) {
-      if (b.type === 'figure' && b.props.fileName) out.push(String(b.props.fileName));
-      if (b.type === 'gallery') {
-        try {
-          out.push(...(JSON.parse(String(b.props.fileNames || '[]')) as string[]));
-        } catch {
-          // ignore a malformed gallery — it just won't offer cover options
-        }
-      }
-      if (b.children?.length) walk(b.children);
-    }
-  };
-  walk(blocks);
-  return [...new Set(out.filter(Boolean))];
-}
 
 function isEmptyDraft(meta: PostMeta, blocks: SBlock[]): boolean {
   const metaEmpty =
@@ -135,12 +96,15 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const githubEnabled = isGithubConfigured();
   const [loadedSlug, setLoadedSlug] = useState<string | null>(null);
   const [publishOpen, setPublishOpen] = useState(false);
-  const [publishStage, setPublishStage] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
+  const [publishStage, setPublishStage] = useState<PublishStage>('idle');
   const [publishError, setPublishError] = useState<string | null>(null);
   const [prUrl, setPrUrl] = useState<string | null>(null);
 
+  // Single place for the BlockNote → serializer block-shape cast.
+  const docBlocks = useCallback(() => editor.document as unknown as SBlock[], [editor]);
+
   const variantCss = useMemo(() => tableVariantCss(tableVariants), [tableVariants]);
-  const images = collectImages(editor.document as unknown as SBlock[]);
+  const images = useMemo(() => collectImages(docBlocks()), [docBlocks, editor.document]);
 
   const oversizedIssues = (): string[] => {
     const big = allAssets()
@@ -194,7 +158,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const getDraft = useCallback(
     () => ({
       meta,
-      blocks: editor.document as unknown as SBlock[],
+      blocks: docBlocks(),
       tableVariants,
       savedAt: Date.now(),
     }),
@@ -204,7 +168,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const autosave = useCallback(() => {
     if (restore) return;
     setSentFile(null);
-    if (isEmptyDraft(meta, editor.document as unknown as SBlock[])) return;
+    if (isEmptyDraft(meta, docBlocks())) return;
     saveDraftDebounced(getDraft, () => setStorageOff(true));
   }, [getDraft, restore, editor, meta]);
 
@@ -278,7 +242,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   };
 
   const download = async () => {
-    const blocks = editor.document as unknown as SBlock[];
+    const blocks = docBlocks();
     const found = [...validate(meta, blocks), ...oversizedIssues()];
     setIssues(found);
     if (found.length > 0) return;
@@ -312,7 +276,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   };
 
   const openPublish = () => {
-    const blocks = editor.document as unknown as SBlock[];
+    const blocks = docBlocks();
     const found = [...validate(meta, blocks), ...oversizedIssues()];
     setIssues(found);
     if (found.length > 0) return;
@@ -323,7 +287,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   };
 
   const submitToGithub = async () => {
-    const blocks = editor.document as unknown as SBlock[];
+    const blocks = docBlocks();
     setPublishStage('working');
     setPublishError(null);
     try {
@@ -404,59 +368,15 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         </button>
       </div>
 
-      {openDialog && (
-        <div
-          className="write-modal-backdrop"
-          onClick={() => !busy && setOpenDialog(false)}
-          role="presentation"
-        >
-          <div
-            className="write-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Edit a published post"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3>Edit a published post</h3>
-            <p>Paste the post’s URL.</p>
-            <input
-              type="text"
-              className="write-open-url"
-              placeholder="https://mlsystems.dev/blog/…"
-              aria-label="Post URL"
-              autoFocus
-              value={openUrl}
-              disabled={busy}
-              onChange={(e) => setOpenUrl(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  void openExisting();
-                }
-              }}
-            />
-            {openError && <p className="write-modal-error">{openError}</p>}
-            <div className="write-modal-actions">
-              <button
-                type="button"
-                className="write-ghost"
-                disabled={busy}
-                onClick={() => setOpenDialog(false)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="write-download"
-                disabled={busy || !openUrl.trim()}
-                onClick={() => void openExisting()}
-              >
-                {busy ? 'Loading…' : 'Open post'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <OpenExistingDialog
+        open={openDialog}
+        busy={busy}
+        url={openUrl}
+        error={openError}
+        onUrlChange={setOpenUrl}
+        onSubmit={() => void openExisting()}
+        onClose={() => setOpenDialog(false)}
+      />
 
       <MetaForm
         authors={authors}
@@ -601,80 +521,14 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         )}
       </div>
 
-      {publishOpen && (
-        <div
-          className="write-modal-backdrop"
-          onClick={() => publishStage !== 'working' && setPublishOpen(false)}
-          role="presentation"
-        >
-          <div
-            className="write-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Post to GitHub"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {publishStage === 'done' ? (
-              <>
-                <h3>
-                  Your post has been submitted{' '}
-                  <span className="write-celebrate" aria-hidden="true">
-                    🎉
-                  </span>
-                </h3>
-                <p>
-                  Open the request and comment to claim it — that&rsquo;s how a maintainer knows
-                  it&rsquo;s yours.
-                </p>
-                <div className="write-modal-actions">
-                  {prUrl && (
-                    <a className="write-download" href={prUrl} target="_blank" rel="noreferrer">
-                      Open my request →
-                    </a>
-                  )}
-                </div>
-              </>
-            ) : publishStage === 'working' ? (
-              <>
-                <h3>Opening your request…</h3>
-                <div className="write-modal-loading">
-                  <span className="write-spinner" aria-hidden="true" />
-                  <p>Creating your pull request on GitHub. This only takes a moment.</p>
-                </div>
-              </>
-            ) : (
-              <>
-                <h3>Ready to post?</h3>
-                <p>
-                  We’ll submit your article via GitHub. Once it’s created, please add your name on
-                  the request to claim it — Admin will take it from there.
-                </p>
-                {publishError && (
-                  <p className="write-modal-error" role="alert">
-                    {publishError}
-                  </p>
-                )}
-                <div className="write-modal-actions">
-                  <button
-                    type="button"
-                    className="write-ghost"
-                    onClick={() => setPublishOpen(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    className="write-download"
-                    onClick={() => void submitToGithub()}
-                  >
-                    Create pull request
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
+      <PublishDialog
+        open={publishOpen}
+        stage={publishStage}
+        error={publishError}
+        prUrl={prUrl}
+        onSubmit={() => void submitToGithub()}
+        onClose={() => setPublishOpen(false)}
+      />
     </div>
   );
 }

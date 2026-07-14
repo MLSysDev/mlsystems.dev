@@ -46,7 +46,6 @@ const { activeTopic, allCount, topicCounts } = Astro.props;
     const topic = link.dataset.topic!;
     const newUrl = topic === 'all' ? '/blog' : `/blog?topic=${topic}`;
     history.pushState(null, '', newUrl);
-    // Update active chip
     document
       .querySelectorAll<HTMLAnchorElement>('[data-blog-filter] a[data-topic]')
       .forEach((a) => {

@@ -109,7 +109,7 @@ export const EXTERNAL_TOOLS: ExternalTool[] = [
   {
     name: 'The Tokenizer Playground',
     source: 'Xenova · Hugging Face',
-    desc: 'Compare how GPT-4, LLaMA, Mistral, Qwen, Gemma, and others tokenize the same text — side by side, in the browser.',
+    desc: 'Tokenize the same text with GPT-4, Claude, LLaMA, Mistral, Gemma, and more — switch tokenizers instantly, or load any Hugging Face tokenizer. Runs in the browser.',
     href: 'https://huggingface.co/spaces/Xenova/the-tokenizer-playground',
     category: 'Tokenization',
   },
@@ -130,28 +130,28 @@ export const EXTERNAL_TOOLS: ExternalTool[] = [
   {
     name: 'APXML VRAM Calculator',
     source: 'APXML',
-    desc: 'Inference-focused VRAM calculator covering Nvidia GPUs and Apple Silicon. Good for picking hardware for a target model.',
+    desc: 'Inference and fine-tuning VRAM calculator covering Nvidia GPUs and Apple Silicon. Good for picking hardware for a target model.',
     href: 'https://apxml.com/tools/vram-calculator',
     category: 'Memory & VRAM',
   },
   {
     name: 'LLM Visualization',
     source: 'Brendan Bycroft',
-    desc: 'A 3D, animated walk through the entire forward pass of GPT-2 nano, layer by layer. The clearest mental model of how a transformer works.',
+    desc: 'A 3D, animated walk through the entire forward pass of a nano-GPT model, layer by layer. The clearest mental model of how a transformer works.',
     href: 'https://bbycroft.net/llm',
     category: 'Architecture',
   },
   {
     name: 'Chinchilla Scaling Calculator',
     source: 'Nathan Godey',
-    desc: 'Plug in a compute budget, get the compute-optimal model and data size per Hoffmann et al. 2022. Charts the iso-loss surface too.',
+    desc: 'Enter a model size, get the Chinchilla-optimal training-token count per Hoffmann et al. 2022 — with an interactive params-vs-tokens chart.',
     href: 'https://nathangodey.github.io/posts/scaling/',
     category: 'Training & Scaling',
   },
 ];
 
-export function formatDate(iso: string): string {
-  const d = new Date(iso);
+export function formatDate(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
 }
 
@@ -163,7 +163,7 @@ export function sortPostsByDate<T extends { id: string; data: { date: Date } }>(
   return d !== 0 ? d : a.id.localeCompare(b.id);
 }
 
-export function formatMonth(iso: string): string {
-  const d = new Date(iso);
+export function formatMonth(date: Date | string): string {
+  const d = typeof date === 'string' ? new Date(date) : date;
   return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }

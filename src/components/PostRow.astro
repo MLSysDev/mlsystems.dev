@@ -1,0 +1,39 @@
+---
+import { formatDate, topicName } from '@/lib/data';
+import type { PostWithAuthors } from '@/lib/posts';
+
+interface Props {
+  post: PostWithAuthors;
+  /** Heading level for the title — h3 in most lists, h2 where the row is the page's main content */
+  heading?: 'h2' | 'h3';
+  showChip?: boolean;
+  /** Right column: author byline + date, or date + reading time (author pages) */
+  meta?: 'byline' | 'readtime';
+}
+const { post, heading: Heading = 'h3', showChip = true, meta = 'byline' } = Astro.props;
+---
+
+<a href={`/blog/${post.id}`} class="blog-row" data-topic={post.data.topicId}>
+  <div class="blog-row-body">
+    <div class="blog-row-title-line">
+      <Heading class="blog-row-title">{post.data.title}</Heading>
+      {showChip && <span class="chip chip--sm">{topicName(post.data.topicId)}</span>}
+    </div>
+    <p class="blog-row-summary">{post.data.summary}</p>
+  </div>
+  <div class="blog-row-meta">
+    {
+      meta === 'byline' ? (
+        <>
+          <strong>{post.authors.map((a) => a.data.name).join(' · ')}</strong>
+          <span>{formatDate(post.data.date)}</span>
+        </>
+      ) : (
+        <>
+          <strong>{formatDate(post.data.date)}</strong>
+          <span>{post.data.readMin} min</span>
+        </>
+      )
+    }
+  </div>
+</a>

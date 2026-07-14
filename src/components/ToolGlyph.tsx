@@ -28,19 +28,23 @@ export default function ToolGlyph({ id }: { id: string }) {
           <rect x="36" y="14" width="12" height="38" fill="var(--accent)" />
         </svg>
       );
-    case 'cost-calc':
+    case 'gpu-mem-calc':
       return (
         <svg width={size} height={size} viewBox="0 0 56 56">
-          <text
-            x="28"
-            y="40"
-            fontSize="42"
-            fontFamily="var(--font-display)"
-            fill="var(--accent)"
-            textAnchor="middle"
-          >
-            $
-          </text>
+          <rect
+            x="16"
+            y="4"
+            width="24"
+            height="48"
+            fill="none"
+            stroke="var(--ink-2)"
+            strokeWidth="1.5"
+            rx="2"
+          />
+          <rect x="20" y="8" width="16" height="14" fill="var(--accent)" rx="1" />
+          <rect x="20" y="25" width="16" height="9" fill="var(--ink-2)" rx="1" />
+          <rect x="20" y="37" width="16" height="6" fill="var(--ink-3)" rx="1" />
+          <rect x="20" y="46" width="16" height="3" fill="var(--ink-3)" opacity="0.5" rx="1" />
         </svg>
       );
     case 'model-card':

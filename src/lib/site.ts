@@ -31,7 +31,6 @@ export const SITE = {
   discussionsUrl: `https://github.com/${GITHUB_REPO}/discussions`,
   orgDiscussionsUrl: `https://github.com/orgs/${GITHUB_ORG}/discussions`,
   pitchEmail: 'admin@mlsystems.dev',
-  // Used in nav, footer, etc.
   startYear: 2026,
   // Shows the "Post to GitHub" button in /write. Flip to true once the GitHub App
   // credentials are set in the Cloudflare Function env (see /api/create-pr).
@@ -40,6 +39,11 @@ export const SITE = {
   // set PUBLIC_OG_CARD_OPTIN=true to expose it. Opted-in posts render a per-post OG
   // card at build (a small build-time cost), so keep it off unless you want it.
   ogCardOptIn: import.meta.env.PUBLIC_OG_CARD_OPTIN === 'true',
+  // Google Form /formResponse URL + email field entry id.
+  newsletter: {
+    formUrl: '',
+    emailEntry: 'entry.999355293',
+  },
 };
 
 export const APPEARANCE = {

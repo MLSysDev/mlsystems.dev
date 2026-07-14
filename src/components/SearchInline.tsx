@@ -2,28 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { TOPICS } from '@/lib/data';
-
-type PagefindResultData = {
-  url: string;
-  excerpt: string;
-  meta: { title?: string; topic?: string; date?: string; read?: string; authors?: string };
-};
-
-type PagefindResult = { id: string; data: () => Promise<PagefindResultData> };
-
-type Pagefind = {
-  debouncedSearch: (q: string) => Promise<{ results: PagefindResult[] } | null>;
-  options: (o: Record<string, unknown>) => Promise<void>;
-};
-
-async function loadPagefind(): Promise<Pagefind> {
-  if (window.__mlsPagefind) return window.__mlsPagefind;
-  const url = `${window.location.origin}/_pagefind/pagefind.js`;
-  const mod = (await import(/* @vite-ignore */ url)) as Pagefind;
-  await mod.options({ excerptLength: 30 });
-  window.__mlsPagefind = mod;
-  return mod;
-}
+import { loadPagefind, type PagefindResultData } from '@/lib/pagefind';
 
 type Group = 'topic' | 'article' | 'tool' | 'author' | 'page';
 

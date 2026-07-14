@@ -1,17 +1,15 @@
 ---
-import { getCollection, getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
 import Stat from '@/components/Stat.astro';
 import { TOPICS, countPostsByTopic, formatDate, sortPostsByDate, topicName } from '@/lib/data';
+import { resolvePostAuthors } from '@/lib/posts';
 import { SITE, SOCIALS } from '@/lib/site';
 
 const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
-
-const allPosts = await Promise.all(
-  allPostsRaw.map(async (p) => ({ ...p, authors: await getEntries(p.data.authors) })),
-);
+const allPosts = await resolvePostAuthors(allPostsRaw);
 
 const authors = await getCollection('authors');
 
@@ -22,7 +20,6 @@ const recent = allPosts.filter((p) => !featuredIds.has(p.id)).slice(0, 6);
 const topicCounts = countPostsByTopic(allPosts);
 const articleCount = allPosts.length;
 const contributorCount = authors.length;
-const topicCount = TOPICS.length;
 
 const TOPIC_PREVIEW_LIMIT = 5;
 const topicsWithPosts = TOPICS.map((t) => ({
@@ -44,43 +41,11 @@ const featuredTools = allTools
     return a.data.name.localeCompare(b.data.name);
   })
   .slice(0, 6);
-
-const sameAs = [SOCIALS.github, SOCIALS.twitter, SOCIALS.linkedin, SOCIALS.discord].filter(
-  (u): u is string => !!u,
-);
-
-const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: SITE.name,
-  url: SITE.url,
-  logo: new URL('/favicon-96x96.png', SITE.url).toString(),
-  description: SITE.description,
-  ...(sameAs.length ? { sameAs } : {}),
-};
-
-const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: SITE.name,
-  url: SITE.url,
-  description: SITE.description,
-  publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
-  potentialAction: {
-    '@type': 'SearchAction',
-    target: {
-      '@type': 'EntryPoint',
-      urlTemplate: `${SITE.url}/search?q={search_term_string}`,
-    },
-    'query-input': 'required name=search_term_string',
-  },
-};
 ---
 
 <BaseLayout
-  title="ML Systems — Machine learning systems: inference, training, LLMs & infrastructure"
+  title="ML Systems — ML infrastructure, inference, training & LLMs"
   description="Deep dives on machine learning systems — inference, training infrastructure, GPU memory, quantization, and LLM architecture. Articles, primers, and case studies."
-  jsonLd={[organizationJsonLd, websiteJsonLd]}
 >
   <!-- HERO -->
   <section class="hero">
@@ -114,7 +79,6 @@ const websiteJsonLd = {
           <div style="margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap;">
             <Stat value={articleCount} label="articles" />
             <Stat value={contributorCount} label="contributors" />
-            <Stat value={topicCount} label="topics" />
           </div>
         </div>
         <div>
@@ -148,7 +112,7 @@ const websiteJsonLd = {
                 <div class="article-foot">
                   <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
                   <span>
-                    {formatDate(p.data.date.toISOString())} · {p.data.readMin} min
+                    {formatDate(p.data.date)} · {p.data.readMin} min
                   </span>
                 </div>
               </a>
@@ -183,7 +147,7 @@ const websiteJsonLd = {
                 <div class="article-foot">
                   <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
                   <span>
-                    {formatDate(p.data.date.toISOString())} · {p.data.readMin} min
+                    {formatDate(p.data.date)} · {p.data.readMin} min
                   </span>
                 </div>
               </a>
@@ -248,7 +212,7 @@ const websiteJsonLd = {
                           </div>
                           <div class="topic-post-meta">
                             <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
-                            <span>{formatDate(p.data.date.toISOString())}</span>
+                            <span>{formatDate(p.data.date)}</span>
                           </div>
                         </a>
                       </li>
@@ -364,6 +328,7 @@ const websiteJsonLd = {
           <a href={SITE.github} target="_blank" rel="noreferrer" class="cta-github-link">
             Browse the repo on GitHub →
           </a>
+          <a href="/why" class="cta-github-link">Why this exists →</a>
         </div>
       </div>
     </div>
@@ -526,8 +491,7 @@ const websiteJsonLd = {
 </style>
 
 <script>
-  const ACCENTS = ['oxide', 'indigo', 'emerald'] as const;
-  type Accent = (typeof ACCENTS)[number];
+  import { ACCENTS, writePrefs, type Accent } from '@/lib/prefs';
 
   document.querySelectorAll<HTMLButtonElement>('[data-accent-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -536,12 +500,7 @@ const websiteJsonLd = {
       const idx = ACCENTS.indexOf(current);
       const next = ACCENTS[(idx + 1) % ACCENTS.length];
       root.setAttribute('data-accent', next);
-      try {
-        const raw = localStorage.getItem('mls.prefs');
-        const prefs = raw ? JSON.parse(raw) : {};
-        prefs.accent = next;
-        localStorage.setItem('mls.prefs', JSON.stringify(prefs));
-      } catch {}
+      writePrefs({ accent: next });
     });
   });
 
