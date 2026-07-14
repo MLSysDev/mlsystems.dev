@@ -243,21 +243,20 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                 ✕
               </button>
             </div>
+            <span className="write-cover-tip">
+              This is the crop shown in link previews. Best at 1200×630 (landscape).
+            </span>
             {SITE.ogCardOptIn && (
-              <label className="write-ogcard-opt">
+              <label
+                className="write-ogcard-opt"
+                title="Overlays your post title + brand on the cover for link previews (LinkedIn, X, Slack). Generated when you publish."
+              >
                 <input
                   type="checkbox"
                   checked={!!meta.ogCard}
                   onChange={(e) => set({ ogCard: e.target.checked })}
                 />
                 Designed share card
-                <span
-                  className="write-ogcard-info"
-                  title="Overlays your post title + brand on the cover for link previews (LinkedIn, X, Slack). Generated when you publish."
-                  aria-label="What is a designed share card?"
-                >
-                  ⓘ
-                </span>
               </label>
             )}
           </div>
