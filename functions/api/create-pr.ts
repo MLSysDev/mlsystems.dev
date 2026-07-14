@@ -138,10 +138,6 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   const origin = request.headers.get('origin');
   if (origin && origin !== allowed) return json({ error: 'Forbidden origin.' }, 403);
 
-  if (!env.GH_APP_ID || !env.GH_APP_INSTALLATION_ID || !env.GH_APP_PRIVATE_KEY) {
-    return json({ error: 'Publishing is not configured on the server yet.' }, 500);
-  }
-
   let payload: {
     title?: string;
     slug?: string;
@@ -177,6 +173,13 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   const badPath = invalidPath(files, slug);
   if (badPath) return json({ error: `File path not allowed: ${badPath}` }, 400);
 
+  const appId = env.GH_APP_ID;
+  const installationId = env.GH_APP_INSTALLATION_ID;
+  const privateKey = env.GH_APP_PRIVATE_KEY;
+  if (!appId || !installationId || !privateKey) {
+    return json({ error: 'Publishing is not configured on the server yet.' }, 500);
+  }
+
   if (env.RATE_LIMIT) {
     const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
     const key = `create-pr:${ip}`;
@@ -190,8 +193,8 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   const [owner, name] = (env.GH_REPO || DEFAULT_REPO).split('/');
 
   try {
-    const jwt = await appJwt(env.GH_APP_ID, env.GH_APP_PRIVATE_KEY);
-    const inst = (await gh(`/app/installations/${env.GH_APP_INSTALLATION_ID}/access_tokens`, jwt, {
+    const jwt = await appJwt(appId, privateKey);
+    const inst = (await gh(`/app/installations/${installationId}/access_tokens`, jwt, {
       method: 'POST',
     })) as { token: string };
     const token = inst.token;
