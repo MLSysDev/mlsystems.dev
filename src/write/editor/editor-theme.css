@@ -209,6 +209,35 @@
   margin-top: 20px;
 }
 
+.write-modal-loading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+.write-modal-loading p {
+  margin: 0;
+}
+.write-spinner {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-top-color: currentColor;
+  animation: write-spin 0.7s linear infinite;
+}
+@keyframes write-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .write-spinner {
+    animation-duration: 2s;
+  }
+}
+
 .write-cover {
   display: flex;
   flex-direction: column;

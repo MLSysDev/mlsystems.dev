@@ -1,10 +1,12 @@
 name: Post preview link
 
-# When Cloudflare Pages finishes a preview deploy, comment the exact post URL
-# (preview base + /blog/<slug>/) on the pull request. Free: runs on GitHub's
-# built-in token, no secrets.
+# Cloudflare Pages reports previews as a Check Run, not a GitHub Deployment, so
+# deployment_status never fires here. Instead we key off the comment Cloudflare
+# posts on the PR — it carries the branch preview URL — and reply with the exact
+# post URL (branch preview + /blog/<slug>/). Free: GitHub's built-in token, no secrets.
 on:
-  deployment_status: {}
+  issue_comment:
+    types: [created, edited]
 
 permissions:
   pull-requests: write
@@ -12,29 +14,28 @@ permissions:
 
 jobs:
   comment:
-    # Only successful PREVIEW deploys (previews live on *.pages.dev; production is the real domain).
+    # Only Cloudflare's deploy comment, and only on pull requests.
     if: >
-      github.event.deployment_status.state == 'success' &&
-      contains(github.event.deployment_status.environment_url, '.pages.dev')
+      github.event.issue.pull_request &&
+      github.event.comment.user.login == 'cloudflare-workers-and-pages' &&
+      contains(github.event.comment.body, 'Deploy successful')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
-            const url = context.payload.deployment_status.environment_url;
-            const sha = context.payload.deployment.sha;
-            if (!url || !sha) return;
+            const cf = context.payload.comment.body || '';
 
-            const prs = await github.rest.repos.listPullRequestsAssociatedWithCommit({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              commit_sha: sha,
-            });
-            const pr = prs.data.find((p) => p.state === 'open');
-            if (!pr) return;
+            // Prefer the branch preview URL (stable across redeploys of this branch);
+            // fall back to the per-deploy hash URL if only that is present.
+            const branch = cf.match(/Branch Preview URL:[\s\S]*?(https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.pages\.dev)/i);
+            const hash = cf.match(/Preview URL:[\s\S]*?(https:\/\/[a-z0-9-]+\.[a-z0-9-]+\.pages\.dev)/i);
+            const base = (branch && branch[1]) || (hash && hash[1]);
+            if (!base) return;
 
+            const pr = context.payload.issue;
             const match = (pr.body || '').match(/<!--\s*post-slug:\s*([a-z0-9-]+)\s*-->/);
-            const link = match ? `${url}/blog/${match[1]}/` : url;
+            const link = match ? `${base}/blog/${match[1]}/` : base;
 
             const marker = '<!-- preview-link-bot -->';
             const body = `${marker}\n📄 **Preview your post:** ${link}\n\n_Updates on each redeploy._`;

@@ -615,13 +615,14 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
                       Open my request →
                     </a>
                   )}
-                  <button
-                    type="button"
-                    className="write-ghost"
-                    onClick={() => setPublishOpen(false)}
-                  >
-                    Done
-                  </button>
+                </div>
+              </>
+            ) : publishStage === 'working' ? (
+              <>
+                <h3>Opening your request…</h3>
+                <div className="write-modal-loading">
+                  <span className="write-spinner" aria-hidden="true" />
+                  <p>Creating your pull request on GitHub. This only takes a moment.</p>
                 </div>
               </>
             ) : (
@@ -640,7 +641,6 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
                   <button
                     type="button"
                     className="write-ghost"
-                    disabled={publishStage === 'working'}
                     onClick={() => setPublishOpen(false)}
                   >
                     Cancel
@@ -648,10 +648,9 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
                   <button
                     type="button"
                     className="write-download"
-                    disabled={publishStage === 'working'}
                     onClick={() => void submitToGithub()}
                   >
-                    {publishStage === 'working' ? 'Opening pull request…' : 'Create pull request'}
+                    Create pull request
                   </button>
                 </div>
               </>

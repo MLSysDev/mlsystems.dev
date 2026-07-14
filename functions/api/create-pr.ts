@@ -1,7 +1,4 @@
-// Cloudflare Pages Function: opens a pull request on the repo directly, as our
-// installed GitHub App. No user login and no forks — the client sends the post
-// files, we authenticate as the App (private key in env) and create the branch,
-// commit, and PR. The App's short-lived installation token never leaves here.
+// Cloudflare Pages Function: opens a pull request on the repo directly via github app
 
 type Env = {
   GH_APP_ID?: string;
@@ -25,8 +22,6 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-// Wraps lines in an aligned ASCII box inside a code fence (renders monospace on
-// GitHub). Padding is computed, so the box is always square regardless of content.
 function box(lines: string[], minWidth = 0): string {
   const width = Math.max(minWidth, ...lines.map((l) => l.length));
   const bar = '─'.repeat(width + 2);
@@ -189,12 +184,29 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
       body: JSON.stringify({ ref: `refs/heads/${branch}`, sha: commit.sha }),
     });
 
+    const banner = (() => {
+      const width = 52;
+      const center = (s: string) => {
+        const total = width - s.length;
+        const left = Math.floor(total / 2);
+        return ' '.repeat(left) + s + ' '.repeat(total - left);
+      };
+      const bar = '═'.repeat(width);
+      const blank = ' '.repeat(width);
+      return [
+        '```',
+        `╔${bar}╗`,
+        `║${blank}║`,
+        `║${center('M L S Y S T E M S . D E V')}║`,
+        `║${center('N E W   A R T I C L E')}║`,
+        `║${blank}║`,
+        `╚${bar}╝`,
+        '```',
+      ].join('\n');
+    })();
+
     const body = [
-      '```',
-      '╔══════════════════════════════╗',
-      '║  ML SYSTEMS  —  NEW ARTICLE  ║',
-      '╚══════════════════════════════╝',
-      '```',
+      banner,
       '',
       `## ${title}`,
       '',
