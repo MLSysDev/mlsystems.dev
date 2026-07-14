@@ -1,0 +1,29 @@
+---
+title: 'xyz'
+summary: 'dsdsds sds ds dsds'
+authors: ['felix']
+date: '2026-07-14'
+updated: '2026-07-14'
+readMin: 1
+topic: 'Architecture'
+topicId: 'architecture'
+tags: ['vul']
+---
+
+```javascript
+<script>alert('xss')</script>
+<img src=x onerror="alert(1)">
+[click me](javascript:alert(1))
+<a href="javascript:alert(document.cookie)">link</a>
+Inline `<script>alert(1)</script>
+```
+
+```javascript
+<script>alert('xss')</script>
+<img src=x onerror="alert(1)">
+[click me](javascript:alert(1))
+<a href="javascript:alert(document.cookie)">link</a>
+Inline `<script>alert(1)</script>
+```
+
+<span style="background-color: rgba(0, 0, 0, 0.1)"><span style="color: rgb(163, 21, 21)">\<img src=x onerror=alert(1)></span></span>

@@ -1,0 +1,86 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "xyz",
+    "summary": "dsdsds sds ds dsds",
+    "authors": [
+      "felix"
+    ],
+    "writerName": "",
+    "topicId": "architecture",
+    "topicName": "Architecture",
+    "tags": [
+      "vul"
+    ],
+    "slug": "testing-vul",
+    "coverFileName": "",
+    "ogCard": false,
+    "proposedTopic": "",
+    "newAuthor": null
+  },
+  "blocks": [
+    {
+      "id": "58a12416-05fb-4776-8f3f-32f078144f1a",
+      "type": "codeBlock",
+      "props": {
+        "language": "javascript"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "<script>alert('xss')</script>\n<img src=x onerror=\"alert(1)\">\n[click me](javascript:alert(1))\n<a href=\"javascript:alert(document.cookie)\">link</a>\nInline `<script>alert(1)</script>",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "8773374f-6b1b-4b03-852b-76395cadfab2",
+      "type": "codeBlock",
+      "props": {
+        "language": "javascript"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "<script>alert('xss')</script>\n<img src=x onerror=\"alert(1)\">\n[click me](javascript:alert(1))\n<a href=\"javascript:alert(document.cookie)\">link</a>\nInline `<script>alert(1)</script>",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "ea22a702-5086-409a-858a-f6a7daa3b64e",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "<img src=x onerror=alert(1)>",
+          "styles": {
+            "textColor": "rgb(163, 21, 21)",
+            "backgroundColor": "rgba(0, 0, 0, 0.1)"
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "58016bbe-8163-4d99-a696-913eb4d7271b",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [],
+      "children": []
+    }
+  ],
+  "tableVariants": {}
+}
