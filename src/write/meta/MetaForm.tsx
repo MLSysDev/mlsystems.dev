@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { SITE } from '@/lib/site';
 import type { NewAuthor, PostMeta } from '../serialize/toMdx';
 import { slugify } from '../serialize/validate';
-import { addAsset, getAssetUrl } from '../storage/assets';
+import { getAsset, getAssetUrl } from '../storage/assets';
 import { AuthorModal } from './AuthorModal';
+import { addCroppedCover } from './cropCover';
 
 export type Option = { id: string; name: string };
 
@@ -231,8 +232,10 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
       <div className="write-cover">
         {meta.coverFileName ? (
           <div className="write-cover-set">
-            <div className="write-cover-frame">
-              <img src={getAssetUrl(meta.coverFileName)} alt="" />
+            <div className="write-cover-holder">
+              <div className="write-cover-frame">
+                <img src={getAssetUrl(meta.coverFileName)} alt="" />
+              </div>
               <button
                 type="button"
                 className="write-cover-remove"
@@ -266,7 +269,10 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                 type="button"
                 className="write-cover-thumb"
                 title="Use as cover"
-                onClick={() => set({ coverFileName: name })}
+                onClick={async () => {
+                  const file = getAsset(name);
+                  if (file) set({ coverFileName: await addCroppedCover(file) });
+                }}
               >
                 <img src={getAssetUrl(name)} alt="" />
               </button>
@@ -276,9 +282,9 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0];
-                  if (file) set({ coverFileName: addAsset(file) });
+                  if (file) set({ coverFileName: await addCroppedCover(file) });
                 }}
               />
             </label>

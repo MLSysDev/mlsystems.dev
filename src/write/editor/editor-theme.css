@@ -376,12 +376,15 @@
 .write-ogcard-opt input {
   cursor: pointer;
 }
-.write-cover-frame {
+.write-cover-holder {
   position: relative;
+  width: 100%;
+  max-width: 640px;
+}
+.write-cover-frame {
   display: block;
   line-height: 0;
   width: 100%;
-  max-width: 640px;
   aspect-ratio: 1200 / 630;
   border-radius: 8px;
   border: 1px solid var(--line-2);
