@@ -38,7 +38,7 @@ const related = await resolvePostAuthors(
   all
     .filter((a) => a.data.topicId === post.data.topicId && a.id !== post.id)
     .sort(sortPostsByDate)
-    .slice(0, 3),
+    .slice(0, 6),
 );
 
 const canonical = `${SITE.url}/blog/${post.id}`;
@@ -201,27 +201,20 @@ const breadcrumbJsonLd = {
 
     {
       related.length > 0 && (
-        <div class="comments" data-pagefind-ignore style="margin-top: 80px;">
-          <h2 style="margin-bottom: 24px;">More from this topic</h2>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
+        <section class="related" data-pagefind-ignore>
+          <h2>More from this topic</h2>
+          <div class="related-strip">
             {related.map((r) => (
-              <a href={`/blog/${r.id}`} class="article-card" style="padding: 20px 0;">
-                <div class="article-meta">
-                  <span class="chip chip--sm">{topicName(r.data.topicId)}</span>
-                </div>
-                <h3 class="article-title" style="font-size: 22px;">
-                  {r.data.title}
-                </h3>
-                <div class="article-foot">
+              <a href={`/blog/${r.id}`} class="related-card">
+                <h3>{r.data.title}</h3>
+                <div class="related-card-foot">
                   <span>{r.authors.map((a) => a.data.name).join(', ')}</span>
-                  <span>
-                    {formatDate(r.data.date)} · {r.data.readMin} min
-                  </span>
+                  <span>{formatDate(r.data.date)}</span>
                 </div>
               </a>
             ))}
           </div>
-        </div>
+        </section>
       )
     }
   </article>
