@@ -1,3 +1,5 @@
+import { sanitizeSvg } from '../lib/sanitizeSvg';
+
 export type InlineRun =
   | { type: 'text'; text: string; styles: Record<string, boolean | string> }
   | {
@@ -244,7 +246,7 @@ function serializeFigure(block: SBlock, ctx: Ctx): string {
 }
 
 function serializeSvg(block: SBlock): string {
-  const code = String(block.props.code ?? '').trim();
+  const code = sanitizeSvg(String(block.props.code ?? '')).trim();
   if (!code) return '';
   const caption = String(block.props.caption ?? '');
   const captionAttr = caption ? ` ${attr('caption', caption)}` : '';

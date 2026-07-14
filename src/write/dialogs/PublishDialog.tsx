@@ -1,3 +1,6 @@
+import { useRef } from 'react';
+import { useDialogFocus } from '../lib/useDialogFocus';
+
 export type PublishStage = 'idle' | 'working' | 'done' | 'error';
 
 type Props = {
@@ -19,6 +22,8 @@ export function PublishDialog({
   onSubmit,
   onClose,
 }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(open, panelRef, onClose, stage !== 'working');
   if (!open) return null;
   return (
     <div
@@ -27,6 +32,7 @@ export function PublishDialog({
       role="presentation"
     >
       <div
+        ref={panelRef}
         className="write-modal"
         role="dialog"
         aria-modal="true"

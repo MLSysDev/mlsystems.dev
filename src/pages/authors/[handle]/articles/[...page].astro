@@ -1,30 +1,35 @@
 ---
+import type { GetStaticPaths, Page } from 'astro';
 import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import Pager from '@/components/Pager.astro';
 import PostRow from '@/components/PostRow.astro';
 import { sortPostsByDate } from '@/lib/data';
-import { resolvePostAuthors } from '@/lib/posts';
+import { resolvePostAuthors, type PostWithAuthors } from '@/lib/posts';
 import { SITE } from '@/lib/site';
 
-export async function getStaticPaths() {
+export const getStaticPaths = (async ({ paginate }) => {
   const authors = await getCollection('authors');
-  return authors.map((author) => ({
-    params: { handle: author.id },
-    props: { author },
-  }));
-}
+  const all = await getCollection('posts', ({ data }) => !data.draft);
+  const paths = [];
+  for (const author of authors) {
+    const matching = all.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
+    const posts = (await resolvePostAuthors(matching)).sort(sortPostsByDate);
+    paths.push(
+      ...paginate(posts, { params: { handle: author.id }, pageSize: 20, props: { author } }),
+    );
+  }
+  return paths;
+}) satisfies GetStaticPaths;
 
 interface Props {
+  page: Page<PostWithAuthors>;
   author: CollectionEntry<'authors'>;
 }
-const { author } = Astro.props;
+const { page, author } = Astro.props;
 
-const allRaw = await getCollection('posts', ({ data }) => !data.draft);
-const matching = allRaw.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
-const posts = (await resolvePostAuthors(matching)).sort(sortPostsByDate);
-
-const canonical = `${SITE.url}/authors/${author.id}/articles`;
+const canonical = `${SITE.url}${page.url.current}`;
 const description = `Every article by ${author.data.name} on mlsystems.dev — machine learning systems.`;
 
 const breadcrumbJsonLd = {
@@ -39,13 +44,23 @@ const breadcrumbJsonLd = {
       name: author.data.name,
       item: `${SITE.url}/authors/${author.id}`,
     },
-    { '@type': 'ListItem', position: 4, name: 'Articles', item: canonical },
+    {
+      '@type': 'ListItem',
+      position: 4,
+      name: 'Articles',
+      item: `${SITE.url}/authors/${author.id}/articles`,
+    },
   ],
 };
+
+const title =
+  page.currentPage > 1
+    ? `All articles by ${author.data.name} — page ${page.currentPage}`
+    : `All articles by ${author.data.name}`;
 ---
 
 <BaseLayout
-  title={`All articles by ${author.data.name}`}
+  title={title}
   description={description}
   canonical={canonical}
   image={`/og/author/${author.id}.png`}
@@ -60,22 +75,24 @@ const breadcrumbJsonLd = {
         <a href={`/authors/${author.id}`} class="page-h1-name">{author.data.name}</a>
       </h1>
       <p class="page-lede">
-        {posts.length}
-        {posts.length === 1 ? 'article' : 'articles'}.
+        {page.total}
+        {page.total === 1 ? 'article' : 'articles'}.
       </p>
     </header>
 
     {
-      posts.length === 0 ? (
+      page.data.length === 0 ? (
         <p style="color: var(--ink-3); padding: 40px 0;">No published articles yet.</p>
       ) : (
         <div class="blog-list">
-          {posts.map((p) => (
+          {page.data.map((p) => (
             <PostRow post={p} heading="h2" meta="readtime" />
           ))}
         </div>
       )
     }
+
+    <Pager page={page} />
   </div>
 </BaseLayout>
 

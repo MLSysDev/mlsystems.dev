@@ -1,11 +1,18 @@
 // Cloudflare Pages Function: opens a pull request on the repo directly via github app
 
+interface KVStore {
+  get(key: string): Promise<string | null>;
+  put(key: string, value: string, opts?: { expirationTtl?: number }): Promise<void>;
+}
+
 type Env = {
   GH_APP_ID?: string;
   GH_APP_INSTALLATION_ID?: string;
   GH_APP_PRIVATE_KEY?: string;
   GH_REPO?: string;
   ALLOWED_ORIGIN?: string;
+  // Optional KV namespace; when bound, submissions are throttled per IP.
+  RATE_LIMIT?: KVStore;
 };
 
 type PostFile = { path: string; content: string; encoding: 'utf-8' | 'base64' };
@@ -14,6 +21,30 @@ const DEFAULT_REPO = 'MLSysDev/mlsystems.dev';
 const DEFAULT_ORIGIN = 'https://mlsystems.dev';
 const CONTACT_EMAIL = 'admin@mlsystems.dev';
 const UA = 'mlsystems-write';
+
+const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const FILE_NAME_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+const AUTHOR_PATH_RE = /^src\/content\/authors\/[a-z0-9]+(?:-[a-z0-9]+)*\.json$/;
+const MAX_FILES = 40;
+const MAX_FILE_CHARS = 8_000_000;
+const MAX_TOTAL_CHARS = 24_000_000;
+const MAX_SUBMISSIONS_PER_HOUR = 5;
+
+// Every file must live in the post's own folder (flat, safe names) — except a
+// single new-author profile. Anything else could overwrite arbitrary repo files.
+function invalidPath(files: PostFile[], slug: string): string | null {
+  const postDir = `src/content/posts/${slug}/`;
+  let authorFiles = 0;
+  for (const f of files) {
+    if (AUTHOR_PATH_RE.test(f.path)) {
+      if (++authorFiles > 1) return f.path;
+      continue;
+    }
+    if (!f.path.startsWith(postDir)) return f.path;
+    if (!FILE_NAME_RE.test(f.path.slice(postDir.length))) return f.path;
+  }
+  return null;
+}
 
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -124,11 +155,37 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     return json({ error: 'Invalid request body.' }, 400);
   }
   const slug = (payload.slug ?? '').trim();
-  const title = (payload.title ?? '').trim() || slug;
-  const summary = (payload.summary ?? '').trim();
+  const title = (payload.title ?? '').trim().slice(0, 200) || slug;
+  const summary = (payload.summary ?? '').trim().slice(0, 500);
   const files = payload.files ?? [];
   const isEdit = payload.isEdit === true;
   if (!slug || files.length === 0) return json({ error: 'Missing post data.' }, 400);
+  if (!SLUG_RE.test(slug) || slug.length > 64) {
+    return json({ error: 'Invalid URL slug.' }, 400);
+  }
+  if (files.length > MAX_FILES) return json({ error: 'Too many files in this post.' }, 400);
+  let totalChars = 0;
+  for (const f of files) {
+    if (typeof f.path !== 'string' || typeof f.content !== 'string') {
+      return json({ error: 'Invalid file entry.' }, 400);
+    }
+    totalChars += f.content.length;
+    if (f.content.length > MAX_FILE_CHARS || totalChars > MAX_TOTAL_CHARS) {
+      return json({ error: 'This post is too large to submit — reduce image sizes.' }, 413);
+    }
+  }
+  const badPath = invalidPath(files, slug);
+  if (badPath) return json({ error: `File path not allowed: ${badPath}` }, 400);
+
+  if (env.RATE_LIMIT) {
+    const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+    const key = `create-pr:${ip}`;
+    const count = Number((await env.RATE_LIMIT.get(key)) ?? '0');
+    if (count >= MAX_SUBMISSIONS_PER_HOUR) {
+      return json({ error: 'Too many submissions — please try again in an hour.' }, 429);
+    }
+    await env.RATE_LIMIT.put(key, String(count + 1), { expirationTtl: 3600 });
+  }
 
   const [owner, name] = (env.GH_REPO || DEFAULT_REPO).split('/');
 
@@ -140,16 +197,22 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     const token = inst.token;
 
     // A brand-new post must not silently overwrite an existing one at the same slug.
-    // Edits (loaded via the portal's "Open existing post") are meant to, so skip then.
-    if (
-      !isEdit &&
-      (await fileExistsOnMain(owner, name, `src/content/posts/${slug}/index.mdx`, token))
-    ) {
+    // Edits (loaded via the portal's "Open existing post") are meant to. isEdit is
+    // client-supplied, so the server checks reality itself and labels updates loudly —
+    // maintainer review of the PR is the trust boundary for overwrites.
+    const postExists = await fileExistsOnMain(
+      owner,
+      name,
+      `src/content/posts/${slug}/index.mdx`,
+      token,
+    );
+    if (!isEdit && postExists) {
       return json(
         { error: 'A post with this URL already exists. Change the URL slug and try again.' },
         409,
       );
     }
+    const isUpdate = isEdit && postExists;
 
     // A newly registered author must not overwrite an existing profile at the same handle.
     const authorFile = files.find((f) => f.path.startsWith('src/content/authors/'));
@@ -188,7 +251,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     const commit = (await gh(`/repos/${owner}/${name}/git/commits`, token, {
       method: 'POST',
       body: JSON.stringify({
-        message: `Add post: ${title}`,
+        message: `${isUpdate ? 'Update' : 'Add'} post: ${title}`,
         tree: newTree.sha,
         parents: [baseSha],
       }),
@@ -265,7 +328,12 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
 
     const pr = (await gh(`/repos/${owner}/${name}/pulls`, token, {
       method: 'POST',
-      body: JSON.stringify({ title: `New post: ${title}`, head: branch, base: 'main', body }),
+      body: JSON.stringify({
+        title: `${isUpdate ? 'Update post' : 'New post'}: ${title}`,
+        head: branch,
+        base: 'main',
+        body,
+      }),
     })) as { html_url: string; number: number };
 
     // Best-effort label for triage. Needs Issues: write on the App + the label to
@@ -273,7 +341,9 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
     try {
       await gh(`/repos/${owner}/${name}/issues/${pr.number}/labels`, token, {
         method: 'POST',
-        body: JSON.stringify({ labels: ['blog-submission'] }),
+        body: JSON.stringify({
+          labels: ['blog-submission', ...(isUpdate ? ['post-update'] : [])],
+        }),
       });
     } catch {
       // labeling is optional

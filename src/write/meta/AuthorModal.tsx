@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { NewAuthor } from '../serialize/toMdx';
 import { slugify } from '../serialize/validate';
+import { useDialogFocus } from '../lib/useDialogFocus';
 
 type Props = {
   existingHandles: string[];
@@ -33,6 +34,8 @@ export function AuthorModal({ existingHandles, initial, onSave, onRemove, onCanc
   );
   const [handleTouched, setHandleTouched] = useState(!!initial);
   const [error, setError] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFocus(true, panelRef, onCancel);
 
   const set = (patch: Partial<NewAuthor>) => setForm((f) => ({ ...f, ...patch }));
 
@@ -52,6 +55,7 @@ export function AuthorModal({ existingHandles, initial, onSave, onRemove, onCanc
   return (
     <div className="write-modal-backdrop" role="presentation" onClick={onCancel}>
       <div
+        ref={panelRef}
         className="write-modal write-author-modal"
         role="dialog"
         aria-modal="true"

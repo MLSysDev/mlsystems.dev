@@ -10,6 +10,8 @@ export function usePasteImages(editor: WriteEditor, onInserted: () => void): voi
     function onPaste(e: ClipboardEvent) {
       const target = e.target as HTMLElement | null;
       if (!target?.closest('.bn-editor')) return;
+      // Block-embedded fields (captions, alt text, SVG code) keep native paste.
+      if (target.closest('input, textarea')) return;
       const images = [...(e.clipboardData?.files ?? [])].filter((f) => f.type.startsWith('image/'));
       if (images.length === 0) return;
       e.preventDefault();

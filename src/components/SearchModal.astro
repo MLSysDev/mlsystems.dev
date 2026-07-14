@@ -108,29 +108,18 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
 
 <script>
   import { loadPagefind } from '@/lib/pagefind';
+  import {
+    GROUP_LABEL,
+    buildMeta,
+    classifyUrl,
+    sortRows,
+    topicMatches as matchTopics,
+    type SearchRow,
+  } from '@/lib/search';
 
   const TOPICS: { id: string; name: string; desc: string }[] = JSON.parse(
     document.querySelector('[data-search-topics]')?.textContent ?? '[]',
   );
-
-  type Group = 'topic' | 'article' | 'tool' | 'author' | 'page';
-  type RowItem = { group: Group; url: string; title: string; excerpt?: string; meta?: string };
-
-  const GROUP_ORDER: Group[] = ['topic', 'article', 'tool', 'author', 'page'];
-  const GROUP_LABEL: Record<Group, string> = {
-    topic: 'Topics',
-    article: 'Articles',
-    tool: 'Tools',
-    author: 'Authors',
-    page: 'Pages',
-  };
-
-  function classifyUrl(url: string): Group {
-    if (url.startsWith('/blog/')) return 'article';
-    if (url.startsWith('/playground/')) return 'tool';
-    if (url.startsWith('/authors/')) return 'author';
-    return 'page';
-  }
 
   const modalEl = document.querySelector<HTMLElement>('[data-search-modal]');
   if (modalEl) setup(modalEl);
@@ -144,14 +133,16 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
     const noneQueryEl = modal.querySelector<HTMLElement>('[data-search-none-query]')!;
     const resultsEl = modal.querySelector<HTMLUListElement>('[data-search-results]')!;
 
-    let rows: RowItem[] = [];
+    let rows: SearchRow[] = [];
     let activeIdx = 0;
     let searchSeq = 0;
     let loading = false;
+    let lastFocused: HTMLElement | null = null;
 
     const isOpen = () => !modal.hidden;
 
     function open() {
+      lastFocused = document.activeElement as HTMLElement | null;
       modal.hidden = false;
       document.body.style.overflow = 'hidden';
       setTimeout(() => input.focus(), 30);
@@ -164,19 +155,8 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
       rows = [];
       activeIdx = 0;
       render('');
-    }
-
-    function topicMatches(q: string): RowItem[] {
-      return TOPICS.filter(
-        (t) => t.name.toLowerCase().includes(q) || t.desc.toLowerCase().includes(q),
-      )
-        .slice(0, 3)
-        .map((t) => ({
-          group: 'topic' as const,
-          url: `/topics/${t.id}`,
-          title: t.name,
-          excerpt: t.desc,
-        }));
+      lastFocused?.focus();
+      lastFocused = null;
     }
 
     function render(query: string) {
@@ -252,20 +232,21 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
         if (seq !== searchSeq || !res) return;
         const data = await Promise.all(res.results.slice(0, 10).map((r) => r.data()));
         if (seq !== searchSeq) return;
-        const fromPagefind: RowItem[] = data.map((r) => ({
-          group: classifyUrl(r.url),
-          url: r.url,
-          title: r.meta.title ?? r.url,
-          excerpt: r.excerpt,
-          meta: [r.meta.topic, r.meta.read].filter(Boolean).join(' · '),
-        }));
-        rows = [...topicMatches(q), ...fromPagefind].sort(
-          (a, b) => GROUP_ORDER.indexOf(a.group) - GROUP_ORDER.indexOf(b.group),
-        );
+        const fromPagefind: SearchRow[] = data.map((r) => {
+          const g = classifyUrl(r.url);
+          return {
+            group: g,
+            url: r.url,
+            title: r.meta.title ?? r.url,
+            excerpt: r.excerpt,
+            meta: buildMeta(g, r.meta),
+          };
+        });
+        rows = sortRows([...matchTopics(TOPICS, q), ...fromPagefind]);
         activeIdx = 0;
       } catch {
         if (seq !== searchSeq) return;
-        rows = topicMatches(q);
+        rows = matchTopics(TOPICS, q);
       } finally {
         if (seq === searchSeq) {
           loading = false;
@@ -292,6 +273,24 @@ const HINT_TERMS = ['attention', 'quantization', 'vLLM', 'FSDP', 'evals'];
     });
 
     document.addEventListener('mls:open-search', open);
+
+    const panel = modal.querySelector<HTMLElement>('.search-panel')!;
+    modal.addEventListener('keydown', (e) => {
+      if (e.key !== 'Tab') return;
+      const els = Array.from(
+        panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input'),
+      ).filter((el) => el.offsetParent !== null);
+      if (els.length === 0) return;
+      const first = els[0];
+      const last = els[els.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
 
     modal.querySelector('[data-search-close]')?.addEventListener('click', close);
 
