@@ -14,6 +14,8 @@ export const SOCIALS: Record<'discord' | 'github' | 'twitter' | 'linkedin', stri
 
 export const SITE = {
   name: 'ML Systems',
+  // Keyword-rich name fed to search engines (og:site_name + JSON-LD) as the
+  fullName: 'Machine Learning Systems',
   domain: 'mlsystems.dev',
   url: 'https://mlsystems.dev',
   description:

@@ -84,13 +84,13 @@ const imageUrl = image.startsWith('http') ? image : new URL(image, SITE.url).toS
 const currentPath = Astro.url.pathname;
 const gaMeasurementId = import.meta.env.PUBLIC_GA_MEASUREMENT_ID;
 
-const ALT_NAMES = ['Machine Learning Systems', 'MLSystems', 'MLSys', 'mlsystems.dev'];
+const ALT_NAMES = ['ML Systems', 'MLSystems', 'MLSys', 'mlsystems.dev'];
 
 const siteJsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'Organization',
-    name: SITE.name,
+    name: SITE.fullName,
     alternateName: ALT_NAMES,
     url: SITE.url,
     logo: new URL('/favicon-96x96.png', SITE.url).toString(),
@@ -100,11 +100,11 @@ const siteJsonLd = [
   {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
-    name: SITE.name,
+    name: SITE.fullName,
     alternateName: ALT_NAMES,
     url: SITE.url,
     description: SITE.description,
-    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+    publisher: { '@type': 'Organization', name: SITE.fullName, url: SITE.url },
     potentialAction: {
       '@type': 'SearchAction',
       target: {
@@ -182,7 +182,7 @@ const siteJsonLd = [
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content={imageAlt ?? fullTitle} />
-  <meta property="og:site_name" content={SITE.name} />
+  <meta property="og:site_name" content={SITE.fullName} />
   <meta property="og:locale" content="en_US" />
   {publishedTime && <meta property="article:published_time" content={publishedTime} />}
   {modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
