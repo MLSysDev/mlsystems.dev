@@ -39,9 +39,11 @@ export const SITE = {
   // set PUBLIC_OG_CARD_OPTIN=true to expose it. Opted-in posts render a per-post OG
   // card at build (a small build-time cost), so keep it off unless you want it.
   ogCardOptIn: import.meta.env.PUBLIC_OG_CARD_OPTIN === 'true',
-  // Newsletter signup link (e.g. a Google Form). Leave empty to hide all
-  // newsletter UI (footer block + end-of-article box).
-  newsletterUrl: '',
+  // Google Form /formResponse URL + email field entry id.
+  newsletter: {
+    formUrl: '',
+    emailEntry: 'entry.999355293',
+  },
 };
 
 export const APPEARANCE = {

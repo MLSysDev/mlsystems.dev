@@ -7,7 +7,6 @@ import { mdxComponents } from '@/components/MDXComponents.tsx';
 import ArticleActions from '@/components/ArticleActions.tsx';
 import Comments from '@/components/Comments.tsx';
 import Avatar from '@/components/Avatar.astro';
-import NewsletterCta from '@/components/NewsletterCta.astro';
 import { formatDate, sortPostsByDate, topicName, tagSlug } from '@/lib/data';
 import { resolvePostAuthors } from '@/lib/posts';
 import { SITE } from '@/lib/site';
@@ -190,10 +189,6 @@ const breadcrumbJsonLd = {
       author={authorNames}
       date={formatDate(dateISO)}
     />
-
-    <div data-pagefind-ignore>
-      <NewsletterCta />
-    </div>
 
     <div data-pagefind-ignore>
       <Comments client:visible />

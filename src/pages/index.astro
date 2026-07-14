@@ -20,7 +20,6 @@ const recent = allPosts.filter((p) => !featuredIds.has(p.id)).slice(0, 6);
 const topicCounts = countPostsByTopic(allPosts);
 const articleCount = allPosts.length;
 const contributorCount = authors.length;
-const topicCount = TOPICS.length;
 
 const TOPIC_PREVIEW_LIMIT = 5;
 const topicsWithPosts = TOPICS.map((t) => ({
@@ -80,7 +79,6 @@ const featuredTools = allTools
           <div style="margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap;">
             <Stat value={articleCount} label="articles" />
             <Stat value={contributorCount} label="contributors" />
-            <Stat value={topicCount} label="topics" />
           </div>
         </div>
         <div>
