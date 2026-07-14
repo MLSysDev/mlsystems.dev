@@ -156,7 +156,7 @@ export async function onRequestPost(context: { request: Request; env: Env }): Pr
   const files = payload.files ?? [];
   const isEdit = payload.isEdit === true;
   if (!slug || files.length === 0) return json({ error: 'Missing post data.' }, 400);
-  if (!SLUG_RE.test(slug) || slug.length > 64) {
+  if (!SLUG_RE.test(slug) || slug.length > 80) {
     return json({ error: 'Invalid URL slug.' }, 400);
   }
   if (files.length > MAX_FILES) return json({ error: 'Too many files in this post.' }, 400);
