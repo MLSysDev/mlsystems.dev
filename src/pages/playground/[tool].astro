@@ -1,8 +1,9 @@
 ---
-import { getCollection, getEntries, render } from 'astro:content';
+import { getCollection, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import { mdxComponents } from '@/components/MDXComponents.tsx';
+import { resolveAuthors } from '@/lib/posts';
 import { SITE } from '@/lib/site';
 
 export async function getStaticPaths() {
@@ -20,7 +21,7 @@ interface Props {
 const { tool } = Astro.props;
 const { Content } = await render(tool);
 
-const authors = tool.data.authors ? await getEntries(tool.data.authors) : [];
+const authors = await resolveAuthors(tool.data.authors);
 const canonical = `${SITE.url}/playground/${tool.id}`;
 const ogImage = `/og/tool/${tool.id}.png`;
 

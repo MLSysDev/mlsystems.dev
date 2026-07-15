@@ -1,5 +1,5 @@
 import { readdirSync } from 'node:fs';
-import { defineCollection, reference, z } from 'astro:content';
+import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
 // Topic ids come from the data files themselves, so post frontmatter is
@@ -31,7 +31,9 @@ const posts = defineCollection({
     z.object({
       title: z.string(),
       summary: z.string(),
-      authors: z.array(reference('authors')).min(1),
+      // Plain author handles, resolved defensively at render (see lib/posts.ts):
+      // a missing profile falls back to Guest rather than failing the build.
+      authors: z.array(z.string()).min(1),
       date: z.coerce.date(),
       readMin: z.number().int().positive(),
       // Display name is derived from topicId via topicName(); kept optional for
@@ -62,7 +64,7 @@ const tools = defineCollection({
       tag: z.enum(['Live', 'Beta', 'Experimental', 'Soon']),
       icon: z.string().optional(),
       thumbnail: z.union([image(), z.string().url()]).optional(),
-      authors: z.array(reference('authors')).optional(),
+      authors: z.array(z.string()).optional(),
       topics: z.array(z.string()).optional(),
       tags: z.array(z.string()).optional(),
       repo: z.string().url().optional(),

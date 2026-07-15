@@ -9,7 +9,7 @@ const posts = await getCollection('posts', ({ data }) => !data.draft);
 
 const contributors = authors
   .map((author) => {
-    const authorPosts = posts.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
+    const authorPosts = posts.filter((p) => p.data.authors.some((h) => h === author.id));
     const lastDate = authorPosts.reduce<Date | null>((acc, p) => {
       const d = p.data.date;
       return !acc || d > acc ? d : acc;

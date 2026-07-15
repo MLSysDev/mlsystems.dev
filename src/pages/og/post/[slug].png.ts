@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { getCollection, getEntries } from 'astro:content';
+import { getCollection } from 'astro:content';
+import { resolveAuthors } from '@/lib/posts';
 import type { CollectionEntry } from 'astro:content';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -76,7 +77,7 @@ async function coverDataUrl(post: CollectionEntry<'posts'>): Promise<string | un
 export const GET: APIRoute = async ({ props }) => {
   const { post } = props as { post: CollectionEntry<'posts'> };
   return pngResponseWithFallback(async () => {
-    const authors = await getEntries(post.data.authors);
+    const authors = await resolveAuthors(post.data.authors);
     const cover = await coverDataUrl(post);
     return generateOgPng(
       {
