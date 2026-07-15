@@ -25,7 +25,7 @@ const { author } = Astro.props;
 const RECENT_LIMIT = 5;
 
 const allRaw = await getCollection('posts', ({ data }) => !data.draft);
-const matching = allRaw.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
+const matching = allRaw.filter((p) => p.data.authors.some((h) => h === author.id));
 const posts = (await resolvePostAuthors(matching)).sort(sortPostsByDate);
 const recent = posts.slice(0, RECENT_LIMIT);
 

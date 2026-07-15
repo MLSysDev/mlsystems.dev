@@ -14,7 +14,7 @@ export const getStaticPaths = (async ({ paginate }) => {
   const all = await getCollection('posts', ({ data }) => !data.draft);
   const paths = [];
   for (const author of authors) {
-    const matching = all.filter((p) => p.data.authors.some((ref) => ref.id === author.id));
+    const matching = all.filter((p) => p.data.authors.some((h) => h === author.id));
     const posts = (await resolvePostAuthors(matching)).sort(sortPostsByDate);
     paths.push(
       ...paginate(posts, { params: { handle: author.id }, pageSize: 20, props: { author } }),
