@@ -14,7 +14,6 @@ export function validate(meta: PostMeta, blocks: SBlock[]): string[] {
   const issues: string[] = [];
   if (!meta.title.trim()) issues.push('Add a title.');
   if (!meta.summary.trim()) issues.push('Add a one-sentence summary below the title.');
-  if (!meta.topicId) issues.push('Pick a topic.');
   if (!SLUG_RE.test(meta.slug)) {
     issues.push('The URL slug must be lowercase words separated by hyphens, like my-article.');
   }

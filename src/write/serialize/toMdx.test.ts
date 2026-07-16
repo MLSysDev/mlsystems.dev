@@ -467,6 +467,17 @@ describe('frontmatter', () => {
     expect(fm).toContain("cover: './hero.png'");
   });
 
+  it('omits topic fields when no topic is chosen', () => {
+    const { mdx } = serializePost(
+      { ...meta, topicId: '', topicName: '' },
+      [block('paragraph', {}, [t('body')])],
+      { tableVariants: {}, today },
+    );
+    const fm = mdx.split('---')[1];
+    expect(fm).not.toContain('topicId:');
+    expect(fm).not.toContain('topic:');
+  });
+
   it('preserves an existing write date and always stamps updated as today', () => {
     const { mdx } = serializePost(
       { ...meta, date: '2026-01-05' },

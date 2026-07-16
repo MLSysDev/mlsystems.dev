@@ -30,6 +30,7 @@ const posts = (await resolvePostAuthors(matching)).sort(sortPostsByDate);
 const recent = posts.slice(0, RECENT_LIMIT);
 
 const topicCounts = posts.reduce<Record<string, number>>((acc, p) => {
+  if (!p.data.topicId) return acc;
   const name = topicName(p.data.topicId);
   acc[name] = (acc[name] ?? 0) + 1;
   return acc;

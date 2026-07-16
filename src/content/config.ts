@@ -39,7 +39,9 @@ const posts = defineCollection({
       // Display name is derived from topicId via topicName(); kept optional for
       // backward compat with existing frontmatter but no longer rendered.
       topic: z.string().optional(),
-      topicId: z.enum(TOPIC_IDS),
+      // Optional: a post can belong to a topic hub, or stand alone. Missing topic
+      // only removes it from /topics/<x> — it stays in /blog, search, tags, feeds.
+      topicId: z.enum(TOPIC_IDS).optional(),
       // A writer-suggested topic not yet in TOPIC_IDS — surfaced for a maintainer
       // (or automation) to create the topic or remap topicId. Ignored by rendering.
       proposedTopic: z.string().optional(),

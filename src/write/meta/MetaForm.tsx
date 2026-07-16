@@ -131,7 +131,7 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
           </label>
         )}
         <label>
-          Topic
+          Topic <span className="write-optional">optional</span>
           <select
             value={proposing ? '__propose__' : meta.topicId}
             onChange={(e) => {
@@ -144,7 +144,7 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
               set({ topicId: topic?.id ?? '', topicName: topic?.name ?? '', proposedTopic: '' });
             }}
           >
-            <option value="">Pick a topic…</option>
+            <option value="">No specific topic</option>
             {topics.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name}

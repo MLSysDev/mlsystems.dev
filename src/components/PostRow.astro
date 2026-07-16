@@ -18,7 +18,11 @@ const { post, heading: Heading = 'h3', showChip = true, meta = 'byline' } = Astr
   <div class="blog-row-body">
     <div class="blog-row-title-line">
       <Heading class="blog-row-title">{post.data.title}</Heading>
-      {showChip && <span class="chip chip--sm">{topicName(post.data.topicId)}</span>}
+      {
+        showChip && post.data.topicId && (
+          <span class="chip chip--sm">{topicName(post.data.topicId)}</span>
+        )
+      }
     </div>
     <p class="blog-row-summary">{post.data.summary}</p>
   </div>
