@@ -417,9 +417,12 @@ function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptio
     `date: ${yaml(meta.date || todayStr)}`,
     `updated: ${yaml(todayStr)}`,
     `readMin: ${readMin}`,
-    `topic: ${yaml(meta.topicName)}`,
-    `topicId: ${yaml(meta.topicId)}`,
   ];
+  // Topic is optional; only emit it when the writer chose one.
+  if (meta.topicId) {
+    lines.push(`topic: ${yaml(meta.topicName)}`);
+    lines.push(`topicId: ${yaml(meta.topicId)}`);
+  }
   if (meta.tags.length > 0) lines.push(`tags: [${meta.tags.map(yaml).join(', ')}]`);
   if (meta.proposedTopic?.trim()) lines.push(`proposedTopic: ${yaml(meta.proposedTopic.trim())}`);
   if (meta.coverFileName) lines.push(`cover: ${yaml(`./${meta.coverFileName}`)}`);

@@ -36,9 +36,17 @@ const authors = await resolveAuthors(post.data.authors);
 const authorNames = authors.map((a) => a.data.name).join(', ');
 
 const all = await getCollection('posts', ({ data }) => !data.draft);
+const postTags = new Set(post.data.tags ?? []);
 const related = await resolvePostAuthors(
   all
-    .filter((a) => a.data.topicId === post.data.topicId && a.id !== post.id)
+    .filter((a) => {
+      if (a.id === post.id) return false;
+      // With a topic, relate by topic; without one, fall back to shared tags so
+      // topicless posts still get a meaningful "related" strip (never each other).
+      return post.data.topicId
+        ? a.data.topicId === post.data.topicId
+        : (a.data.tags ?? []).some((t) => postTags.has(t));
+    })
     .sort(sortPostsByDate)
     .slice(0, 6),
 );
@@ -89,13 +97,22 @@ const breadcrumbJsonLd = {
   '@type': 'BreadcrumbList',
   itemListElement: [
     { '@type': 'ListItem', position: 1, name: 'Home', item: SITE.url },
+    ...(post.data.topicId
+      ? [
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: topicLabel,
+            item: `${SITE.url}/topics/${post.data.topicId}`,
+          },
+        ]
+      : []),
     {
       '@type': 'ListItem',
-      position: 2,
-      name: topicLabel,
-      item: `${SITE.url}/topics/${post.data.topicId}`,
+      position: post.data.topicId ? 3 : 2,
+      name: post.data.title,
+      item: canonical,
     },
-    { '@type': 'ListItem', position: 3, name: post.data.title, item: canonical },
   ],
 };
 ---
@@ -117,13 +134,13 @@ const breadcrumbJsonLd = {
   <article
     class="article-shell"
     data-pagefind-body
-    data-pagefind-meta={`topic:${topicName(post.data.topicId)}, date:${formatDate(dateISO)}, read:${post.data.readMin} min, authors:${authorNames}`}
+    data-pagefind-meta={`${topicLabel ? `topic:${topicLabel}, ` : ''}date:${formatDate(dateISO)}, read:${post.data.readMin} min, authors:${authorNames}`}
   >
     <div class="article-head">
       <a href="/blog" class="article-back">← Back to archive</a>
 
       <div class="article-byline" style="margin-bottom: 4px;">
-        <span class="chip chip--sm">{topicName(post.data.topicId)}</span>
+        {post.data.topicId && <span class="chip chip--sm">{topicLabel}</span>}
         {
           post.data.tags?.map((t) => (
             <a href={`/tags/${tagSlug(t)}`} class="hashtag">

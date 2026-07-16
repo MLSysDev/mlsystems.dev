@@ -97,7 +97,7 @@ const featuredTools = pickCoreTools(allTools);
             {featured.map((p) => (
               <a class="article-card" href={`/blog/${p.id}`}>
                 <div class="article-meta">
-                  <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
+                  {p.data.topicId && <span class="chip chip--sm">{topicName(p.data.topicId)}</span>}
                 </div>
                 <h3 class="article-title">{p.data.title}</h3>
                 <p class="article-summary">{p.data.summary}</p>
@@ -132,7 +132,7 @@ const featuredTools = pickCoreTools(allTools);
             {recent.map((p) => (
               <a class="article-card" href={`/blog/${p.id}`}>
                 <div class="article-meta">
-                  <span class="chip chip--sm">{topicName(p.data.topicId)}</span>
+                  {p.data.topicId && <span class="chip chip--sm">{topicName(p.data.topicId)}</span>}
                 </div>
                 <h3 class="article-title">{p.data.title}</h3>
                 <p class="article-summary">{p.data.summary}</p>

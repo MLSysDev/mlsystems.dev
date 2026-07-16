@@ -20,7 +20,7 @@ export async function GET(context: APIContext) {
       pubDate: p.data.date,
       link: `/blog/${p.id}`,
       author: authorNames(p),
-      categories: [topicName(p.data.topicId), ...(p.data.tags ?? [])],
+      categories: [topicName(p.data.topicId), ...(p.data.tags ?? [])].filter(Boolean),
       customData: `<author>${escapeXml(authorNames(p))}</author>`,
     })),
     customData: `<language>en-us</language>`,
