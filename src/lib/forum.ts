@@ -3,7 +3,7 @@ import { tagSlug } from './data';
 const OWNER = 'MLSysDev';
 const NAME = 'mlsystems.dev';
 
-const EXCLUDED_CATEGORY_SLUGS = new Set(['comments', 'polls']);
+const EXCLUDED_CATEGORY_SLUGS = new Set(['comments']);
 
 export const COMMENT_RENDER_CAP = 50;
 
@@ -26,6 +26,12 @@ export type ForumComment = {
   replies: ForumComment[];
 };
 
+export type ForumPoll = {
+  question: string;
+  totalVoteCount: number;
+  options: { option: string; votes: number }[];
+};
+
 export type ForumThread = {
   number: number;
   title: string;
@@ -39,6 +45,7 @@ export type ForumThread = {
   author: ForumAuthor | null;
   commentCount: number;
   comments: ForumComment[];
+  poll: ForumPoll | null;
 };
 
 export type Forum = { categories: ForumCategory[]; threads: ForumThread[] };
@@ -73,6 +80,7 @@ query($owner:String!,$name:String!,$after:String){
         number title bodyHTML createdAt updatedAt url upvoteCount
         category{ name slug emojiHTML isAnswerable }
         author{ login url avatarUrl }
+        poll{ question totalVoteCount options(first:10){ nodes{ option totalVoteCount } } }
         comments(first:${COMMENT_RENDER_CAP}){
           totalCount
           nodes{
@@ -100,6 +108,12 @@ type RawComment = {
 
 type RawCategory = { name: string; slug: string; emojiHTML: string; isAnswerable: boolean };
 
+type RawPoll = {
+  question: string;
+  totalVoteCount: number;
+  options: { nodes: { option: string; totalVoteCount: number }[] };
+} | null;
+
 type RawDiscussion = {
   number: number;
   title: string;
@@ -110,6 +124,7 @@ type RawDiscussion = {
   upvoteCount: number;
   category: RawCategory | null;
   author: ForumAuthor | null;
+  poll: RawPoll;
   comments: { totalCount: number; nodes: RawComment[] };
 };
 
@@ -206,6 +221,16 @@ export async function getForum(): Promise<Forum> {
         author: d.author,
         commentCount: d.comments.totalCount,
         comments: d.comments.nodes.map(shapeComment),
+        poll: d.poll
+          ? {
+              question: d.poll.question,
+              totalVoteCount: d.poll.totalVoteCount,
+              options: d.poll.options.nodes.map((o) => ({
+                option: o.option,
+                votes: o.totalVoteCount,
+              })),
+            }
+          : null,
       };
     });
 

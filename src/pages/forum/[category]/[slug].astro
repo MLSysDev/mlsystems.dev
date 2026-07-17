@@ -53,6 +53,15 @@ const jsonLd = { '@context': 'https://schema.org', ...postLd };
 
 const rendered = thread.comments.length;
 const hiddenCount = thread.commentCount - rendered;
+
+const poll = thread.poll;
+const pollOptions = poll
+  ? poll.options.map((o) => ({
+      label: o.option,
+      votes: o.votes,
+      pct: poll.totalVoteCount ? Math.round((o.votes / poll.totalVoteCount) * 100) : 0,
+    }))
+  : [];
 ---
 
 <BaseLayout
@@ -91,6 +100,33 @@ const hiddenCount = thread.commentCount - rendered;
         {thread.category.isAnswerable && <span class="chip chip--sm">Q&amp;A</span>}
       </div>
       <div class="forum-content" set:html={thread.bodyHTML} />
+
+      {
+        poll && (
+          <div class="forum-poll">
+            <div class="forum-poll-q">{poll.question}</div>
+            {pollOptions.map((o) => (
+              <div class="forum-poll-opt">
+                <div class="forum-poll-opt-top">
+                  <span>{o.label}</span>
+                  <span>
+                    {o.pct}% · {o.votes}
+                  </span>
+                </div>
+                <div class="forum-poll-bar">
+                  <div class="forum-poll-fill" style={`width:${o.pct}%`} />
+                </div>
+              </div>
+            ))}
+            <div class="forum-poll-meta">
+              {poll.totalVoteCount} {poll.totalVoteCount === 1 ? 'vote' : 'votes'} ·{' '}
+              <a href={thread.url} target="_blank" rel="noreferrer">
+                Vote on GitHub ↗
+              </a>
+            </div>
+          </div>
+        )
+      }
     </article>
 
     <section class="forum-comments" aria-label="Replies">

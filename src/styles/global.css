@@ -3321,3 +3321,46 @@ a.forum-cat:hover {
 .forum-giscus {
   margin-top: 8px;
 }
+
+.forum-poll {
+  margin: 20px 0;
+  padding: 18px 20px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--paper-2);
+}
+.forum-poll-q {
+  font-family: var(--font-display);
+  font-size: 17px;
+  margin-bottom: 14px;
+}
+.forum-poll-opt {
+  margin-bottom: 12px;
+}
+.forum-poll-opt-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--ink-2);
+  margin-bottom: 4px;
+}
+.forum-poll-bar {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--paper-3);
+  overflow: hidden;
+}
+.forum-poll-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+}
+.forum-poll-meta {
+  margin-top: 14px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+}
+.forum-poll-meta a {
+  color: var(--accent);
+}
