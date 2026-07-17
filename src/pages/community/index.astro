@@ -4,11 +4,11 @@ import { SITE, SOCIALS } from '@/lib/site';
 
 const channels = [
   {
-    label: 'GitHub Discussions',
+    label: 'Forum Discussions',
     blurb:
-      'Long-form Q&A, paper threads, RFCs. Tied to your GitHub identity — searchable, attributed, permanent.',
-    action: 'Open Discussions',
-    href: SITE.orgDiscussionsUrl,
+      'Ask questions, share what you built, run a poll — the community forum, right here on the site.',
+    action: 'Open the Forum',
+    href: '/forum',
     tag: 'asynchronous',
   },
   {
@@ -38,7 +38,7 @@ const channels = [
 
 <BaseLayout
   title="Community"
-  description="Where the ML Systems community talks. GitHub Discussions for long-form, Discord for real-time chat."
+  description="Where the ML Systems community talks. Forum Discussions for long-form, Discord for real-time chat."
   image="/og/page/community.png"
 >
   <div class="container">
@@ -47,30 +47,33 @@ const channels = [
       <h1 class="page-h1">Community.</h1>
       <p class="page-lede">
         We're trying to build the comments section the field deserves — technical, kind,
-        signal-rich. The discussion lives on GitHub and Discord, not here. No karma, no algorithm,
-        no ads.
+        signal-rich. The discussion lives in the forum and on Discord. No karma, no algorithm, no
+        ads.
       </p>
     </div>
 
     <div class="community-channels">
       {
-        channels.map((c) => (
-          <a
-            href={c.href ?? '#'}
-            target="_blank"
-            rel="noreferrer"
-            class="card card--interactive community-channel"
-          >
-            <div class="community-channel-head">
-              <h3>{c.label}</h3>
-              <span class="community-channel-tag">{c.tag}</span>
-            </div>
-            <p>{c.blurb}</p>
-            <span class="community-channel-action">
-              {c.action} <span aria-hidden="true">→</span>
-            </span>
-          </a>
-        ))
+        channels.map((c) => {
+          const external = (c.href ?? '#').startsWith('http');
+          return (
+            <a
+              href={c.href ?? '#'}
+              target={external ? '_blank' : undefined}
+              rel={external ? 'noreferrer' : undefined}
+              class="card card--interactive community-channel"
+            >
+              <div class="community-channel-head">
+                <h3>{c.label}</h3>
+                <span class="community-channel-tag">{c.tag}</span>
+              </div>
+              <p>{c.blurb}</p>
+              <span class="community-channel-action">
+                {c.action} <span aria-hidden="true">→</span>
+              </span>
+            </a>
+          );
+        })
       }
     </div>
 
