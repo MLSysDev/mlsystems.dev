@@ -1,21 +1,10 @@
-// Server-only: mirrors GitHub Discussions into forum data at build time.
-// All writing happens on GitHub; this module is read-only. Never import it into
-// client-bundled code — it uses a build-time token. Fetch is fully defensive:
-// no token, a failed request, or Discussions being empty all yield an empty
-// forum (with a warning) rather than a broken build.
-
 import { tagSlug } from './data';
 
 const OWNER = 'MLSysDev';
 const NAME = 'mlsystems.dev';
 
-// 'comments' holds giscus per-post blog comments (not forum threads). 'polls' is
-// an interactive GitHub widget whose options/results aren't in bodyHTML, so it
-// can't render meaningfully here — voting stays on GitHub.
 const EXCLUDED_CATEGORY_SLUGS = new Set(['comments', 'polls']);
 
-// Cap rendered comments per thread; commentCount still reports the true total to
-// readers and to search engines, with a "continue on GitHub" link for the rest.
 export const COMMENT_RENDER_CAP = 50;
 
 export type ForumAuthor = { login: string; url: string; avatarUrl: string };
@@ -55,7 +44,6 @@ export type ForumThread = {
 export type Forum = { categories: ForumCategory[]; threads: ForumThread[] };
 
 function token(): string | undefined {
-  // Cloudflare Pages / CI expose the token as an env var at build time.
   return (
     import.meta.env.GITHUB_TOKEN ||
     import.meta.env.GH_TOKEN ||
@@ -65,13 +53,10 @@ function token(): string | undefined {
   );
 }
 
-// GitHub returns the category emoji as HTML (<div>🙏</div>); strip it to the char.
 function emojiFromHtml(html: string): string {
   return html.replace(/<[^>]*>/g, '').trim();
 }
 
-// One discussion slug = number + title, so it never collides with a page number
-// and stays stable if the title is later edited (the number anchors it).
 export function threadSlug(number: number, title: string): string {
   const s = tagSlug(title)
     .slice(0, 60)
@@ -143,7 +128,6 @@ function shapeComment(c: RawComment): ForumComment {
 async function fetchAll(gh: string): Promise<RawDiscussion[]> {
   const out: RawDiscussion[] = [];
   let after: string | null = null;
-  // Bound the loop so a surprise of thousands of threads can't stall a build.
   for (let page = 0; page < 40; page++) {
     const res = await fetch('https://api.github.com/graphql', {
       method: 'POST',
@@ -225,7 +209,6 @@ export async function getForum(): Promise<Forum> {
       };
     });
 
-  // Only surface categories that actually contain forum threads.
   const bySlug = new Map<string, ForumCategory>();
   for (const t of threads) bySlug.set(t.category.slug, t.category);
   const categories = [...bySlug.values()].sort((a, b) => a.name.localeCompare(b.name));

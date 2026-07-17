@@ -1,15 +1,8 @@
 ---
-// Inline GitHub-login discussion for a forum thread. Binds giscus to the thread's
-// existing discussion by number, so it shows that thread's comments plus a
-// sign-in-and-reply box on our own page — no trip to github.com. Reuses the same
-// giscus app/repo already configured for blog comments.
-// Note: giscus posts REPLIES to an existing discussion; creating a brand-new
-// topic still happens on GitHub (needs full OAuth, out of scope here).
 import { SITE } from '@/lib/site';
 
 interface Props {
   number: number;
-  /** Static comments to hide once giscus (the live view) has loaded. */
   hideSelector?: string;
 }
 const { number, hideSelector } = Astro.props;
@@ -62,8 +55,6 @@ const configured = Boolean(repoId);
     s.setAttribute('data-lang', 'en');
     mount.appendChild(s);
 
-    // Swap the static (SEO) comments for the live giscus view only once giscus is
-    // actually up, so there's no empty gap while it loads.
     const hide = mount.dataset.hide;
     window.addEventListener('message', function onMsg(e: MessageEvent) {
       if (e.origin !== 'https://giscus.app') return;
@@ -74,7 +65,6 @@ const configured = Boolean(repoId);
       window.removeEventListener('message', onMsg);
     });
 
-    // Keep giscus in sync with the site theme toggle.
     new MutationObserver(() => {
       const f = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
       f?.contentWindow?.postMessage(

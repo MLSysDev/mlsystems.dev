@@ -1,8 +1,4 @@
-# Rebuilds the site when a GitHub Discussion changes, so the forum mirror and its
-# SEO snapshot stay current. Between events, a daily cron catches anything missed
-# (e.g. edits/deletes that don't always fire). Requires a repo secret
-# CLOUDFLARE_DEPLOY_HOOK_URL — the Deploy Hook URL from the Cloudflare Pages project
-# (Settings → Builds → Add deploy hook). No-ops quietly if the secret is unset.
+# Requires repo secret CLOUDFLARE_DEPLOY_HOOK_URL (Cloudflare Pages deploy hook).
 name: Forum sync
 
 on:

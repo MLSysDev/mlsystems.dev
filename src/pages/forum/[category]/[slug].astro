@@ -27,7 +27,6 @@ const plain = (html: string) =>
     .replace(/\s+/g, ' ')
     .trim();
 
-// A Q&A category maps to QAPage; everything else to DiscussionForumPosting.
 const commentLd = (c: ForumComment): Record<string, unknown> => ({
   '@type': 'Comment',
   text: plain(c.bodyHTML).slice(0, 500),
