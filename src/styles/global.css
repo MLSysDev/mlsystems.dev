@@ -3317,3 +3317,7 @@ a.forum-cat:hover {
     font-size: 27px;
   }
 }
+
+.forum-giscus {
+  margin-top: 8px;
+}
