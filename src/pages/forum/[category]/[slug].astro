@@ -1,0 +1,222 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate } from '@/lib/data';
+import { getForum, type ForumComment, type ForumThread } from '@/lib/forum';
+import { SITE } from '@/lib/site';
+
+export const getStaticPaths = (async () => {
+  const { threads } = await getForum();
+  return threads.map((thread) => ({
+    params: { category: thread.category.slug, slug: thread.slug },
+    props: { thread },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  thread: ForumThread;
+}
+const { thread } = Astro.props;
+
+const canonical = `${SITE.url}/forum/${thread.category.slug}/${thread.slug}`;
+const authorName = thread.author?.login ?? 'Guest';
+const plain = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+// A Q&A category maps to QAPage; everything else to DiscussionForumPosting.
+const commentLd = (c: ForumComment): Record<string, unknown> => ({
+  '@type': 'Comment',
+  text: plain(c.bodyHTML).slice(0, 500),
+  datePublished: c.createdAt,
+  url: c.url,
+  ...(c.author ? { author: { '@type': 'Person', name: c.author.login, url: c.author.url } } : {}),
+  ...(c.replies.length ? { comment: c.replies.map(commentLd) } : {}),
+});
+
+const postLd = {
+  '@type': thread.category.isAnswerable ? 'QAPage' : 'DiscussionForumPosting',
+  headline: thread.title,
+  text: plain(thread.bodyHTML).slice(0, 1000),
+  datePublished: thread.createdAt,
+  dateModified: thread.updatedAt,
+  url: canonical,
+  commentCount: thread.commentCount,
+  ...(thread.author
+    ? { author: { '@type': 'Person', name: thread.author.login, url: thread.author.url } }
+    : {}),
+  comment: thread.comments.map(commentLd),
+};
+const jsonLd = { '@context': 'https://schema.org', ...postLd };
+
+const rendered = thread.comments.length;
+const hiddenCount = thread.commentCount - rendered;
+---
+
+<BaseLayout
+  title={thread.title}
+  description={plain(thread.bodyHTML).slice(0, 155) || `${thread.category.name} discussion`}
+  canonical={canonical}
+  ogType="article"
+  publishedTime={thread.createdAt}
+  modifiedTime={thread.updatedAt}
+  section={thread.category.name}
+  author={authorName}
+  jsonLd={jsonLd}
+>
+  <div class="container forum-thread" data-discussion={thread.number}>
+    <nav class="forum-crumb">
+      <a href="/forum">Forum</a>
+      <span aria-hidden="true">/</span>
+      <a href={`/forum/c/${thread.category.slug}`}>{thread.category.emoji} {thread.category.name}</a
+      >
+    </nav>
+
+    <article class="forum-op" data-pagefind-body>
+      <h1 class="forum-thread-title">{thread.title}</h1>
+      <div class="forum-thread-meta">
+        {
+          thread.author?.url ? (
+            <a href={thread.author.url} target="_blank" rel="noreferrer">
+              @{authorName}
+            </a>
+          ) : (
+            <span>{authorName}</span>
+          )
+        }
+        <span>·</span>
+        <span>{formatDate(new Date(thread.createdAt))}</span>
+        {thread.category.isAnswerable && <span class="chip chip--sm">Q&amp;A</span>}
+      </div>
+      <div class="forum-content" set:html={thread.bodyHTML} />
+    </article>
+
+    <section class="forum-comments" aria-label="Replies">
+      <h2 class="forum-comments-head">
+        <span data-comment-total>{thread.commentCount}</span>
+        {thread.commentCount === 1 ? ' reply' : ' replies'}
+      </h2>
+
+      <div data-comments>
+        {
+          thread.comments.map((c) => (
+            <div class={`forum-comment${c.isAnswer ? ' is-answer' : ''}`}>
+              {c.isAnswer && <div class="forum-answer-badge">✓ Answer</div>}
+              <div class="forum-comment-meta">
+                {c.author?.url ? (
+                  <a href={c.author.url} target="_blank" rel="noreferrer">
+                    @{c.author.login}
+                  </a>
+                ) : (
+                  <span>Guest</span>
+                )}
+                <span>·</span>
+                <span>{formatDate(new Date(c.createdAt))}</span>
+              </div>
+              <div class="forum-content" set:html={c.bodyHTML} />
+              {c.replies.length > 0 && (
+                <div class="forum-replies">
+                  {c.replies.map((r) => (
+                    <div class="forum-comment forum-reply">
+                      <div class="forum-comment-meta">
+                        {r.author?.url ? (
+                          <a href={r.author.url} target="_blank" rel="noreferrer">
+                            @{r.author.login}
+                          </a>
+                        ) : (
+                          <span>Guest</span>
+                        )}
+                        <span>·</span>
+                        <span>{formatDate(new Date(r.createdAt))}</span>
+                      </div>
+                      <div class="forum-content" set:html={r.bodyHTML} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        }
+      </div>
+
+      {
+        hiddenCount > 0 && (
+          <p class="forum-more" data-hidden-note>
+            {hiddenCount} more {hiddenCount === 1 ? 'reply' : 'replies'} on GitHub.
+          </p>
+        )
+      }
+
+      <a class="btn btn-accent forum-reply-cta" href={thread.url} target="_blank" rel="noreferrer">
+        Reply on GitHub <span class="btn-arrow">→</span>
+      </a>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  // Progressive enhancement: the page ships with comments baked in at build time
+  // (SEO + instant paint). On open we refresh from GitHub via a same-origin proxy
+  // so anything posted since the last build appears. Any failure leaves the static
+  // content untouched.
+  const root = document.querySelector<HTMLElement>('.forum-thread[data-discussion]');
+  const number = root?.dataset.discussion;
+  const list = root?.querySelector<HTMLElement>('[data-comments]');
+  if (root && number && list) {
+    type Author = { login: string; url: string } | null;
+    type Comment = {
+      author: Author;
+      bodyHTML: string;
+      createdAt: string;
+      isAnswer?: boolean;
+      replies?: Comment[];
+    };
+
+    const fmt = (iso: string) =>
+      new Date(iso).toLocaleDateString('en-US', {
+        month: 'short',
+        day: '2-digit',
+        year: 'numeric',
+      });
+
+    const meta = (a: Author, iso: string) => {
+      const who = a
+        ? `<a href="${a.url}" target="_blank" rel="noreferrer">@${a.login}</a>`
+        : '<span>Guest</span>';
+      return `<div class="forum-comment-meta">${who}<span>·</span><span>${fmt(iso)}</span></div>`;
+    };
+
+    const renderComment = (c: Comment): string => {
+      const answer = c.isAnswer ? '<div class="forum-answer-badge">✓ Answer</div>' : '';
+      const replies = (c.replies ?? [])
+        .map(
+          (r) =>
+            `<div class="forum-comment forum-reply">${meta(r.author, r.createdAt)}<div class="forum-content">${r.bodyHTML}</div></div>`,
+        )
+        .join('');
+      const repliesWrap = replies ? `<div class="forum-replies">${replies}</div>` : '';
+      return `<div class="forum-comment${c.isAnswer ? ' is-answer' : ''}">${answer}${meta(
+        c.author,
+        c.createdAt,
+      )}<div class="forum-content">${c.bodyHTML}</div>${repliesWrap}</div>`;
+    };
+
+    fetch(`/api/discussion/${number}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data: { comments?: Comment[]; commentCount?: number }) => {
+        if (!Array.isArray(data.comments)) return;
+        list.innerHTML = data.comments.map(renderComment).join('');
+        const total = root.querySelector('[data-comment-total]');
+        if (total && typeof data.commentCount === 'number') {
+          total.textContent = String(data.commentCount);
+        }
+        // The static "N more on GitHub" note may be stale once refreshed.
+        root.querySelector('[data-hidden-note]')?.remove();
+      })
+      .catch(() => {
+        /* keep the build-time comments */
+      });
+  }
+</script>

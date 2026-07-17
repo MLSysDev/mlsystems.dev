@@ -1,0 +1,56 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Pager from '@/components/Pager.astro';
+import ForumThreadRow from '@/components/ForumThreadRow.astro';
+import { getForum, threadsByCategory, type ForumCategory, type ForumThread } from '@/lib/forum';
+import { SITE } from '@/lib/site';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const { categories, threads } = await getForum();
+  return categories.flatMap((category) =>
+    paginate(threadsByCategory(threads, category.slug), {
+      params: { category: category.slug },
+      props: { category },
+      pageSize: 20,
+    }),
+  );
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<ForumThread>;
+  category: ForumCategory;
+}
+const { page, category } = Astro.props;
+const suffix = page.currentPage > 1 ? ` — page ${page.currentPage}` : '';
+---
+
+<BaseLayout
+  title={`${category.name} — Forum${suffix}`}
+  description={`${category.name} discussions on machine learning systems, mirrored from GitHub Discussions.`}
+>
+  <div class="container forum-shell">
+    <div class="forum-head">
+      <div>
+        <div class="eyebrow page-eyebrow">
+          <a href="/forum" style="color: var(--ink-3);">Forum</a> / {category.name}
+        </div>
+        <h1 class="forum-h1">{category.emoji} {category.name}</h1>
+      </div>
+      <a
+        class="btn btn-accent forum-new"
+        href={`${SITE.repoUrl}/discussions/new?category=${category.slug}`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Start a discussion <span class="btn-arrow">→</span>
+      </a>
+    </div>
+
+    <div class="forum-list">
+      {page.data.map((t) => <ForumThreadRow thread={t} showCategory={false} />)}
+    </div>
+
+    <Pager page={page} />
+  </div>
+</BaseLayout>

@@ -1,0 +1,34 @@
+# Rebuilds the site when a GitHub Discussion changes, so the forum mirror and its
+# SEO snapshot stay current. Between events, a daily cron catches anything missed
+# (e.g. edits/deletes that don't always fire). Requires a repo secret
+# CLOUDFLARE_DEPLOY_HOOK_URL — the Deploy Hook URL from the Cloudflare Pages project
+# (Settings → Builds → Add deploy hook). No-ops quietly if the secret is unset.
+name: Forum sync
+
+on:
+  discussion:
+    types: [created, edited, deleted, category_changed, answered, unanswered]
+  discussion_comment:
+    types: [created, edited, deleted]
+  schedule:
+    - cron: '0 6 * * *' # daily 06:00 UTC safety rebuild
+  workflow_dispatch: {}
+
+# One rebuild at a time; newer events supersede a queued run.
+concurrency:
+  group: forum-sync
+  cancel-in-progress: true
+
+jobs:
+  trigger-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloudflare Pages deploy
+        env:
+          HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "CLOUDFLARE_DEPLOY_HOOK_URL not set — skipping."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" -o /dev/null -w "deploy hook status: %{http_code}\n"
