@@ -1,0 +1,48 @@
+---
+import { CONCEPT_ICONS } from '@/lib/conceptIcons';
+
+interface Props {
+  items?: string[];
+  count?: number;
+  hero?: boolean;
+}
+const { items, count = 4, hero = false } = Astro.props;
+
+const byKey = new Map(CONCEPT_ICONS.map((i) => [i.key, i]));
+const shown = (items ?? CONCEPT_ICONS.slice(0, count).map((i) => i.key))
+  .map((k) => byKey.get(k))
+  .filter(Boolean);
+---
+
+<div class:list={['concept-band', { 'concept-band--hero': hero }]} aria-hidden="true">
+  <div class="container concept-band-inner" data-concept-band data-count={count}>
+    {shown.map((it) => <span class="concept-item" title={it!.label} set:html={it!.svg} />)}
+  </div>
+</div>
+
+<script>
+  import { CONCEPT_ICONS } from '@/lib/conceptIcons';
+
+  const shuffle = <T,>(arr: T[]): T[] => {
+    const a = arr.slice();
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  const bands = Array.from(document.querySelectorAll<HTMLElement>('[data-concept-band]'));
+  const pool = shuffle(CONCEPT_ICONS);
+
+  let cursor = 0;
+  for (const band of bands) {
+    const n = Number(band.dataset.count) || 4;
+    if (cursor + n > pool.length) cursor = 0;
+    const picks = pool.slice(cursor, cursor + n);
+    cursor += n;
+    band.innerHTML = picks
+      .map((it) => `<span class="concept-item" title="${it.label}">${it.svg}</span>`)
+      .join('');
+  }
+</script>

@@ -4,6 +4,7 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import HeroFigure from '@/components/HeroFigure.tsx';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
 import Stat from '@/components/Stat.astro';
+import ConceptBand from '@/components/ConceptBand.astro';
 import { formatDate, sortPostsByDate } from '@/lib/data';
 import { TOPICS, countPostsByTopic, topicName } from '@/lib/topics';
 import { resolvePostAuthors } from '@/lib/posts';
@@ -81,6 +82,8 @@ const featuredTools = pickCoreTools(allTools);
     </div>
   </section>
 
+  <ConceptBand hero items={['kernel', 'attention', 'cluster', 'network']} />
+
   {
     featured.length > 0 && (
       <section class="section" style="padding-top: 0;">
@@ -150,6 +153,8 @@ const featuredTools = pickCoreTools(allTools);
       </section>
     )
   }
+
+  <ConceptBand items={['tokenize', 'train', 'serve', 'scale']} />
 
   <!-- TOPICS -->
   <section class="section">
@@ -320,6 +325,8 @@ const featuredTools = pickCoreTools(allTools);
       </div>
     </div>
   </section>
+
+  <ConceptBand items={['vram', 'quantize', 'batch', 'gradient']} />
 
   <!-- CONTRIBUTE CTA -->
   <section class="section">
