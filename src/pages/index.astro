@@ -9,6 +9,7 @@ import { TOPICS, countPostsByTopic, topicName } from '@/lib/topics';
 import { resolvePostAuthors } from '@/lib/posts';
 import { pickCoreTools } from '@/lib/tools';
 import { SITE, SOCIALS } from '@/lib/site';
+import { SOCIAL_ICONS } from '@/lib/socialIcons';
 
 const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
 const allPosts = await resolvePostAuthors(allPostsRaw);
@@ -264,11 +265,22 @@ const featuredTools = pickCoreTools(allTools);
       </div>
       <div class="community-grid">
         <div class="side-panel">
-          <h3>Forum Discussions</h3>
-          <p>
-            Ask questions, share what you built, run a poll — the community forum, right here on the
-            site.
-          </p>
+          <h3 class="side-panel-title">
+            <svg
+              class="side-panel-icon"
+              viewBox="0 0 16 16"
+              width="18"
+              height="18"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v7A1.5 1.5 0 0 1 13.5 11H8.62l-3.5 3.15A.5.5 0 0 1 4.3 14v-3H2.5A1.5 1.5 0 0 1 1 9.5v-7Z"
+              ></path>
+            </svg>
+            Forum Discussions
+          </h3>
+          <p>Ask questions, share what you built, run a poll, or just discuss ML systems.</p>
           <a
             href="/forum"
             class="btn"
@@ -278,7 +290,19 @@ const featuredTools = pickCoreTools(allTools);
           </a>
         </div>
         <div class="side-panel">
-          <h3>Discord</h3>
+          <h3 class="side-panel-title">
+            <svg
+              class="side-panel-icon"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d={SOCIAL_ICONS.discord.path}></path>
+            </svg>
+            Discord
+          </h3>
           <p>
             Real-time chat for the working day. Quick questions, debugging help, paper club, and the
             occasional argument about whether MoE is overrated.
