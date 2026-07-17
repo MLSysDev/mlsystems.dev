@@ -63,6 +63,11 @@ function token(): string | undefined {
   );
 }
 
+// GitHub returns the category emoji as HTML (<div>🙏</div>); strip it to the char.
+function emojiFromHtml(html: string): string {
+  return html.replace(/<[^>]*>/g, '').trim();
+}
+
 // One discussion slug = number + title, so it never collides with a page number
 // and stays stable if the title is later edited (the number anchors it).
 export function threadSlug(number: number, title: string): string {
@@ -79,7 +84,7 @@ query($owner:String!,$name:String!,$after:String){
       pageInfo{ hasNextPage endCursor }
       nodes{
         number title bodyHTML createdAt updatedAt url upvoteCount
-        category{ name slug emoji isAnswerable }
+        category{ name slug emojiHTML isAnswerable }
         author{ login url avatarUrl }
         comments(first:${COMMENT_RENDER_CAP}){
           totalCount
@@ -106,6 +111,8 @@ type RawComment = {
   replies?: { nodes: RawComment[] };
 };
 
+type RawCategory = { name: string; slug: string; emojiHTML: string; isAnswerable: boolean };
+
 type RawDiscussion = {
   number: number;
   title: string;
@@ -114,7 +121,7 @@ type RawDiscussion = {
   updatedAt: string;
   url: string;
   upvoteCount: number;
-  category: ForumCategory | null;
+  category: RawCategory | null;
   author: ForumAuthor | null;
   comments: { totalCount: number; nodes: RawComment[] };
 };
@@ -193,20 +200,28 @@ export async function getForum(): Promise<Forum> {
 
   const threads: ForumThread[] = raw
     .filter((d) => d.category && !EXCLUDED_CATEGORY_SLUGS.has(d.category.slug))
-    .map((d) => ({
-      number: d.number,
-      title: d.title,
-      slug: threadSlug(d.number, d.title),
-      bodyHTML: d.bodyHTML,
-      createdAt: d.createdAt,
-      updatedAt: d.updatedAt,
-      url: d.url,
-      upvoteCount: d.upvoteCount,
-      category: d.category as ForumCategory,
-      author: d.author,
-      commentCount: d.comments.totalCount,
-      comments: d.comments.nodes.map(shapeComment),
-    }));
+    .map((d) => {
+      const c = d.category as RawCategory;
+      return {
+        number: d.number,
+        title: d.title,
+        slug: threadSlug(d.number, d.title),
+        bodyHTML: d.bodyHTML,
+        createdAt: d.createdAt,
+        updatedAt: d.updatedAt,
+        url: d.url,
+        upvoteCount: d.upvoteCount,
+        category: {
+          name: c.name,
+          slug: c.slug,
+          emoji: emojiFromHtml(c.emojiHTML),
+          isAnswerable: c.isAnswerable,
+        },
+        author: d.author,
+        commentCount: d.comments.totalCount,
+        comments: d.comments.nodes.map(shapeComment),
+      };
+    });
 
   // Only surface categories that actually contain forum threads.
   const bySlug = new Map<string, ForumCategory>();
