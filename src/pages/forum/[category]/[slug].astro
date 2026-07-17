@@ -103,23 +103,29 @@ const pollOptions = poll
 
       {
         poll && (
-          <div class="forum-poll">
+          <div class="forum-poll" data-poll data-number={thread.number}>
             <div class="forum-poll-q">{poll.question}</div>
             {pollOptions.map((o) => (
-              <div class="forum-poll-opt">
+              <div class="forum-poll-opt" data-opt>
                 <div class="forum-poll-opt-top">
                   <span>{o.label}</span>
-                  <span>
+                  <span data-opt-stat>
                     {o.pct}% · {o.votes}
                   </span>
                 </div>
-                <div class="forum-poll-bar">
-                  <div class="forum-poll-fill" style={`width:${o.pct}%`} />
-                </div>
+                <a
+                  class="forum-poll-bar"
+                  href={thread.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Vote on GitHub"
+                >
+                  <div class="forum-poll-fill" data-opt-fill style={`width:${o.pct}%`} />
+                </a>
               </div>
             ))}
             <div class="forum-poll-meta">
-              {poll.totalVoteCount} {poll.totalVoteCount === 1 ? 'vote' : 'votes'} ·{' '}
+              <span data-poll-total>{poll.totalVoteCount}</span> votes ·{' '}
               <a href={thread.url} target="_blank" rel="noreferrer">
                 Vote on GitHub ↗
               </a>
@@ -130,7 +136,7 @@ const pollOptions = poll
     </article>
 
     <section class="forum-comments" aria-label="Replies">
-      <div data-static-comments>
+      <div data-static-comments data-pagefind-body>
         <h2 class="forum-comments-head">
           {thread.commentCount}
           {thread.commentCount === 1 ? ' reply' : ' replies'}
@@ -190,3 +196,28 @@ const pollOptions = poll
     </section>
   </div>
 </BaseLayout>
+
+<script>
+  const poll = document.querySelector<HTMLElement>('[data-poll]');
+  if (poll?.dataset.number) {
+    fetch(`/api/poll/${poll.dataset.number}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data: { totalVoteCount?: number; options?: { option: string; votes: number }[] }) => {
+        if (!Array.isArray(data.options) || !data.options.length) return;
+        const total = data.totalVoteCount ?? 0;
+        const opts = poll.querySelectorAll<HTMLElement>('[data-opt]');
+        data.options.forEach((o, i) => {
+          const el = opts[i];
+          if (!el) return;
+          const pct = total ? Math.round((o.votes / total) * 100) : 0;
+          const fill = el.querySelector<HTMLElement>('[data-opt-fill]');
+          if (fill) fill.style.width = `${pct}%`;
+          const stat = el.querySelector<HTMLElement>('[data-opt-stat]');
+          if (stat) stat.textContent = `${pct}% · ${o.votes}`;
+        });
+        const totalEl = poll.querySelector<HTMLElement>('[data-poll-total]');
+        if (totalEl) totalEl.textContent = String(total);
+      })
+      .catch(() => {});
+  }
+</script>

@@ -3063,7 +3063,7 @@ a.hashtag:hover {
 }
 .forum-head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
   margin-bottom: 28px;
@@ -3079,7 +3079,6 @@ a.hashtag:hover {
   color: var(--ink-2);
   font-size: 15px;
   margin: 8px 0 0;
-  max-width: 52ch;
 }
 .forum-new {
   flex-shrink: 0;
@@ -3345,10 +3344,19 @@ a.forum-cat:hover {
   margin-bottom: 4px;
 }
 .forum-poll-bar {
+  display: block;
   height: 8px;
   border-radius: var(--radius-pill);
   background: var(--paper-3);
   overflow: hidden;
+  cursor: pointer;
+}
+a.forum-poll-bar:hover {
+  outline: 2px solid var(--accent-soft);
+  outline-offset: 2px;
+}
+a.forum-poll-bar:hover .forum-poll-fill {
+  background: var(--accent-2, var(--accent));
 }
 .forum-poll-fill {
   height: 100%;

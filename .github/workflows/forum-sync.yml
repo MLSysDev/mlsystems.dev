@@ -3,9 +3,7 @@ name: Forum sync
 
 on:
   discussion:
-    types: [created, edited, deleted, category_changed, answered, unanswered]
-  discussion_comment:
-    types: [created, edited, deleted]
+    types: [created, edited, deleted, category_changed]
   schedule:
     - cron: '0 6 * * *' # daily 06:00 UTC safety rebuild
   workflow_dispatch: {}

@@ -35,16 +35,18 @@ hardcoded.
 The forum needs a read-only token at **build time** to read Discussions, and a
 deploy hook so it rebuilds when discussions change.
 
-| Where                                           | Name                         | Purpose                                                                                                                    |
-| ----------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Cloudflare Pages → Settings → Variables (build) | `GITHUB_TOKEN`               | Lets the build read Discussions. Without it the forum renders empty. Fine-grained PAT, read-only Discussions on this repo. |
-| GitHub → Settings → Secrets → Actions           | `CLOUDFLARE_DEPLOY_HOOK_URL` | The Cloudflare Pages deploy-hook URL. The `forum-sync` workflow POSTs to it.                                               |
+| Where                                                       | Name                         | Purpose                                                                                                                                                                              |
+| ----------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cloudflare Pages → Settings → Variables (build + Functions) | `GITHUB_TOKEN`               | Read Discussions at build (forum pages) and at runtime (the `/api/poll` live vote counts). Without it the forum renders empty. Fine-grained PAT, read-only Discussions on this repo. |
+| GitHub → Settings → Secrets → Actions                       | `CLOUDFLARE_DEPLOY_HOOK_URL` | The Cloudflare Pages deploy-hook URL. The `forum-sync` workflow POSTs to it.                                                                                                         |
 
 The deploy hook itself is created in **Cloudflare Pages → Settings → Builds →
 Deploy hooks** (branch `main`); copy its URL into the GitHub secret above.
 
-`.github/workflows/forum-sync.yml` triggers a rebuild on discussion and comment
-events, plus a daily cron. If the secret is unset it no-ops.
+`.github/workflows/forum-sync.yml` triggers a rebuild when a discussion is
+created, edited, deleted, or moved category — plus a daily cron. Comments and
+poll votes are live (giscus / `/api/poll`), so they never trigger a rebuild.
+If the secret is unset it no-ops.
 
 Inline commenting reuses the same `PUBLIC_GISCUS_REPO_ID` already configured for
 blog comments — no extra setup.
