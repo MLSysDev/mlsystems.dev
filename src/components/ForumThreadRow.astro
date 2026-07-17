@@ -1,0 +1,49 @@
+---
+import { formatDate } from '@/lib/data';
+import type { ForumThread } from '@/lib/forum';
+
+interface Props {
+  thread: ForumThread;
+  showCategory?: boolean;
+}
+const { thread, showCategory = true } = Astro.props;
+const href = `/forum/${thread.category.slug}/${thread.slug}`;
+const answered = thread.category.isAnswerable && thread.comments.some((c) => c.isAnswer);
+---
+
+<a href={href} class="forum-row">
+  <div class="forum-row-body">
+    <div class="forum-row-title-line">
+      <h3 class="forum-row-title">{thread.title}</h3>
+      {
+        showCategory && (
+          <span class="chip chip--sm">
+            {thread.category.emoji} {thread.category.name}
+          </span>
+        )
+      }
+      {
+        answered && (
+          <span class="forum-answered" title="Has an accepted answer">
+            ✓ answered
+          </span>
+        )
+      }
+    </div>
+    <div class="forum-row-meta">
+      {thread.author?.login ? <span>@{thread.author.login}</span> : <span>Guest</span>}
+      <span>·</span>
+      <span>{formatDate(new Date(thread.createdAt))}</span>
+      <span>·</span>
+      <span>{thread.commentCount} {thread.commentCount === 1 ? 'reply' : 'replies'}</span>
+      {
+        thread.upvoteCount > 0 && (
+          <>
+            <span>·</span>
+            <span>▲ {thread.upvoteCount}</span>
+          </>
+        )
+      }
+    </div>
+  </div>
+</a>

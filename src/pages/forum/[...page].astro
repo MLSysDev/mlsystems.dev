@@ -1,0 +1,77 @@
+---
+import type { GetStaticPaths, Page } from 'astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Pager from '@/components/Pager.astro';
+import ForumThreadRow from '@/components/ForumThreadRow.astro';
+import { getForum, type ForumCategory, type ForumThread } from '@/lib/forum';
+import { SITE } from '@/lib/site';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const { threads, categories } = await getForum();
+  return paginate(threads, { pageSize: 20, props: { categories } });
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<ForumThread>;
+  categories: ForumCategory[];
+}
+const { page, categories } = Astro.props;
+---
+
+<BaseLayout
+  title={page.currentPage > 1 ? `Forum — page ${page.currentPage}` : 'Forum'}
+  description="Community discussion on machine learning systems — questions, ideas, and show-and-tell from people building in the space."
+>
+  <div class="container forum-shell">
+    <div class="forum-head">
+      <div>
+        <div class="eyebrow page-eyebrow">Community</div>
+        <h1 class="forum-h1">Forum.</h1>
+        <p class="forum-lede">
+          Questions, ideas, and things people built — ask, share, and discuss with the community.
+        </p>
+      </div>
+      <a
+        class="btn btn-accent forum-new"
+        href={`${SITE.repoUrl}/discussions/new/choose`}
+        target="_blank"
+        rel="noreferrer"
+      >
+        Start a discussion <span class="btn-arrow">→</span>
+      </a>
+    </div>
+
+    {
+      categories.length > 0 && (
+        <nav class="forum-cats" aria-label="Forum categories">
+          <span class="forum-cat is-active">All</span>
+          {categories.map((c) => (
+            <a class="forum-cat" href={`/forum/c/${c.slug}`}>
+              {c.emoji} {c.name}
+            </a>
+          ))}
+        </nav>
+      )
+    }
+
+    {
+      page.data.length > 0 ? (
+        <div class="forum-list">
+          {page.data.map((t) => (
+            <ForumThreadRow thread={t} />
+          ))}
+        </div>
+      ) : (
+        <div class="forum-empty">
+          No discussions yet.{' '}
+          <a href={`${SITE.repoUrl}/discussions/new/choose`} target="_blank" rel="noreferrer">
+            Start the first one on GitHub
+          </a>
+          .
+        </div>
+      )
+    }
+
+    <Pager page={page} />
+  </div>
+</BaseLayout>

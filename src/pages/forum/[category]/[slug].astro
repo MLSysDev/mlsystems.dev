@@ -1,0 +1,223 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { formatDate } from '@/lib/data';
+import { getForum, type ForumComment, type ForumThread } from '@/lib/forum';
+import GiscusThread from '@/components/GiscusThread.astro';
+import { SITE } from '@/lib/site';
+
+export const getStaticPaths = (async () => {
+  const { threads } = await getForum();
+  return threads.map((thread) => ({
+    params: { category: thread.category.slug, slug: thread.slug },
+    props: { thread },
+  }));
+}) satisfies GetStaticPaths;
+
+interface Props {
+  thread: ForumThread;
+}
+const { thread } = Astro.props;
+
+const canonical = `${SITE.url}/forum/${thread.category.slug}/${thread.slug}`;
+const authorName = thread.author?.login ?? 'Guest';
+const plain = (html: string) =>
+  html
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const commentLd = (c: ForumComment): Record<string, unknown> => ({
+  '@type': 'Comment',
+  text: plain(c.bodyHTML).slice(0, 500),
+  datePublished: c.createdAt,
+  url: c.url,
+  ...(c.author ? { author: { '@type': 'Person', name: c.author.login, url: c.author.url } } : {}),
+  ...(c.replies.length ? { comment: c.replies.map(commentLd) } : {}),
+});
+
+const postLd = {
+  '@type': thread.category.isAnswerable ? 'QAPage' : 'DiscussionForumPosting',
+  headline: thread.title,
+  text: plain(thread.bodyHTML).slice(0, 1000),
+  datePublished: thread.createdAt,
+  dateModified: thread.updatedAt,
+  url: canonical,
+  commentCount: thread.commentCount,
+  ...(thread.author
+    ? { author: { '@type': 'Person', name: thread.author.login, url: thread.author.url } }
+    : {}),
+  comment: thread.comments.map(commentLd),
+};
+const jsonLd = { '@context': 'https://schema.org', ...postLd };
+
+const rendered = thread.comments.length;
+const hiddenCount = thread.commentCount - rendered;
+
+const poll = thread.poll;
+const pollOptions = poll
+  ? poll.options.map((o) => ({
+      label: o.option,
+      votes: o.votes,
+      pct: poll.totalVoteCount ? Math.round((o.votes / poll.totalVoteCount) * 100) : 0,
+    }))
+  : [];
+---
+
+<BaseLayout
+  title={thread.title}
+  description={plain(thread.bodyHTML).slice(0, 155) || `${thread.category.name} discussion`}
+  canonical={canonical}
+  ogType="article"
+  publishedTime={thread.createdAt}
+  modifiedTime={thread.updatedAt}
+  section={thread.category.name}
+  author={authorName}
+  jsonLd={jsonLd}
+>
+  <div class="container forum-thread">
+    <nav class="forum-crumb">
+      <a href="/forum">Forum</a>
+      <span aria-hidden="true">/</span>
+      <a href={`/forum/c/${thread.category.slug}`}>{thread.category.emoji} {thread.category.name}</a
+      >
+    </nav>
+
+    <article class="forum-op" data-pagefind-body>
+      <h1 class="forum-thread-title">{thread.title}</h1>
+      <div class="forum-thread-meta">
+        {
+          thread.author?.url ? (
+            <a href={thread.author.url} target="_blank" rel="noreferrer">
+              @{authorName}
+            </a>
+          ) : (
+            <span>{authorName}</span>
+          )
+        }
+        <span>·</span>
+        <span>{formatDate(new Date(thread.createdAt))}</span>
+        {thread.category.isAnswerable && <span class="chip chip--sm">Q&amp;A</span>}
+      </div>
+      <div class="forum-content" set:html={thread.bodyHTML} />
+
+      {
+        poll && (
+          <div class="forum-poll" data-poll data-number={thread.number}>
+            <div class="forum-poll-q">{poll.question}</div>
+            {pollOptions.map((o) => (
+              <div class="forum-poll-opt" data-opt>
+                <div class="forum-poll-opt-top">
+                  <span>{o.label}</span>
+                  <span data-opt-stat>
+                    {o.pct}% · {o.votes}
+                  </span>
+                </div>
+                <a
+                  class="forum-poll-bar"
+                  href={thread.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Vote on GitHub"
+                >
+                  <div class="forum-poll-fill" data-opt-fill style={`width:${o.pct}%`} />
+                </a>
+              </div>
+            ))}
+            <div class="forum-poll-meta">
+              <span data-poll-total>{poll.totalVoteCount}</span> votes ·{' '}
+              <a href={thread.url} target="_blank" rel="noreferrer">
+                Vote on GitHub ↗
+              </a>
+            </div>
+          </div>
+        )
+      }
+    </article>
+
+    <section class="forum-comments" aria-label="Replies">
+      <div data-static-comments data-pagefind-body>
+        <h2 class="forum-comments-head">
+          {thread.commentCount}
+          {thread.commentCount === 1 ? ' reply' : ' replies'}
+        </h2>
+
+        {
+          thread.comments.map((c) => (
+            <div class={`forum-comment${c.isAnswer ? ' is-answer' : ''}`}>
+              {c.isAnswer && <div class="forum-answer-badge">✓ Answer</div>}
+              <div class="forum-comment-meta">
+                {c.author?.url ? (
+                  <a href={c.author.url} target="_blank" rel="noreferrer">
+                    @{c.author.login}
+                  </a>
+                ) : (
+                  <span>Guest</span>
+                )}
+                <span>·</span>
+                <span>{formatDate(new Date(c.createdAt))}</span>
+              </div>
+              <div class="forum-content" set:html={c.bodyHTML} />
+              {c.replies.length > 0 && (
+                <div class="forum-replies">
+                  {c.replies.map((r) => (
+                    <div class="forum-comment forum-reply">
+                      <div class="forum-comment-meta">
+                        {r.author?.url ? (
+                          <a href={r.author.url} target="_blank" rel="noreferrer">
+                            @{r.author.login}
+                          </a>
+                        ) : (
+                          <span>Guest</span>
+                        )}
+                        <span>·</span>
+                        <span>{formatDate(new Date(r.createdAt))}</span>
+                      </div>
+                      <div class="forum-content" set:html={r.bodyHTML} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        }
+
+        {
+          hiddenCount > 0 && (
+            <p class="forum-more">
+              {hiddenCount} more {hiddenCount === 1 ? 'reply' : 'replies'} — sign in below to see
+              all.
+            </p>
+          )
+        }
+      </div>
+
+      <GiscusThread number={thread.number} hideSelector="[data-static-comments]" />
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  const poll = document.querySelector<HTMLElement>('[data-poll]');
+  if (poll?.dataset.number) {
+    fetch(`/api/poll/${poll.dataset.number}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((data: { totalVoteCount?: number; options?: { option: string; votes: number }[] }) => {
+        if (!Array.isArray(data.options) || !data.options.length) return;
+        const total = data.totalVoteCount ?? 0;
+        const opts = poll.querySelectorAll<HTMLElement>('[data-opt]');
+        data.options.forEach((o, i) => {
+          const el = opts[i];
+          if (!el) return;
+          const pct = total ? Math.round((o.votes / total) * 100) : 0;
+          const fill = el.querySelector<HTMLElement>('[data-opt-fill]');
+          if (fill) fill.style.width = `${pct}%`;
+          const stat = el.querySelector<HTMLElement>('[data-opt-stat]');
+          if (stat) stat.textContent = `${pct}% · ${o.votes}`;
+        });
+        const totalEl = poll.querySelector<HTMLElement>('[data-poll-total]');
+        if (totalEl) totalEl.textContent = String(total);
+      })
+      .catch(() => {});
+  }
+</script>

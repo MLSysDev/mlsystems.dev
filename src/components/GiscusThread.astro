@@ -1,0 +1,76 @@
+---
+import { SITE } from '@/lib/site';
+
+interface Props {
+  number: number;
+  hideSelector?: string;
+}
+const { number, hideSelector } = Astro.props;
+const repo = SITE.repo;
+const repoId = import.meta.env.PUBLIC_GISCUS_REPO_ID as string | undefined;
+const configured = Boolean(repoId);
+---
+
+{
+  configured ? (
+    <div
+      class="forum-giscus"
+      data-giscus-mount
+      data-repo={repo}
+      data-repo-id={repoId}
+      data-term={String(number)}
+      data-hide={hideSelector ?? ''}
+    />
+  ) : (
+    <p class="forum-more">
+      Inline sign-in commenting activates once giscus is configured; replies live in{' '}
+      <a href={`${SITE.repoUrl}/discussions/${number}`} target="_blank" rel="noreferrer">
+        this discussion
+      </a>
+      .
+    </p>
+  )
+}
+
+<script>
+  const mount = document.querySelector<HTMLElement>('[data-giscus-mount]');
+  if (mount && !mount.querySelector('script')) {
+    const themeName = () =>
+      document.documentElement.getAttribute('data-theme') === 'dark'
+        ? 'noborder_dark'
+        : 'noborder_light';
+
+    const s = document.createElement('script');
+    s.src = 'https://giscus.app/client.js';
+    s.async = true;
+    s.crossOrigin = 'anonymous';
+    s.setAttribute('data-repo', mount.dataset.repo ?? '');
+    s.setAttribute('data-repo-id', mount.dataset.repoId ?? '');
+    s.setAttribute('data-mapping', 'number');
+    s.setAttribute('data-term', mount.dataset.term ?? '');
+    s.setAttribute('data-reactions-enabled', '1');
+    s.setAttribute('data-input-position', 'top');
+    s.setAttribute('data-theme', themeName());
+    s.setAttribute('data-loading', 'lazy');
+    s.setAttribute('data-lang', 'en');
+    mount.appendChild(s);
+
+    const hide = mount.dataset.hide;
+    window.addEventListener('message', function onMsg(e: MessageEvent) {
+      if (e.origin !== 'https://giscus.app') return;
+      if (hide) {
+        const stat = document.querySelector<HTMLElement>(hide);
+        if (stat) stat.style.display = 'none';
+      }
+      window.removeEventListener('message', onMsg);
+    });
+
+    new MutationObserver(() => {
+      const f = document.querySelector<HTMLIFrameElement>('iframe.giscus-frame');
+      f?.contentWindow?.postMessage(
+        { giscus: { setConfig: { theme: themeName() } } },
+        'https://giscus.app',
+      );
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+</script>

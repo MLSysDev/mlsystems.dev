@@ -1,0 +1,28 @@
+# Requires repo secret CLOUDFLARE_DEPLOY_HOOK_URL (Cloudflare Pages deploy hook).
+name: Forum sync
+
+on:
+  discussion:
+    types: [created, edited, deleted, category_changed]
+  schedule:
+    - cron: '0 6 * * *' # daily 06:00 UTC safety rebuild
+  workflow_dispatch: {}
+
+# One rebuild at a time; newer events supersede a queued run.
+concurrency:
+  group: forum-sync
+  cancel-in-progress: true
+
+jobs:
+  trigger-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cloudflare Pages deploy
+        env:
+          HOOK: ${{ secrets.CLOUDFLARE_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "CLOUDFLARE_DEPLOY_HOOK_URL not set — skipping."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" -o /dev/null -w "deploy hook status: %{http_code}\n"
