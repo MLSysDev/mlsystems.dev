@@ -1,4 +1,4 @@
-export type SearchGroup = 'topic' | 'article' | 'tool' | 'author' | 'page';
+export type SearchGroup = 'topic' | 'article' | 'forum' | 'tool' | 'author' | 'page';
 
 export type SearchRow = {
   group: SearchGroup;
@@ -8,11 +8,12 @@ export type SearchRow = {
   meta?: string;
 };
 
-export const GROUP_ORDER: SearchGroup[] = ['topic', 'article', 'tool', 'author', 'page'];
+export const GROUP_ORDER: SearchGroup[] = ['topic', 'article', 'forum', 'tool', 'author', 'page'];
 
 export const GROUP_LABEL: Record<SearchGroup, string> = {
   topic: 'Topics',
   article: 'Articles',
+  forum: 'Forum',
   tool: 'Tools',
   author: 'Authors',
   page: 'Pages',
@@ -20,6 +21,7 @@ export const GROUP_LABEL: Record<SearchGroup, string> = {
 
 export function classifyUrl(url: string): SearchGroup {
   if (url.startsWith('/blog/')) return 'article';
+  if (url.startsWith('/forum/')) return 'forum';
   if (url.startsWith('/playground/')) return 'tool';
   if (url.startsWith('/authors/')) return 'author';
   return 'page';
@@ -42,13 +44,15 @@ export function topicMatches(
 
 export function buildMeta(
   group: SearchGroup,
-  meta: { topic?: string; read?: string; authors?: string },
+  meta: { topic?: string; read?: string; authors?: string; category?: string },
 ): string {
   const parts: string[] = [];
   if (group === 'article') {
     if (meta.topic) parts.push(meta.topic);
     if (meta.read) parts.push(meta.read);
     if (meta.authors) parts.push(meta.authors);
+  } else if (group === 'forum') {
+    parts.push(meta.category ?? 'Discussion');
   } else if (group === 'tool') {
     parts.push('Tool');
   } else if (group === 'author') {

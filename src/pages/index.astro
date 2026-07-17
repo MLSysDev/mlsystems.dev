@@ -513,6 +513,7 @@ const featuredTools = pickCoreTools(allTools);
 
 <script>
   import { ACCENTS, writePrefs, type Accent } from '@/lib/prefs';
+  import { neuralBurst } from '@/lib/neuralBurst';
 
   document.querySelectorAll<HTMLButtonElement>('[data-accent-cycle]').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -522,6 +523,8 @@ const featuredTools = pickCoreTools(allTools);
       const next = ACCENTS[(idx + 1) % ACCENTS.length];
       root.setAttribute('data-accent', next);
       writePrefs({ accent: next });
+      const hero = btn.closest<HTMLElement>('.hero');
+      if (hero) neuralBurst(hero);
     });
   });
 

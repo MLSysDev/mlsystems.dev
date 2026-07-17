@@ -84,7 +84,11 @@ const pollOptions = poll
       >
     </nav>
 
-    <article class="forum-op" data-pagefind-body>
+    <article
+      class="forum-op"
+      data-pagefind-body
+      data-pagefind-meta={`category:${thread.category.name}`}
+    >
       <h1 class="forum-thread-title">{thread.title}</h1>
       <div class="forum-thread-meta">
         {

@@ -508,6 +508,10 @@ main {
   padding: clamp(28px, 6vw, 64px) 0 0;
   position: relative;
 }
+.hero > .container {
+  position: relative;
+  z-index: 1;
+}
 .hero-grid {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
