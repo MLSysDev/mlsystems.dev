@@ -164,43 +164,45 @@ const pollOptions = poll
         </h2>
 
         {
-          thread.comments.map((c) => (
-            <div class={`forum-comment${c.isAnswer ? ' is-answer' : ''}`}>
-              {c.isAnswer && <div class="forum-answer-badge">✓ Answer</div>}
-              <div class="forum-comment-meta">
-                {c.author?.url ? (
-                  <a href={c.author.url} target="_blank" rel="noreferrer">
-                    @{c.author.login}
-                  </a>
-                ) : (
-                  <span>Guest</span>
-                )}
-                <span>·</span>
-                <span>{formatDate(new Date(c.createdAt))}</span>
-              </div>
-              <div class="forum-content" set:html={c.bodyHTML} />
-              {c.replies.length > 0 && (
-                <div class="forum-replies">
-                  {c.replies.map((r) => (
-                    <div class="forum-comment forum-reply">
-                      <div class="forum-comment-meta">
-                        {r.author?.url ? (
-                          <a href={r.author.url} target="_blank" rel="noreferrer">
-                            @{r.author.login}
-                          </a>
-                        ) : (
-                          <span>Guest</span>
-                        )}
-                        <span>·</span>
-                        <span>{formatDate(new Date(r.createdAt))}</span>
-                      </div>
-                      <div class="forum-content" set:html={r.bodyHTML} />
-                    </div>
-                  ))}
+          thread.comments
+            .filter((c) => c !== acceptedAnswer)
+            .map((c) => (
+              <div class={`forum-comment${c.isAnswer ? ' is-answer' : ''}`}>
+                {c.isAnswer && <div class="forum-answer-badge">✓ Answer</div>}
+                <div class="forum-comment-meta">
+                  {c.author?.url ? (
+                    <a href={c.author.url} target="_blank" rel="noreferrer">
+                      @{c.author.login}
+                    </a>
+                  ) : (
+                    <span>Guest</span>
+                  )}
+                  <span>·</span>
+                  <span>{formatDate(new Date(c.createdAt))}</span>
                 </div>
-              )}
-            </div>
-          ))
+                <div class="forum-content" set:html={c.bodyHTML} />
+                {c.replies.length > 0 && (
+                  <div class="forum-replies">
+                    {c.replies.map((r) => (
+                      <div class="forum-comment forum-reply">
+                        <div class="forum-comment-meta">
+                          {r.author?.url ? (
+                            <a href={r.author.url} target="_blank" rel="noreferrer">
+                              @{r.author.login}
+                            </a>
+                          ) : (
+                            <span>Guest</span>
+                          )}
+                          <span>·</span>
+                          <span>{formatDate(new Date(r.createdAt))}</span>
+                        </div>
+                        <div class="forum-content" set:html={r.bodyHTML} />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))
         }
 
         {
