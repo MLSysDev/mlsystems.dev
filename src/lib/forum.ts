@@ -9,8 +9,10 @@ import { tagSlug } from './data';
 const OWNER = 'MLSysDev';
 const NAME = 'mlsystems.dev';
 
-// giscus stores per-post blog comments in this category — never a forum thread.
-const EXCLUDED_CATEGORY_SLUGS = new Set(['comments']);
+// 'comments' holds giscus per-post blog comments (not forum threads). 'polls' is
+// an interactive GitHub widget whose options/results aren't in bodyHTML, so it
+// can't render meaningfully here — voting stays on GitHub.
+const EXCLUDED_CATEGORY_SLUGS = new Set(['comments', 'polls']);
 
 // Cap rendered comments per thread; commentCount still reports the true total to
 // readers and to search engines, with a "continue on GitHub" link for the rest.
