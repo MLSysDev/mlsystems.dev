@@ -3231,6 +3231,11 @@ a.forum-cat:hover {
   color: var(--accent);
   margin-bottom: 6px;
 }
+.forum-pinned-answer {
+  margin-bottom: 24px;
+  padding: 16px 18px;
+  border-bottom: none;
+}
 .forum-comment .forum-content {
   margin-top: 8px;
 }
