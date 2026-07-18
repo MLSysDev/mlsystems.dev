@@ -3,7 +3,7 @@
   "version": 1,
   "meta": {
     "title": "Neural Networks From Zero: From a Single Number to a Billion Parameters",
-    "summary": "A neural network never sees a word, an image, or a sound — only a list of numbers. Starting from that one fact and a single neuron, this day-zero guide builds the whole machine: how any input becomes numbers, why weights, biases, and activations each exist, how neurons stack into layers and layers into a model, and how to compute a model's size and running cost by hand.",
+    "summary": "A neural network never sees a word, an image, or a sound — only a list of numbers. Starting from that one fact and a single neuron, this guide builds the whole machine: how any input becomes numbers, why weights, biases, and activations each exist, and how neurons stack into layers and layers into a model.",
     "authors": [
       "dinesh"
     ],
@@ -3596,20 +3596,9 @@
       "children": []
     },
     {
-      "id": "paragraph-102",
-      "type": "separator",
-      "props": {},
-      "children": []
-    },
-    {
       "id": "44bdadb3-da54-4a7b-9d64-0799eadb9d0e",
-      "type": "paragraph",
-      "props": {
-        "backgroundColor": "default",
-        "textColor": "default",
-        "textAlignment": "left"
-      },
-      "content": [],
+      "type": "divider",
+      "props": {},
       "children": []
     },
     {
@@ -3629,17 +3618,6 @@
           }
         }
       ],
-      "children": []
-    },
-    {
-      "id": "9e403107-b71e-4bb2-86b2-573648d35a88",
-      "type": "paragraph",
-      "props": {
-        "backgroundColor": "default",
-        "textColor": "default",
-        "textAlignment": "left"
-      },
-      "content": [],
       "children": []
     }
   ],
