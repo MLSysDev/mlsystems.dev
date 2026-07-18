@@ -1,5 +1,0 @@
-{
-  "name": "Toma Iliescu",
-  "bio": "Training infrastructure for research-scale workloads. Spends most of his time figuring out why a run that worked on 8 GPUs falls over on 64. Currently working on FSDP recipes and large-scale debugging tooling.",
-  "role": "contributor"
-}

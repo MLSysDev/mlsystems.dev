@@ -1,5 +1,0 @@
-{
-  "name": "Mira Holst",
-  "bio": "Inference acceleration via speculative decoding and tree-based sampling. Interested in the systems-side of decoding — verification kernels, draft-model selection, throughput under real load. Currently exploring multi-draft and Medusa-style heads.",
-  "role": "contributor"
-}

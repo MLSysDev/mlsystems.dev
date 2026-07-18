@@ -1,5 +1,0 @@
-{
-  "name": "Ana Voinescu",
-  "bio": "Works on quantization-aware training and post-training quantization for production deployment. Cares about the gap between papers and the calibration headaches you actually hit in prod. Currently focused on FP4 and mixed-precision rollouts.",
-  "role": "contributor"
-}
