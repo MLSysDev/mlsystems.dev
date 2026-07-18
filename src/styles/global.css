@@ -33,9 +33,9 @@ html {
   --font-read: 'Source Serif 4', 'Source Serif Pro', Georgia, Cambria, 'Times New Roman', serif;
 
   /* Light palette — warm paper */
-  --paper: #f8f4eb;
-  --paper-2: #f0ead9;
-  --paper-3: #e6dfca;
+  --paper: #f6f2e9;
+  --paper-2: #eee8d7;
+  --paper-3: #e4ddc8;
   --ink: #18171a;
   --ink-body: #2b2621;
   --ink-2: #4a4844;

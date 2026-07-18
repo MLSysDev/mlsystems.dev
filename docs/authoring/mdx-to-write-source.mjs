@@ -188,6 +188,11 @@ function emitMd(text) {
       i++;
       continue;
     }
+    if (/^<hr\b/.test(line.trim())) {
+      push('divider', {});
+      i++;
+      continue;
+    }
     if (line.startsWith('|')) {
       const rows = [];
       while (i < lines.length && lines[i].startsWith('|')) {
@@ -212,7 +217,7 @@ function emitMd(text) {
     while (
       i < lines.length &&
       lines[i].trim() &&
-      !/^(#{2,6} |> |\||```|[-*] |\d+\. |!\[)/.test(lines[i]) &&
+      !/^(#{2,6} |> |\||```|[-*] |\d+\. |!\[|<hr\b)/.test(lines[i]) &&
       !/^(---+|\*\*\*+)$/.test(lines[i].trim())
     ) {
       para.push(lines[i]);
