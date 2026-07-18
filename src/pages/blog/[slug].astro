@@ -236,6 +236,11 @@ const breadcrumbJsonLd = {
   </article>
 
   <script>
+    import { initReaderHighlights } from '@/lib/readerHighlights';
+
+    const articleBody = document.querySelector<HTMLElement>('.article-body');
+    if (articleBody) initReaderHighlights(articleBody);
+
     const anchors = document.querySelectorAll<HTMLAnchorElement>(
       '.article-body :is(h1, h2, h3, h4) > a[href^="#"]',
     );

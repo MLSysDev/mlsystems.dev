@@ -3521,6 +3521,71 @@ a.forum-poll-bar:hover .forum-poll-fill {
     animation: none;
   }
 }
+
+/* Reader highlights — client-side, stored in localStorage per post */
+mark.reader-hl {
+  background: rgba(255, 220, 60, 0.45);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0.06em 0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+mark.reader-hl:hover {
+  background: rgba(255, 220, 60, 0.65);
+}
+:root[data-theme='dark'] mark.reader-hl {
+  background: rgba(255, 205, 60, 0.28);
+}
+:root[data-theme='dark'] mark.reader-hl:hover {
+  background: rgba(255, 205, 60, 0.4);
+}
+.reader-hl-pop {
+  position: fixed;
+  z-index: 120;
+  display: none;
+}
+.reader-hl-pop.is-open {
+  display: block;
+}
+.reader-hl-pop button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+.reader-hl-pop button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  transform: scale(1.06);
+}
+.reader-hl-pop button svg {
+  width: 18px;
+  height: 18px;
+}
+:root[data-theme='dark'] .reader-hl-pop button {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reader-hl-pop button {
+    transition: none;
+  }
+  .reader-hl-pop button:hover {
+    transform: none;
+  }
+}
 @media (max-width: 640px) {
   .concept-band--hero {
     padding: 24px 0;
