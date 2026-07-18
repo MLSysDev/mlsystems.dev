@@ -76,6 +76,7 @@ Every block has this shape:
 
 - Booleans: `bold`, `italic`, `underline`, `strike`, `code`
 - `textColor` / `backgroundColor` — one of: `gray`, `brown`, `red`, `orange`, `yellow`, `green`, `blue`, `purple`, `pink` (or `"default"`). Use sparingly — body text should stay default.
+- **`code` is exclusive** — it cannot combine with any other style (`{ "code": true, "bold": true }` is rejected by the editor). A run is either code or styled text, never both.
 
 ### Text blocks
 
@@ -83,16 +84,16 @@ Shared default props: `{ "backgroundColor": "default", "textColor": "default", "
 
 **Options:** `textAlignment`: `"left"` | `"center"` | `"right"`; `backgroundColor`/`textColor`: same named colors as inline styles (block-wide tint).
 
-| Type               | Extra props                                       | Notes                                                                         |
-| ------------------ | ------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `paragraph`        | —                                                 | body text                                                                     |
-| `heading`          | `"level": 2`, `"isToggleable": false`             | use levels 2 or 3 — published MDX caps depth at 3, deeper levels flatten to 3 |
-| `bulletListItem`   | —                                                 | **exact spelling** — one block per bullet; consecutive items group            |
-| `numberedListItem` | —                                                 | one block per item                                                            |
-| `checkListItem`    | `"checked": false`                                | task list                                                                     |
-| `toggleListItem`   | —                                                 | collapsible; hidden blocks go in `children`                                   |
-| `quote`            | only `backgroundColor`/`textColor` (no alignment) | pull-quote                                                                    |
-| `note`             | `"props": {}`                                     | highlighted callout/aside for key takeaways                                   |
+| Type               | Extra props                                       | Notes                                                                                                           |
+| ------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `paragraph`        | —                                                 | body text                                                                                                       |
+| `heading`          | `"level": 1`, `"isToggleable": false`             | levels 1–3; publishes one step deeper (the post title owns H1): level 1 → H2 section, 2 → H3 subsection, 3 → H4 |
+| `bulletListItem`   | —                                                 | **exact spelling** — one block per bullet; consecutive items group                                              |
+| `numberedListItem` | —                                                 | one block per item                                                                                              |
+| `checkListItem`    | `"checked": false`                                | task list                                                                                                       |
+| `toggleListItem`   | —                                                 | collapsible; hidden blocks go in `children`                                                                     |
+| `quote`            | only `backgroundColor`/`textColor` (no alignment) | pull-quote                                                                                                      |
+| `note`             | `"props": {}`                                     | highlighted callout/aside for key takeaways                                                                     |
 
 ### Code
 
@@ -255,12 +256,22 @@ Agents **can and should** author complete diagrams this way. Rules: use `stroke=
 
 ## Rules of thumb for a good agent draft
 
-1. Start sections at heading level 2 — `meta.title` is the visual level 1.
+1. Use heading level 1 for sections and 2 for subsections — `meta.title` is the page's H1, so editor levels publish one step deeper (level 1 → H2).
 2. Short paragraphs; one `note` per major section carrying the takeaway.
 3. Prefer authored `svg` diagrams over empty figure slots; when a photo/screenshot is genuinely needed, use a placeholder-`src` figure with a caption telling the writer what to drop in.
 4. Every id unique; JSON must parse — validate before handing over.
 5. Don't invent topic ids or author handles — check `src/content/topics/` and `src/content/authors/`, or use `proposedTopic` / `["guest"]`.
 
+## Converting an existing MDX post (backup tool)
+
+[`mdx-to-write-source.mjs`](./mdx-to-write-source.mjs) converts a published post back into an uploadable JSON — useful if a post's `.write-source.json` sidecar is ever missing:
+
+```bash
+node docs/authoring/mdx-to-write-source.mjs src/content/posts/<slug> [out.json]
+```
+
+Best-effort, not a guaranteed round-trip: it maps standard markdown — headings, bold/italic/strike/links/inline code, bullet/numbered/check lists, quotes, horizontal rules, code fences, tables, markdown images (as figure placeholders with their URL), plus this site's `<Note>` and inline-SVG `<Figure>` components. Unrecognized MDX maps to the closest editor block. Good enough to port a post written outside the editor, then finish by hand in `/write`.
+
 ## Prompt to give your agent
 
-> Write a first draft of a blog post for mlsystems.dev as a single `.write-source.json` file, following `docs/authoring/write-source-format.md` exactly (top-level `kind: "mlsys-write-source"`, `version: 1`, `meta`, `blocks`, `tableVariants`; block shapes and type names exactly as documented — note it's `bulletListItem`, tables use `tableCell` objects, and media blocks omit `content`). Start headings at level 2. Author diagrams as theme-aware inline `svg` blocks (currentColor); for photos use `figure` blocks with a placeholder `src` and a caption saying what image to add. All ids unique; valid JSON. Topic id and author handles must come from the site's existing lists (or use `proposedTopic` / `["guest"]`). The post: [describe your post here].
+> Write a first draft of a blog post for mlsystems.dev as a single `.write-source.json` file, following `docs/authoring/write-source-format.md` exactly (top-level `kind: "mlsys-write-source"`, `version: 1`, `meta`, `blocks`, `tableVariants`; block shapes and type names exactly as documented — note it's `bulletListItem`, tables use `tableCell` objects, and media blocks omit `content`). Use heading level 1 for sections, 2 for subsections. Author diagrams as theme-aware inline `svg` blocks (currentColor); for photos use `figure` blocks with a placeholder `src` and a caption saying what image to add. All ids unique; valid JSON. Topic id and author handles must come from the site's existing lists (or use `proposedTopic` / `["guest"]`). The post: [describe your post here].

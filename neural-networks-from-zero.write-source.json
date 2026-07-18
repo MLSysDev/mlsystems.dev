@@ -1,0 +1,3607 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "Neural Networks From Zero: From a Single Number to a Billion Parameters",
+    "summary": "A neural network never sees a word, an image, or a sound — only a list of numbers. Starting from that one fact and a single neuron, this day-zero guide builds the whole machine: how any input becomes numbers, why weights, biases, and activations each exist, how neurons stack into layers and layers into a model, and how to compute a model's size and running cost by hand.",
+    "authors": ["dinesh"],
+    "writerName": "Author Name",
+    "topicId": "architecture",
+    "topicName": "Architecture",
+    "tags": ["fundamentals", "perceptron", "neural-networks", "parameters", "flops"],
+    "slug": "neural-networks-from-zero",
+    "coverFileName": "",
+    "ogCard": false,
+    "proposedTopic": "",
+    "newAuthor": null,
+    "date": "2026-07-12"
+  },
+  "blocks": [
+    {
+      "id": "paragraph-1",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Almost every explanation of neural networks starts one step too late. It shows you a diagram of circles connected by lines, tells you “these are neurons,” and moves on. But it never answers the question a genuinely curious person asks first:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-2",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "What are those circles even looking at?",
+          "styles": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "paragraph-3",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "When someone writes ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "input = [0.2, 0.9, 0.1, 0.7]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", why are there ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "four",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " numbers? Why numbers at all? What if my input is the word “cat”? A photo? A ten-second voice clip? An entire paragraph? How does ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "any",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of that turn into something a network can process?",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-4",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "This is day zero. If you don’t understand what an input is, what a single neuron does to it, and why each piece of a neuron exists, then everything downstream — attention, transformers, “7 billion parameters,” GPUs running out of memory — is memorization, not understanding. So we’re going to build the whole thing from the smallest possible unit, and by the end you’ll be able to look at any model and compute, by hand, both ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "how big it is",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " and ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "how much math it costs to run",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-5",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Let’s start with the single most important sentence in this entire field.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-6",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A network only ever sees numbers",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-7",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Here it is:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "quote-8",
+      "type": "quote",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A neural network cannot see a word, a pixel, a sound, or a sentence. It can only see ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "a list of numbers",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Everything else is a translation problem that happens ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "before",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the network.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-9",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "That list of numbers has a name: a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "vector",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". When you saw ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "[0.2, 0.9, 0.1, 0.7]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", that was a vector of length 4 — the network’s entire universe for that one input. The “4” isn’t magic; it’s just how many numbers this particular network was built to accept. A different network might take 784 numbers, or 4096. That fixed count is called the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "input dimension",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-10",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "So the real question isn’t “how does a network understand a cat?” It’s: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "how do we turn a cat — the word, or the photo — into a list of numbers?",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " That translation is where all the interesting representational choices live, and it’s completely separate from the network itself. Let’s do it for every kind of input.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-11",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Turning anything into numbers",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "note-12",
+      "type": "note",
+      "props": {},
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The rule to hold onto: the network is fixed and dumb — it eats a vector of numbers. The ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "encoding",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is where meaning gets packed in. Change the encoding and you change what the network can possibly learn, without touching the network at all.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-13",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A single quantity — the easy case.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Say you’re predicting whether it’ll rain from today’s temperature. Temperature is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "already",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " a number: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "28.4",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Your input vector is length 1: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "[28.4]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Add humidity and pressure and you have ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "[28.4, 0.66, 1013]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — length 3. Each slot in the vector is called a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "feature",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". This is the whole reason the classic examples use 3 or 4 numbers: they’re toy problems with 3 or 4 features. Nothing deeper.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-14",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A category — a color, a yes/no, a day of the week.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " These aren’t numbers, and you can’t just assign ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Monday = 1, Tuesday = 2",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", because that would trick the network into thinking Wednesday is “twice” Monday, which is nonsense. Instead we use ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "one-hot encoding",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": one slot per possible value, all zeros except a single 1.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-15",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  Monday    → [1, 0, 0, 0, 0, 0, 0]\n  Wednesday → [0, 0, 1, 0, 0, 0, 0]\n  Sunday    → [0, 0, 0, 0, 0, 0, 1]",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-16",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Seven categories → a vector of length 7. No false ordering, no fake arithmetic. Just “which one is it.”",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-17",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A word — where it gets interesting.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " A word like “cat” is a category too, but the vocabulary has ~50,000 words, so a one-hot vector would be 50,000 numbers that are almost entirely zeros. Wasteful, and worse, it says every word is equally unrelated to every other — “cat” is exactly as far from “dog” as it is from “helicopter.” That’s clearly wrong.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-18",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "So instead we ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "learn",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " a compact vector for each word, called an ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "embedding",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — typically a few hundred to a few thousand numbers:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-19",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  \"cat\"        → [ 0.21, -0.44,  0.10, ..., 0.05]   (say, 768 numbers)\n  \"dog\"        → [ 0.19, -0.41,  0.14, ..., 0.08]   ← close to \"cat\"\n  \"helicopter\" → [-0.88,  0.30, -0.52, ..., 0.77]   ← far from both",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-20",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The magic: these numbers are learned so that ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "similar meanings end up close together",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " in the vector space. “cat” and “dog” land near each other; “helicopter” lands far away. The network never sees the letters c-a-t — it sees 768 numbers that encode what “cat” ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "means",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", in a geometry where distance is similarity. (How text gets split into these units in the first place — “tokenization” — and how embeddings are learned are their own deep dives. For today, just hold the shape: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "word → vector of numbers.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ")",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "svg-21",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 470 270\" role=\"img\" aria-label=\"A 2D map of word-embedding space. The points for cat and dog are close together and circled as similar; the point for helicopter is far away in the opposite corner.\" style=\"width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;\">\n  <rect x=\"24\" y=\"18\" width=\"422\" height=\"234\" rx=\"8\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1\" opacity=\"0.25\"/>\n  <ellipse cx=\"150\" cy=\"112\" rx=\"72\" ry=\"56\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.2\" stroke-dasharray=\"5 5\" opacity=\"0.5\"/>\n  <g fill=\"currentColor\">\n    <circle cx=\"120\" cy=\"98\" r=\"6\"/>\n    <circle cx=\"176\" cy=\"128\" r=\"6\"/>\n    <circle cx=\"372\" cy=\"206\" r=\"6\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"15\">\n    <text x=\"120\" y=\"86\" text-anchor=\"middle\">cat</text>\n    <text x=\"184\" y=\"150\" text-anchor=\"middle\">dog</text>\n    <text x=\"372\" y=\"230\" text-anchor=\"middle\">helicopter</text>\n  </g>\n  <g fill=\"currentColor\" font-size=\"12\" opacity=\"0.7\">\n    <text x=\"150\" y=\"196\" text-anchor=\"middle\">similar meaning → close</text>\n    <text x=\"360\" y=\"170\" text-anchor=\"middle\">unrelated → far</text>\n  </g>\n</svg>",
+        "caption": "Word embeddings live in a space where distance means similarity: 'cat' and 'dog' land close together, 'helicopter' sits far away — and the network only ever sees the coordinates, never the letters."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-22",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "An image.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " A grayscale photo is a grid of brightness values, each from 0 (black) to 255 (white). A small 28×28 image is 784 of those numbers. Flatten the grid row by row into one long list and you have a vector of length 784. A color photo has three such grids (red, green, blue), so a 224×224 color image is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "224 × 224 × 3 = 150,528",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " numbers. A picture really is worth a (few hundred) thousand numbers.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "svg-23",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 470 210\" role=\"img\" aria-label=\"A 4 by 4 grid of grayscale cells forming a dark diagonal on a light background. Each cell shows its brightness value: 30 for the dark diagonal cells, 230 for the light cells. Below, an arrow shows the grid flattened row by row into a list of those numbers.\" style=\"width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;\">\n  <g stroke=\"#888\" stroke-width=\"0.5\">\n    <rect x=\"70\" y=\"20\" width=\"36\" height=\"36\" fill=\"#333\"/><rect x=\"106\" y=\"20\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"142\" y=\"20\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"178\" y=\"20\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/>\n    <rect x=\"70\" y=\"56\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"106\" y=\"56\" width=\"36\" height=\"36\" fill=\"#333\"/><rect x=\"142\" y=\"56\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"178\" y=\"56\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/>\n    <rect x=\"70\" y=\"92\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"106\" y=\"92\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"142\" y=\"92\" width=\"36\" height=\"36\" fill=\"#333\"/><rect x=\"178\" y=\"92\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/>\n    <rect x=\"70\" y=\"128\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"106\" y=\"128\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"142\" y=\"128\" width=\"36\" height=\"36\" fill=\"#e6e6e6\"/><rect x=\"178\" y=\"128\" width=\"36\" height=\"36\" fill=\"#333\"/>\n  </g>\n  <g font-size=\"11\" text-anchor=\"middle\">\n    <text x=\"88\" y=\"42\" fill=\"#f0f0f0\">30</text><text x=\"124\" y=\"42\" fill=\"#555\">230</text><text x=\"160\" y=\"42\" fill=\"#555\">230</text><text x=\"196\" y=\"42\" fill=\"#555\">230</text>\n    <text x=\"88\" y=\"78\" fill=\"#555\">230</text><text x=\"124\" y=\"78\" fill=\"#f0f0f0\">30</text><text x=\"160\" y=\"78\" fill=\"#555\">230</text><text x=\"196\" y=\"78\" fill=\"#555\">230</text>\n    <text x=\"88\" y=\"114\" fill=\"#555\">230</text><text x=\"124\" y=\"114\" fill=\"#555\">230</text><text x=\"160\" y=\"114\" fill=\"#f0f0f0\">30</text><text x=\"196\" y=\"114\" fill=\"#555\">230</text>\n    <text x=\"88\" y=\"150\" fill=\"#555\">230</text><text x=\"124\" y=\"150\" fill=\"#555\">230</text><text x=\"160\" y=\"150\" fill=\"#555\">230</text><text x=\"196\" y=\"150\" fill=\"#f0f0f0\">30</text>\n  </g>\n  <g fill=\"currentColor\">\n    <text x=\"250\" y=\"96\" font-size=\"22\">→</text>\n    <text x=\"70\" y=\"196\" font-size=\"12\" font-family=\"ui-monospace,monospace\">[30, 230, 230, 230, 230, 30, 230, 230, 230, 230, 30, 230, 230, 230, 230, 30]</text>\n  </g>\n</svg>",
+        "caption": "A 4×4 grayscale patch is literally 16 numbers (0 = black, 255 = white). Read the grid row by row and you get the flat vector the network actually receives. This diagonal is a '16-pixel image'."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-24",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Audio (an mp3).",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Sound is a wave — air pressure changing over time. To digitize it, we measure that pressure many times per second (44,100 times/second for CD quality). Ten seconds of audio is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "44,100 × 10 = 441,000",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " numbers, each a sample of the wave’s height at that instant. A vector, again — just a very long, time-ordered one.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "svg-25",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 470 200\" role=\"img\" aria-label=\"A waveform drawn as a curve. Evenly spaced sample dots sit on the curve, each with a thin vertical line dropping to the horizontal time axis, illustrating that each sample is one number giving the wave's height at that instant.\" style=\"width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;\">\n  <line x1=\"40\" y1=\"100\" x2=\"440\" y2=\"100\" stroke=\"currentColor\" stroke-width=\"1\" opacity=\"0.25\"/>\n  <g stroke=\"currentColor\" stroke-width=\"1\" opacity=\"0.28\">\n    <line x1=\"60\" y1=\"100\" x2=\"60\" y2=\"100\"/><line x1=\"90\" y1=\"100\" x2=\"90\" y2=\"65\"/><line x1=\"120\" y1=\"100\" x2=\"120\" y2=\"58\"/><line x1=\"150\" y1=\"100\" x2=\"150\" y2=\"90\"/><line x1=\"180\" y1=\"100\" x2=\"180\" y2=\"135\"/><line x1=\"210\" y1=\"100\" x2=\"210\" y2=\"140\"/><line x1=\"240\" y1=\"100\" x2=\"240\" y2=\"105\"/><line x1=\"270\" y1=\"100\" x2=\"270\" y2=\"62\"/><line x1=\"300\" y1=\"100\" x2=\"300\" y2=\"55\"/><line x1=\"330\" y1=\"100\" x2=\"330\" y2=\"88\"/><line x1=\"360\" y1=\"100\" x2=\"360\" y2=\"135\"/><line x1=\"390\" y1=\"100\" x2=\"390\" y2=\"138\"/><line x1=\"420\" y1=\"100\" x2=\"420\" y2=\"100\"/>\n  </g>\n  <polyline points=\"60,100 90,65 120,58 150,90 180,135 210,140 240,105 270,62 300,55 330,88 360,135 390,138 420,100\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"/>\n  <g fill=\"currentColor\">\n    <circle cx=\"60\" cy=\"100\" r=\"4\"/><circle cx=\"90\" cy=\"65\" r=\"4\"/><circle cx=\"120\" cy=\"58\" r=\"4\"/><circle cx=\"150\" cy=\"90\" r=\"4\"/><circle cx=\"180\" cy=\"135\" r=\"4\"/><circle cx=\"210\" cy=\"140\" r=\"4\"/><circle cx=\"240\" cy=\"105\" r=\"4\"/><circle cx=\"270\" cy=\"62\" r=\"4\"/><circle cx=\"300\" cy=\"55\" r=\"4\"/><circle cx=\"330\" cy=\"88\" r=\"4\"/><circle cx=\"360\" cy=\"135\" r=\"4\"/><circle cx=\"390\" cy=\"138\" r=\"4\"/><circle cx=\"420\" cy=\"100\" r=\"4\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"11\" opacity=\"0.7\" text-anchor=\"middle\">\n    <text x=\"120\" y=\"48\">+0.7</text><text x=\"300\" y=\"45\">+0.8</text><text x=\"210\" y=\"158\">−0.6</text>\n  </g>\n  <text x=\"438\" y=\"120\" fill=\"currentColor\" font-size=\"11\" opacity=\"0.6\" text-anchor=\"end\">time →</text>\n</svg>",
+        "caption": "Sound is a wave; digitizing it means measuring the wave's height thousands of times per second. Each measurement (each dot) is one number. Ten seconds of CD-quality audio is 441,000 of them, in order."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-26",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A paragraph.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " A paragraph is a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "sequence",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of words, so it becomes a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "sequence of embedding vectors",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — one vector per word (or token), in order. This is the one case where we don’t collapse to a single flat vector, because ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "order matters",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (“dog bites man” ≠ “man bites dog”). Handling sequences of vectors while respecting order is exactly the problem transformers were invented to solve — but that’s getting ahead of ourselves. The atom is still the same: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "each word is a vector of numbers.",
+          "styles": {
+            "bold": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "paragraph-27",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Here’s the whole picture in one table:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "table-28",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "children": [],
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [null, null, null],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Input",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "How it becomes numbers",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Example length",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Temperature",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "it’s already a number",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "1",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Day of week",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "one-hot (one slot per category)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "7",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "A word",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "learned embedding vector",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "~768",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "28×28 grayscale image",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "flatten the pixel grid",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "784",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "224×224 color image",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "flatten 3 color grids",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "150,528",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "10s of CD-quality audio",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "samples of the wave over time",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "441,000",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "A paragraph",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "a ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "sequence",
+                    "styles": {
+                      "italic": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " of word vectors",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "(n words) × 768",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "paragraph-29",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Every single one is just numbers. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "That",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is what the circles in the diagram are looking at. Now let’s build a circle.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-30",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The neuron: the atom of the whole field",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-31",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Everything — every model with billions of parameters — is built from one tiny unit repeated a staggering number of times. Understand this one unit completely and the rest is assembly.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-32",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The unit is loosely inspired by a biological neuron, and the analogy is genuinely useful. A brain cell receives signals from many others through its dendrites. Some of those connections are strong, some weak. The cell adds up all its incoming signals (weighted by connection strength), and ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "if the total is strong enough, it fires.",
+          "styles": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "svg-33",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 480 210\" role=\"img\" aria-label=\"Left: a stylized biological neuron with dendrites feeding a soma and an axon leaving it. An approximately-equals sign in the middle. Right: an artificial neuron with input dots feeding a summation node with a bias, then an activation function f, then an output y.\" style=\"width:100%;max-width:540px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;\">\n  <g stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.5\">\n    <circle cx=\"100\" cy=\"95\" r=\"26\"/>\n    <line x1=\"126\" y1=\"95\" x2=\"212\" y2=\"95\"/>\n    <line x1=\"212\" y1=\"95\" x2=\"230\" y2=\"80\"/><line x1=\"212\" y1=\"95\" x2=\"234\" y2=\"95\"/><line x1=\"212\" y1=\"95\" x2=\"230\" y2=\"110\"/>\n  </g>\n  <g stroke=\"currentColor\" stroke-width=\"1.2\" opacity=\"0.7\">\n    <line x1=\"22\" y1=\"52\" x2=\"80\" y2=\"82\"/><line x1=\"18\" y1=\"90\" x2=\"74\" y2=\"93\"/><line x1=\"22\" y1=\"130\" x2=\"80\" y2=\"108\"/><line x1=\"40\" y1=\"38\" x2=\"86\" y2=\"72\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"11\" opacity=\"0.7\">\n    <text x=\"16\" y=\"34\">dendrites</text>\n    <text x=\"168\" y=\"88\">axon</text>\n  </g>\n  <g fill=\"currentColor\" font-size=\"11\">\n    <text x=\"100\" y=\"140\" text-anchor=\"middle\" opacity=\"0.7\">soma</text>\n    <text x=\"115\" y=\"180\" text-anchor=\"middle\" font-size=\"13\">biological neuron</text>\n  </g>\n  <text x=\"258\" y=\"102\" fill=\"currentColor\" font-size=\"26\" opacity=\"0.6\">≈</text>\n  <g fill=\"currentColor\">\n    <circle cx=\"302\" cy=\"62\" r=\"4\"/><circle cx=\"302\" cy=\"95\" r=\"4\"/><circle cx=\"302\" cy=\"128\" r=\"4\"/>\n  </g>\n  <g stroke=\"currentColor\" stroke-width=\"1\" opacity=\"0.55\">\n    <line x1=\"306\" y1=\"62\" x2=\"354\" y2=\"88\"/><line x1=\"306\" y1=\"95\" x2=\"352\" y2=\"95\"/><line x1=\"306\" y1=\"128\" x2=\"354\" y2=\"102\"/>\n  </g>\n  <g stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.5\">\n    <circle cx=\"374\" cy=\"95\" r=\"20\"/>\n    <rect x=\"412\" y=\"78\" width=\"34\" height=\"34\" rx=\"5\"/>\n    <line x1=\"394\" y1=\"95\" x2=\"412\" y2=\"95\"/>\n    <line x1=\"446\" y1=\"95\" x2=\"470\" y2=\"95\"/>\n  </g>\n  <g fill=\"currentColor\" text-anchor=\"middle\">\n    <text x=\"374\" y=\"101\" font-size=\"18\">Σ</text>\n    <text x=\"374\" y=\"130\" font-size=\"11\" opacity=\"0.8\">＋ b</text>\n    <text x=\"429\" y=\"100\" font-size=\"16\">f</text>\n    <text x=\"468\" y=\"90\" font-size=\"14\">y</text>\n    <text x=\"378\" y=\"180\" font-size=\"13\">artificial neuron</text>\n  </g>\n</svg>",
+        "caption": "The artificial neuron mirrors the biological one, part for part: dendrites → inputs, synapse strengths → weights, the cell body's summation → Σ + bias, and 'firing' → the activation function f."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-34",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "An artificial neuron does exactly that, with three ingredients:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "svg-35",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 470 250\" role=\"img\" aria-label=\"Diagram of a single artificial neuron. Four inputs x1 to x4 on the left each connect via a weighted edge (w1 to w4) to a summation node. A bias b is added at the sum. The sum passes into an activation function f, which produces the output y.\" style=\"width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;\">\n  <g stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.5\">\n    <circle cx=\"42\" cy=\"40\" r=\"17\"/>\n    <circle cx=\"42\" cy=\"95\" r=\"17\"/>\n    <circle cx=\"42\" cy=\"150\" r=\"17\"/>\n    <circle cx=\"42\" cy=\"205\" r=\"17\"/>\n    <circle cx=\"252\" cy=\"120\" r=\"27\"/>\n    <rect x=\"330\" y=\"96\" width=\"50\" height=\"48\" rx=\"6\"/>\n  </g>\n  <g stroke=\"currentColor\" stroke-width=\"1\" opacity=\"0.55\">\n    <line x1=\"59\" y1=\"40\" x2=\"227\" y2=\"112\"/>\n    <line x1=\"59\" y1=\"95\" x2=\"226\" y2=\"116\"/>\n    <line x1=\"59\" y1=\"150\" x2=\"226\" y2=\"124\"/>\n    <line x1=\"59\" y1=\"205\" x2=\"227\" y2=\"129\"/>\n    <line x1=\"279\" y1=\"120\" x2=\"330\" y2=\"120\"/>\n    <line x1=\"380\" y1=\"120\" x2=\"430\" y2=\"120\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"15\" text-anchor=\"middle\">\n    <text x=\"42\" y=\"45\">x₁</text>\n    <text x=\"42\" y=\"100\">x₂</text>\n    <text x=\"42\" y=\"155\">x₃</text>\n    <text x=\"42\" y=\"210\">x₄</text>\n    <text x=\"252\" y=\"126\" font-size=\"20\">Σ</text>\n    <text x=\"355\" y=\"126\" font-size=\"18\">f</text>\n    <text x=\"443\" y=\"126\">y</text>\n  </g>\n  <g fill=\"currentColor\" font-size=\"12\" opacity=\"0.8\" text-anchor=\"middle\">\n    <text x=\"140\" y=\"66\">w₁</text>\n    <text x=\"140\" y=\"98\">w₂</text>\n    <text x=\"140\" y=\"130\">w₃</text>\n    <text x=\"140\" y=\"163\">w₄</text>\n    <text x=\"252\" y=\"167\">＋ b</text>\n  </g>\n</svg>",
+        "caption": "A single neuron: each input is scaled by its own weight, the results are summed, a bias is added, and the total is passed through an activation function to produce one output."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-36",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "In math, that entire picture is one short line:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-37",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  y = f( w₁·x₁ + w₂·x₂ + w₃·x₃ + w₄·x₄ + b )\n      └─┬─┘ └──────────────┬───────────────┘\n   activation        weighted sum + bias",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-38",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Three ingredients: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "weights",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "w",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "), a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "bias",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "b",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "), and an ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "activation function",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "f",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "). Each of them exists for a specific reason, and the fastest way to understand ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "why",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is to ask what breaks if you remove it.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-39",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Why weights? (importance knobs)",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-40",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A weight is a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "dimmer switch on each input",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — a learned number that says “how much should ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "this",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " feature matter?” A large positive weight means “this input strongly pushes the answer up.” A weight near zero means “ignore this input.” A negative weight means “this input pushes the answer ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "down",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".”",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-41",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Predicting rain: the humidity input probably deserves a big weight, the day-of-week input a tiny one. The network doesn’t know that in advance — it ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "learns",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the weights from data. Training a neural network is, almost entirely, the process of nudging billions of these dimmer switches until the outputs come out right.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-42",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Remove them",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — force every weight to 1 — and every input counts equally. The neuron loses all ability to say some features matter more than others. It can no longer learn. Weights are ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "where the learning lives.",
+          "styles": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "heading-43",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Why a bias? (the offset that frees the decision)",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-44",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The bias is a single number added ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "after",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the weighted sum, and it’s the ingredient people find most mysterious — until you see the one-dimensional version.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-45",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Strip a neuron down to one input: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "y = w·x + b",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". That’s the equation of a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "straight line",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", exactly the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "y = mx + c",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " from school. The weight ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "w",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is the slope; the bias ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "b",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is the intercept — where the line crosses the axis.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-46",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Now remove the bias: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "y = w·x",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". You can only make lines that ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "pass through the origin (0,0)",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". You can spin the line to any angle, but it’s forever nailed to that one point. If the pattern in your data lives anywhere else — “predict rain when temperature is above 30” — a line through the origin simply cannot express it. The bias is what lets the neuron ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "slide its decision boundary anywhere",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", instead of being pinned to zero.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "note-47",
+      "type": "note",
+      "props": {},
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Analogy: the weights set the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "tilt",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of the decision boundary; the bias sets its ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "position",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Without a bias, every boundary in the whole network is forced through the origin — like trying to describe every line on a graph using only lines that touch (0,0). You lose almost everything.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-48",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Why an activation function? (the one that makes deep learning possible)",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-49",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "This is the subtle one, and it’s the reason the whole field is called ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "deep",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " learning. The activation ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "f",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a function applied to the neuron’s output — historically an S-shaped squash, today usually ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "ReLU",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", which is almost comically simple: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "ReLU(z) = max(0, z)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — keep positives, zero out negatives.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-50",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Why bother? Because a weighted sum plus a bias is a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "linear",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " operation — it can only draw straight lines and flat planes. And here’s the killer fact: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "stacking linear operations gives you another linear operation.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " If layer 2 is just a weighted sum of layer 1, which is a weighted sum of the input, the whole thing collapses algebraically into a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "single",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " weighted sum. A hundred layers with no activation is mathematically identical to one layer. All that depth buys you ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "nothing",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-51",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The activation function inserts a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "bend",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — a non-linearity — between layers, and that bend is what stops the collapse. With bends between them, layers can ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "compose",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": bend, then bend again, then again. Now the network can carve curved, intricate boundaries and represent genuinely complex relationships. The classic proof-by-example is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "XOR",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (“true when exactly one input is true”) — a pattern no single straight line can separate, and which becomes trivial the moment you have two neurons and a non-linearity to combine them.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "quote-52",
+      "type": "quote",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Weights and bias let a neuron draw ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "one",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " straight boundary. The activation is what lets many neurons combine into something that isn’t straight at all. No activation, no depth, no deep learning.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-53",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "That’s the entire atom: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "weights",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " decide what matters, the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "bias",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " frees the boundary from the origin, the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "activation",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " bends the line so depth means something. Three ingredients, each earning its place.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-54",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Why one neuron is never enough",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-55",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "A single neuron draws a single boundary — one line, one plane. Real problems need many. So we do the obvious thing: use lots of neurons. But ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "how",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " we arrange them splits into two independent choices, and understanding the difference between them is understanding the shape of every model.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-56",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Many neurons side by side = width (one layer)",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-57",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Put several neurons in a row, all looking at the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "same",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " input, each with its own weights and bias. Each learns to detect a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "different",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " feature of that input. Feed in an image and, side by side, one neuron might learn to spot a vertical edge, another a patch of red, another a curve. They all work in parallel on the same input, and together they produce a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "new",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " list of numbers — one per neuron — describing the input in terms of the features they detected.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-58",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "That row of neurons is a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "layer",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and the number of neurons in it is the layer’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "width",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Width = how many different features you can detect ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "at the same level of abstraction",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", simultaneously.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-59",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Layers behind layers = depth (a stack)",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-60",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Now the powerful move: take the list of numbers that first layer produced and feed it as input to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "another",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " layer. The second layer isn’t looking at raw pixels anymore — it’s looking at the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "features the first layer found",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and it learns to combine them into bigger patterns. The number of layers stacked this way is the network’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "depth",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-61",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "This is the famous hierarchy, and it’s genuinely how deep vision networks organize themselves:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-62",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  raw pixels\n     │\n     ▼\n  Layer 1  → detects edges & simple colors        (\"there's an edge here\")\n     │\n     ▼\n  Layer 2  → combines edges into shapes            (\"edges here form a curve\")\n     │\n     ▼\n  Layer 3  → combines shapes into parts            (\"curves here form an eye\")\n     │\n     ▼\n  Layer 4  → combines parts into objects           (\"eyes + nose + fur → cat\")",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-63",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Each layer builds on the one below, working at a higher level of abstraction. That’s why we go deep: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "depth is composition.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Width gives you ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "breadth",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of features at one level; depth gives you ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "hierarchy",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " across levels. They are different axes, and a good architecture needs both.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "svg-64",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 470 272\" role=\"img\" aria-label=\"A multilayer perceptron. An input layer of four nodes fully connects to a hidden layer of five nodes, which fully connects to an output layer of two nodes.\" style=\"width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif;\">\n  <g stroke=\"currentColor\" stroke-width=\"0.8\" opacity=\"0.28\">\n    <line x1=\"75\" y1=\"45\" x2=\"215\" y2=\"30\"/><line x1=\"75\" y1=\"45\" x2=\"215\" y2=\"80\"/><line x1=\"75\" y1=\"45\" x2=\"215\" y2=\"130\"/><line x1=\"75\" y1=\"45\" x2=\"215\" y2=\"180\"/><line x1=\"75\" y1=\"45\" x2=\"215\" y2=\"230\"/>\n    <line x1=\"75\" y1=\"100\" x2=\"215\" y2=\"30\"/><line x1=\"75\" y1=\"100\" x2=\"215\" y2=\"80\"/><line x1=\"75\" y1=\"100\" x2=\"215\" y2=\"130\"/><line x1=\"75\" y1=\"100\" x2=\"215\" y2=\"180\"/><line x1=\"75\" y1=\"100\" x2=\"215\" y2=\"230\"/>\n    <line x1=\"75\" y1=\"155\" x2=\"215\" y2=\"30\"/><line x1=\"75\" y1=\"155\" x2=\"215\" y2=\"80\"/><line x1=\"75\" y1=\"155\" x2=\"215\" y2=\"130\"/><line x1=\"75\" y1=\"155\" x2=\"215\" y2=\"180\"/><line x1=\"75\" y1=\"155\" x2=\"215\" y2=\"230\"/>\n    <line x1=\"75\" y1=\"210\" x2=\"215\" y2=\"30\"/><line x1=\"75\" y1=\"210\" x2=\"215\" y2=\"80\"/><line x1=\"75\" y1=\"210\" x2=\"215\" y2=\"130\"/><line x1=\"75\" y1=\"210\" x2=\"215\" y2=\"180\"/><line x1=\"75\" y1=\"210\" x2=\"215\" y2=\"230\"/>\n    <line x1=\"245\" y1=\"30\" x2=\"385\" y2=\"105\"/><line x1=\"245\" y1=\"30\" x2=\"385\" y2=\"155\"/>\n    <line x1=\"245\" y1=\"80\" x2=\"385\" y2=\"105\"/><line x1=\"245\" y1=\"80\" x2=\"385\" y2=\"155\"/>\n    <line x1=\"245\" y1=\"130\" x2=\"385\" y2=\"105\"/><line x1=\"245\" y1=\"130\" x2=\"385\" y2=\"155\"/>\n    <line x1=\"245\" y1=\"180\" x2=\"385\" y2=\"105\"/><line x1=\"245\" y1=\"180\" x2=\"385\" y2=\"155\"/>\n    <line x1=\"245\" y1=\"230\" x2=\"385\" y2=\"105\"/><line x1=\"245\" y1=\"230\" x2=\"385\" y2=\"155\"/>\n  </g>\n  <g stroke=\"currentColor\" fill=\"none\" stroke-width=\"1.5\">\n    <circle cx=\"60\" cy=\"45\" r=\"15\"/><circle cx=\"60\" cy=\"100\" r=\"15\"/><circle cx=\"60\" cy=\"155\" r=\"15\"/><circle cx=\"60\" cy=\"210\" r=\"15\"/>\n    <circle cx=\"230\" cy=\"30\" r=\"15\"/><circle cx=\"230\" cy=\"80\" r=\"15\"/><circle cx=\"230\" cy=\"130\" r=\"15\"/><circle cx=\"230\" cy=\"180\" r=\"15\"/><circle cx=\"230\" cy=\"230\" r=\"15\"/>\n    <circle cx=\"400\" cy=\"105\" r=\"15\"/><circle cx=\"400\" cy=\"155\" r=\"15\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"12\" text-anchor=\"middle\" opacity=\"0.85\">\n    <text x=\"60\" y=\"235\">input</text>\n    <text x=\"230\" y=\"255\">hidden layer (width 5)</text>\n    <text x=\"400\" y=\"185\">output</text>\n  </g>\n</svg>",
+        "caption": "A small multi-layer network. Left: the input vector (4 numbers). Middle: a hidden layer of neurons, each detecting a feature. Right: the output. Every line is a weight; every node adds a bias and an activation."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-65",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "This whole arrangement — an input, one or more hidden layers, an output — is the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Multi-Layer Perceptron (MLP)",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", the original neural network and still a building block inside every transformer today.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-66",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "So how many neurons and how many layers?",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-67",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The honest answer: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "there is no formula, and anyone who gives you one is selling something.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Width and depth are the network’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "capacity",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — its room to learn patterns. Too little and it can’t capture the problem (underfitting); too much and it memorizes noise, wastes compute, and gets harder to train (overfitting). The right size depends on how complex the true pattern is, how much data you have, and how much compute you can afford.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-68",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "In practice it’s chosen empirically — start from sizes that worked on similar problems, then adjust. But the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "rules of thumb",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " are worth knowing: more ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "depth",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " tends to help when the problem is compositional and hierarchical (vision, language); more ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "width",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " helps when there are many independent features to track at once. Modern large models are both very deep ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "and",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " very wide, which is precisely why they have so many parameters — which brings us to the payoff.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-69",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "From atoms to a model: counting the size",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-70",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Here’s where everything connects, and where “7 billion parameters” stops being a marketing number and becomes something you can compute yourself.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-71",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "First, collapse a whole layer into one clean object. A layer is just many neurons, each with a weight per input. Stack their weights and you get a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "matrix",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". A layer that takes ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "d_in",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " numbers in and produces ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "d_out",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " numbers out has:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "bulletListItem-72",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "weight matrix",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of shape ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "d_out × d_in",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — that’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "d_out × d_in",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " individual weights, one for every (output neuron, input) pair,",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "bulletListItem-73",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "bias vector",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of length ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "d_out",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — one bias per output neuron.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-74",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "And the entire layer’s computation — every neuron at once — is a single matrix multiply plus the biases, then the activation:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-75",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  y = f( W · x + b )        W is [d_out × d_in],  x is [d_in],  b is [d_out]",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-76",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "So counting a model’s size is now pure bookkeeping. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "A “parameter” is one single learned number",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — one entry in a weight matrix, or one bias. That’s all it is. “7 billion parameters” means 7 billion individual numbers that training tuned. To find the total, count the weights in every layer and add:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-77",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  parameters in one layer  ≈  d_in × d_out   (+ d_out biases, usually negligible)\n\n  total parameters  =  sum over all layers",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-78",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Worked example — a tiny 3-layer MLP that takes a 784-pixel image and classifies it into 10 digits:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-79",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  Layer 1:  784 → 256      784 × 256   =  200,704 weights\n  Layer 2:  256 → 256      256 × 256   =   65,536 weights\n  Layer 3:  256 → 10       256 ×  10   =    2,560 weights\n  ────────────────────────────────────────────────────────\n  total ≈ 268,800 parameters   (plus 522 biases)",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-80",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "That’s it. You just counted a model’s size by hand. Real transformers use the same arithmetic, just with a specific set of matrices per layer. As a rule of thumb, one transformer layer with hidden size ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "d",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " has roughly ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "12 × d²",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " weights (four matrices for attention plus a wider feed-forward block). So a model with ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "d = 8192",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " and 80 layers has about:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-81",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  80 layers × 12 × 8192²  ≈  64 billion weights   (+ embeddings → ~70B)",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-82",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "There’s your “70B model,” derived from nothing but “a parameter is one number in a matrix, and I can count matrices.”",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-83",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "And the size on disk or in memory",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " follows immediately, because each parameter is just a number stored in some precision. In FP16, one number takes 2 bytes:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-84",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  70,000,000,000 params × 2 bytes  =  140 GB",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-85",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "That 140 GB is why a 70B model doesn’t fit on a single 80 GB GPU, why quantization (storing each number in 1 byte instead of 2) is such a big deal, and why “how many GPUs do I need?” has a concrete answer. It all traces back to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "one number per parameter.",
+          "styles": {
+            "italic": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "heading-86",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The cost of running it: FLOPs",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-87",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "One last piece, and it’s the ground truth for every performance conversation you’ll ever have. We can count the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "math",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " a model does just as precisely as we counted its size.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-88",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Look again at what one weight does inside ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "W · x",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": it gets ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "multiplied",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " by its input, and that product gets ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "added",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " into a running sum. One multiply, one add — two arithmetic operations. Engineers call a floating-point operation a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "FLOP",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", so:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "quote-89",
+      "type": "quote",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Every parameter costs ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "2 FLOPs",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " each time one input passes through the network — one multiply and one add.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-90",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "For one input (in language models, one “token”) flowing through a model with ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "N",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " parameters, the total work is therefore about:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "codeBlock-91",
+      "type": "codeBlock",
+      "props": {
+        "language": "text"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "  FLOPs per token  ≈  2 × N",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-92",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "For our 70B model: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "2 × 70,000,000,000 = 140 billion FLOPs",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " to process a single token. Not “a lot” — ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "exactly",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " 140 billion, a number you derived from first principles.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-93",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "This single formula is the seed of an enormous amount of systems knowledge. It’s why processing a long prompt (many tokens at once, reusing the same weights) behaves completely differently from generating one token at a time (dragging all 140 GB of weights out of memory to do a comparatively tiny 140 GFLOPs of math). That contrast — compute-bound versus memory-bound — is the beating heart of why inference systems look the way they do. But that’s the next deep dive. For now, sit with what you can already do:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "heading-94",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "What you can now do",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-95",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Start to finish, with no hand-waving, you can now explain:",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "bulletListItem-96",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Input",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — a network only ever sees a vector of numbers, and ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "every",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " input type (number, category, word, image, audio, paragraph) is a translation into that vector. The encoding is where meaning gets packed in.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "bulletListItem-97",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "The neuron",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "y = f(w·x + b)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": weights are learned importance knobs, the bias frees the decision boundary from the origin, and the activation’s bend is what makes depth meaningful.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "bulletListItem-98",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Width vs depth",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — many neurons side by side detect many features at one level; stacked layers compose features into a hierarchy. Both axes, for different reasons.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "bulletListItem-99",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Model size",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — a parameter is one number in a matrix; count the matrices and you have the parameter count; multiply by bytes-per-number and you have the memory.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "bulletListItem-100",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Model cost",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — two FLOPs per parameter per token; ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "2N",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " for the whole forward pass.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-101",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "That is the atom, the molecule, the organism, its size, and its running cost — the day-zero ground truth. Every advanced topic — attention, transformers, KV caches, quantization, distributed training — is built on exactly these pieces. When they show up, they won’t be magic. They’ll be assembly.",
+          "styles": {}
+        }
+      ]
+    },
+    {
+      "id": "paragraph-102",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "children": [],
+      "content": [
+        {
+          "type": "text",
+          "text": "Next: why generating text one token at a time makes a GPU spend 99% of its time waiting on memory instead of computing — the compute-bound vs memory-bound story that shapes every serving system.",
+          "styles": {
+            "italic": true
+          }
+        }
+      ]
+    }
+  ],
+  "tableVariants": {}
+}

@@ -49,8 +49,11 @@ describe('sample.write-source.json (docs/authoring)', () => {
       tableVariants: parsed.tableVariants,
       today: new Date('2026-07-18'),
     });
-    expect(out.mdx).toContain('## Headings structure the post (this is level 2)');
-    expect(out.mdx).toContain('### A level-3 subsection');
+    expect(out.mdx).toContain(
+      '## A section heading (level 1 — publishes as H2, the title owns H1)',
+    );
+    expect(out.mdx).toContain('### A subsection heading (level 2 — publishes as H3)');
+    expect(out.mdx).not.toContain('#### ');
     expect(out.mdx).toContain('```python');
     expect(out.mdx).toContain('| Input | Encoding | Vector length |');
     expect(out.mdx).toContain('**bold**');

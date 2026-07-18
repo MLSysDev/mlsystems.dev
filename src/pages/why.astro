@@ -164,7 +164,13 @@ const pageJsonLd = {
     max-width: 680px;
   }
   .why-aside {
-    display: none;
+    display: flex;
+    gap: clamp(12px, 4vw, 28px);
+    max-width: 680px;
+  }
+  .why-aside .why-art {
+    flex: 1;
+    min-width: 0;
   }
   @media (min-width: 1150px) {
     .why-layout {
@@ -172,7 +178,6 @@ const pageJsonLd = {
       justify-content: space-between;
     }
     .why-aside {
-      display: flex;
       flex-direction: column;
       gap: 20px;
       position: sticky;
@@ -180,6 +185,7 @@ const pageJsonLd = {
       align-self: start;
       margin-top: 0;
       padding-right: 8px;
+      max-width: none;
     }
   }
   .why-art {
