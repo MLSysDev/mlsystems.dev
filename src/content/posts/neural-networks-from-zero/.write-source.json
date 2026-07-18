@@ -3596,24 +3596,13 @@
       "children": []
     },
     {
-      "id": "paragraph-102",
-      "type": "separator",
+      "id": "c7f19f6d-69ac-401a-8c43-1f1116ab3e3a",
+      "type": "divider",
       "props": {},
       "children": []
     },
     {
-      "id": "44bdadb3-da54-4a7b-9d64-0799eadb9d0e",
-      "type": "paragraph",
-      "props": {
-        "backgroundColor": "default",
-        "textColor": "default",
-        "textAlignment": "left"
-      },
-      "content": [],
-      "children": []
-    },
-    {
-      "id": "c7f19f6d-69ac-401a-8c43-1f1116ab3e3a",
+      "id": "80d045c6-2e6f-42f2-991a-bbf1ea484863",
       "type": "paragraph",
       "props": {
         "backgroundColor": "default",
