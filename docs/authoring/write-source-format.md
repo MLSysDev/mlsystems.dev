@@ -172,11 +172,14 @@ The first row renders as the header. Style a table via top-level `tableVariants`
 
 **Options:** `latex` is the only prop — a display-mode KaTeX expression, always rendered centered on its own line. There is no alt/caption field; the LaTeX source itself is the accessible text. Double-escape backslashes in JSON: `"\\text{params}"`. For inline math inside a sentence, there is no inline-math style — write it as `code` styled text or keep the expression in a math block.
 
-### Separator
+### Separator / divider
 
 ```json
 { "id": "sep-1", "type": "separator", "props": {}, "children": [] }
+{ "id": "div-1", "type": "divider", "props": {}, "children": [] }
 ```
+
+`separator` renders as a `· · ·` section break; `divider` renders as a straight horizontal line (typing `---` in the editor creates a `divider`).
 
 ### Figure (image)
 

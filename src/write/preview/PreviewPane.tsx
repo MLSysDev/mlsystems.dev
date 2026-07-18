@@ -163,6 +163,8 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
       );
     case 'separator':
       return <hr key={block.id} className="article-hr" />;
+    case 'divider':
+      return <hr key={block.id} className="article-hr article-hr--line" />;
     case 'math': {
       const latex = String(block.props.latex ?? '');
       return latex ? (

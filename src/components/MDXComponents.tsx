@@ -20,7 +20,10 @@ export const mdxComponents = {
     />
   ),
   code: (props: ComponentProps<'code'>) => <code {...props} />,
-  pre: (props: ComponentProps<'pre'>) => <pre {...props} />,
+  // Shiki emits lowercase tabindex="0" on code blocks; React wants tabIndex.
+  pre: ({ tabindex, ...props }: ComponentProps<'pre'> & { tabindex?: number | string }) => (
+    <pre {...props} tabIndex={tabindex != null ? Number(tabindex) : undefined} />
+  ),
   blockquote: (props: ComponentProps<'blockquote'>) => <blockquote {...props} />,
   hr: () => <hr className="article-hr" />,
   table: (props: ComponentProps<'table'>) => (

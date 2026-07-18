@@ -44,8 +44,8 @@ export interface OgArticle {
 }
 
 const C = {
-  paper: '#f5f1e8',
-  paper2: '#ede7d6',
+  paper: '#f8f4eb',
+  paper2: '#f0ead9',
   ink: '#18171a',
   ink2: '#4a4844',
   ink3: '#807c73',

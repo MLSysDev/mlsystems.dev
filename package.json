@@ -3,6 +3,9 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "description": "An open archive for the engineers building modern ML systems.",
   "scripts": {
     "dev": "astro dev",

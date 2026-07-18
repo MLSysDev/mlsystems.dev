@@ -339,6 +339,8 @@ function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
     }
     case 'separator':
       return '---';
+    case 'divider':
+      return '<hr className="article-hr article-hr--line" />';
     case 'math': {
       const latex = String(block.props.latex ?? '');
       return latex ? `$$\n${latex}\n$$` : '';

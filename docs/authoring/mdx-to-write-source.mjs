@@ -271,6 +271,7 @@ const allowed = new Set([
   'codeBlock',
   'math',
   'separator',
+  'divider',
   'table',
   'figure',
   'gallery',

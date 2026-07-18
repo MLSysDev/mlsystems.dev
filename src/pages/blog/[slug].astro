@@ -237,9 +237,13 @@ const breadcrumbJsonLd = {
 
   <script>
     import { initReaderHighlights } from '@/lib/readerHighlights';
+    import { initTocRail } from '@/lib/tocRail';
 
     const articleBody = document.querySelector<HTMLElement>('.article-body');
-    if (articleBody) initReaderHighlights(articleBody);
+    if (articleBody) {
+      initReaderHighlights(articleBody);
+      initTocRail(articleBody);
+    }
 
     const anchors = document.querySelectorAll<HTMLAnchorElement>(
       '.article-body :is(h1, h2, h3, h4) > a[href^="#"]',

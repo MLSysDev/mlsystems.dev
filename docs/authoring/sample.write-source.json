@@ -223,6 +223,12 @@
       "children": []
     },
     {
+      "id": "div-1",
+      "type": "divider",
+      "props": {},
+      "children": []
+    },
+    {
       "id": "table-1",
       "type": "table",
       "props": { "textColor": "default" },

@@ -33,6 +33,7 @@ describe('sample.write-source.json (docs/authoring)', () => {
       'codeBlock',
       'math',
       'separator',
+      'divider',
       'table',
       'figure',
       'gallery',
@@ -58,6 +59,7 @@ describe('sample.write-source.json (docs/authoring)', () => {
     expect(out.mdx).toContain('| Input | Encoding | Vector length |');
     expect(out.mdx).toContain('**bold**');
     expect(out.mdx).toContain('[link](https://mlsystems.dev)');
+    expect(out.mdx).toContain('<hr className="article-hr article-hr--line" />');
     expect(out.componentFiles.some((f) => f.fileName.includes('ParamCounter'))).toBe(true);
   });
 

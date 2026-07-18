@@ -74,6 +74,7 @@ const ICONS = {
     </>,
   ),
   note: svg(<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />),
+  rule: svg(<line x1="4" y1="12" x2="20" y2="12" />),
   divider: svg(
     <>
       <circle cx="5" cy="12" r="1" fill="currentColor" stroke="none" />
@@ -158,10 +159,18 @@ export function getSlashItems(editor: WriteEditor) {
     {
       title: 'Divider',
       subtext: 'A · · · section break',
-      aliases: ['divider', 'separator', 'hr', 'rule', 'break'],
+      aliases: ['divider', 'separator', 'break'],
       group: 'Basic blocks',
       icon: ICONS.divider,
       onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'separator' }),
+    },
+    {
+      title: 'Line divider',
+      subtext: 'A straight horizontal rule',
+      aliases: ['line', 'hr', 'rule', 'straight'],
+      group: 'Basic blocks',
+      icon: ICONS.rule,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'divider' }),
     },
     {
       title: 'Math equation',

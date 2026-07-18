@@ -165,7 +165,7 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
     const next = current === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
     const themeColor = document.querySelector('meta[name="theme-color"]');
-    if (themeColor) themeColor.setAttribute('content', next === 'dark' ? '#0e0d0b' : '#f5f1e8');
+    if (themeColor) themeColor.setAttribute('content', next === 'dark' ? '#0e0d0b' : '#f8f4eb');
     reflectTheme();
     writePrefs({ theme: next });
   });

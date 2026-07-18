@@ -33,9 +33,9 @@ html {
   --font-read: 'Source Serif 4', 'Source Serif Pro', Georgia, Cambria, 'Times New Roman', serif;
 
   /* Light palette — warm paper */
-  --paper: #f5f1e8;
-  --paper-2: #ede7d6;
-  --paper-3: #e3dcc7;
+  --paper: #f8f4eb;
+  --paper-2: #f0ead9;
+  --paper-3: #e6dfca;
   --ink: #18171a;
   --ink-body: #2b2621;
   --ink-2: #4a4844;
@@ -1865,6 +1865,9 @@ a.hashtag:hover {
   line-height: 1.4;
   color: var(--ink-2);
 }
+.article-body blockquote > p:last-child {
+  margin-bottom: 0;
+}
 /* GFM task lists (from editor Check List blocks) */
 .article-body ul.contains-task-list {
   list-style: none;
@@ -2061,6 +2064,12 @@ a.hashtag:hover {
   font-size: 26px;
   letter-spacing: 0.5em;
   padding-left: 0.5em;
+}
+.article-body .article-hr--line {
+  border-top: 1px solid var(--line-2);
+}
+.article-body .article-hr--line::before {
+  content: none;
 }
 
 /* Only visual media breaks out wider than the text column; code and tables stay
@@ -3577,6 +3586,125 @@ mark.reader-hl:hover {
 }
 :root[data-theme='dark'] .reader-hl-pop button {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+}
+
+/* Notion-style table-of-contents rail — dashes on the right edge that expand
+   into a jump list on hover. Blog posts only, desktop only. */
+.article-body :is(h2, h3) {
+  scroll-margin-top: 88px;
+}
+.toc-rail {
+  position: fixed;
+  top: 50%;
+  right: 16px;
+  transform: translateY(-50%);
+  z-index: 80;
+}
+@media (max-width: 720px) {
+  .toc-rail {
+    right: 6px;
+  }
+  .toc-mark {
+    width: 12px;
+  }
+}
+.toc-marks {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  align-items: flex-end;
+  padding: 10px 6px;
+  cursor: pointer;
+}
+.toc-mark {
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--ink-4);
+  transition:
+    background 0.15s ease,
+    width 0.15s ease;
+}
+.toc-mark--h3 {
+  width: 9px;
+}
+.toc-mark.is-active {
+  width: 20px;
+  background: var(--accent);
+}
+.toc-panel {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%) translateX(6px);
+  min-width: min(230px, calc(100vw - 28px));
+  max-width: min(300px, calc(100vw - 28px));
+  max-height: 72vh;
+  overflow-y: auto;
+  background: var(--paper);
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.14);
+  padding: 12px 8px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+}
+.toc-rail:hover .toc-panel,
+.toc-rail:focus-within .toc-panel,
+.toc-rail.is-open .toc-panel {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(-50%) translateX(0);
+}
+:root[data-theme='dark'] .toc-panel {
+  box-shadow: 0 14px 44px rgba(0, 0, 0, 0.55);
+}
+.toc-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-3);
+  padding: 2px 12px 8px;
+}
+.toc-panel ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.toc-panel a {
+  display: block;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 13.5px;
+  line-height: 1.35;
+  color: var(--ink-2);
+  text-decoration: none;
+}
+.toc-item.lvl-3 a {
+  padding-left: 28px;
+  font-size: 12.5px;
+}
+.toc-panel a:hover {
+  background: var(--paper-2);
+  color: var(--ink);
+}
+.toc-item.is-active > a {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .toc-mark,
+  .toc-panel {
+    transition: none;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   .reader-hl-pop button {
