@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import { unified } from '@astrojs/markdown-remark';
 import { readdirSync, readFileSync } from 'fs';
 import { createHash } from 'crypto';
 import { fileURLToPath } from 'url';
@@ -92,63 +93,65 @@ function changefreqFor(path) {
   return 'weekly';
 }
 
+// Astro 7+: remark/rehype plugins live on a shared markdown processor that MDX
+// inherits, rather than on mdx({ remarkPlugins, rehypePlugins }) (removed in v8).
+/** @type {[typeof rehypeAutolinkHeadings, import('rehype-autolink-headings').Options]} */
+const autolinkHeadings = [
+  rehypeAutolinkHeadings,
+  {
+    behavior: 'append',
+    properties: { className: ['heading-anchor'], ariaLabel: 'Copy link to section' },
+    content: {
+      type: 'element',
+      tagName: 'svg',
+      properties: {
+        width: 16,
+        height: 16,
+        viewBox: '0 0 24 24',
+        fill: 'none',
+        stroke: 'currentColor',
+        strokeWidth: 2,
+        strokeLinecap: 'round',
+        strokeLinejoin: 'round',
+        'aria-hidden': 'true',
+      },
+      children: [
+        {
+          type: 'element',
+          tagName: 'path',
+          properties: { d: 'M9 17H7A5 5 0 0 1 7 7h2' },
+          children: [],
+        },
+        {
+          type: 'element',
+          tagName: 'path',
+          properties: { d: 'M15 7h2a5 5 0 0 1 0 10h-2' },
+          children: [],
+        },
+        {
+          type: 'element',
+          tagName: 'line',
+          properties: { x1: 8, y1: 12, x2: 16, y2: 12 },
+          children: [],
+        },
+      ],
+    },
+  },
+];
+
 export default defineConfig({
   site: 'https://mlsystems.dev',
   trailingSlash: 'never',
   markdown: {
     shikiConfig: { theme: 'github-dark' },
+    processor: unified({
+      remarkPlugins: [remarkMath],
+      rehypePlugins: [rehypeSlug, autolinkHeadings, rehypeKatex],
+    }),
   },
   integrations: [
     react(),
-    mdx({
-      remarkPlugins: [remarkMath],
-      rehypePlugins: [
-        rehypeSlug,
-        [
-          rehypeAutolinkHeadings,
-          {
-            behavior: 'append',
-            properties: { className: ['heading-anchor'], ariaLabel: 'Copy link to section' },
-            content: {
-              type: 'element',
-              tagName: 'svg',
-              properties: {
-                width: 16,
-                height: 16,
-                viewBox: '0 0 24 24',
-                fill: 'none',
-                stroke: 'currentColor',
-                strokeWidth: 2,
-                strokeLinecap: 'round',
-                strokeLinejoin: 'round',
-                'aria-hidden': 'true',
-              },
-              children: [
-                {
-                  type: 'element',
-                  tagName: 'path',
-                  properties: { d: 'M9 17H7A5 5 0 0 1 7 7h2' },
-                  children: [],
-                },
-                {
-                  type: 'element',
-                  tagName: 'path',
-                  properties: { d: 'M15 7h2a5 5 0 0 1 0 10h-2' },
-                  children: [],
-                },
-                {
-                  type: 'element',
-                  tagName: 'line',
-                  properties: { x1: 8, y1: 12, x2: 16, y2: 12 },
-                  children: [],
-                },
-              ],
-            },
-          },
-        ],
-        rehypeKatex,
-      ],
-    }),
+    mdx(),
     sitemap({
       changefreq: 'weekly',
       priority: 0.5,

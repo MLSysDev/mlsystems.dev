@@ -30,11 +30,11 @@
     ]
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@astrojs/mdx": "^4.0.0",
-    "@astrojs/react": "^4.1.0",
-    "@astrojs/rss": "^4.0.10",
-    "@astrojs/sitemap": "^3.2.0",
+    "@astrojs/check": "^0.9.9",
+    "@astrojs/mdx": "^7.0.3",
+    "@astrojs/react": "^6.0.1",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.3",
     "@blocknote/code-block": "^0.51.4",
     "@blocknote/core": "^0.51.4",
     "@blocknote/mantine": "^0.51.4",
@@ -44,7 +44,7 @@
     "@fontsource/playfair-display": "^5.2.8",
     "@fontsource/source-serif-4": "^5.2.9",
     "@resvg/resvg-js": "^2.6.2",
-    "astro": "^5.1.0",
+    "astro": "^7.1.1",
     "jszip": "^3.10.1",
     "katex": "^0.17.0",
     "react": "^19.0.0",
@@ -56,7 +56,8 @@
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
     "satori": "^0.26.0",
-    "shiki": "^1.24.0"
+    "shiki": "^1.24.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
