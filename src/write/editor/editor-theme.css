@@ -983,7 +983,8 @@
     [data-content-type='svg'],
     [data-content-type='customComponent'],
     [data-content-type='note'],
-    [data-content-type='separator']
+    [data-content-type='separator'],
+    [data-content-type='divider']
   ) {
   margin-bottom: 20px;
 }
