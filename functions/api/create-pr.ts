@@ -41,7 +41,9 @@ function invalidPath(files: PostFile[], slug: string): string | null {
       continue;
     }
     if (!f.path.startsWith(postDir)) return f.path;
-    if (!FILE_NAME_RE.test(f.path.slice(postDir.length))) return f.path;
+    const name = f.path.slice(postDir.length);
+    // The editor's re-open sidecar is the only permitted dotfile.
+    if (name !== '.write-source.json' && !FILE_NAME_RE.test(name)) return f.path;
   }
   return null;
 }
