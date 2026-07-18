@@ -1,10 +1,11 @@
 import { readdirSync } from 'node:fs';
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'zod';
 import { glob } from 'astro/loaders';
 
 // Topic ids come from the data files themselves, so post frontmatter is
 // validated against whatever topics exist — no code change to add one.
-const TOPIC_IDS = readdirSync(new URL('./topics', import.meta.url))
+const TOPIC_IDS = readdirSync(new URL('./content/topics', import.meta.url))
   .filter((f) => f.endsWith('.json'))
   .map((f) => f.replace(/\.json$/, '')) as [string, ...string[]];
 
@@ -21,7 +22,7 @@ const authors = defineCollection({
     mastodon: z.string().optional(),
     bluesky: z.string().optional(),
     website: z.string().optional(),
-    email: z.string().email().optional(),
+    email: z.email().optional(),
   }),
 });
 
@@ -47,7 +48,7 @@ const posts = defineCollection({
       proposedTopic: z.string().optional(),
       tags: z.array(z.string()).optional(),
       updated: z.coerce.date().optional(),
-      cover: z.union([image(), z.string().url()]).optional(),
+      cover: z.union([image(), z.url()]).optional(),
       // Opt in to a generated 1200×630 share card (post title over the cover).
       // Only these posts render an OG card at build; everyone else uses the raw
       // cover or the shared default, keeping build time flat.
@@ -65,11 +66,11 @@ const tools = defineCollection({
       summary: z.string(),
       tag: z.enum(['Live', 'Beta', 'Experimental', 'Soon']),
       icon: z.string().optional(),
-      thumbnail: z.union([image(), z.string().url()]).optional(),
+      thumbnail: z.union([image(), z.url()]).optional(),
       authors: z.array(z.string()).optional(),
       topics: z.array(z.string()).optional(),
       tags: z.array(z.string()).optional(),
-      repo: z.string().url().optional(),
+      repo: z.url().optional(),
       core: z.boolean().optional().default(false),
       featured: z.boolean().optional().default(false),
       draft: z.boolean().optional().default(false),
@@ -92,7 +93,7 @@ const externalTools = defineCollection({
     name: z.string(),
     source: z.string(),
     desc: z.string(),
-    href: z.string().url(),
+    href: z.url(),
     category: z.enum(['Tokenization', 'Memory & VRAM', 'Architecture', 'Training & Scaling']),
   }),
 });
