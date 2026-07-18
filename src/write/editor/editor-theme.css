@@ -14,6 +14,9 @@
   width: 100%;
   border: none;
   background: none;
+  resize: none;
+  overflow: hidden;
+  display: block;
   color: var(--ink);
   font-family: var(--font-sans, 'Hanken Grotesk', sans-serif);
   font-weight: 700;
@@ -29,6 +32,8 @@
   border: none;
   background: none;
   resize: none;
+  overflow: hidden;
+  display: block;
   color: var(--ink-2);
   font-family: var(--font-sans, 'Hanken Grotesk', sans-serif);
   font-size: clamp(15px, 2.5vw, 22px);
@@ -190,8 +195,17 @@
 
 .write-topbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
   margin-bottom: 12px;
+}
+
+.write-upload-error {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--accent);
+  margin: 0 0 12px;
 }
 
 .write-preview-toggle-row {
@@ -218,6 +232,9 @@
   background: var(--accent-soft);
 }
 .write-open-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--ink-3);
@@ -890,6 +907,10 @@
   margin: 6px 0;
   background: var(--paper-2, var(--paper));
   font-family: var(--font-sans, sans-serif);
+}
+
+.write-math {
+  width: 100%;
 }
 
 .write-block-label {

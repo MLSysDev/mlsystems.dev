@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { SITE } from '@/lib/site';
 import type { NewAuthor, PostMeta } from '../serialize/toMdx';
 import { slugify } from '../serialize/validate';
@@ -41,6 +41,16 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
 
   const slugLocked = slugTouched || (!!meta.slug && meta.slug !== slugify(meta.title));
 
+  const titleRef = useRef<HTMLTextAreaElement>(null);
+  const summaryRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    for (const el of [titleRef.current, summaryRef.current]) {
+      if (!el) continue;
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+    }
+  }, [meta.title, meta.summary]);
+
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase().replace(/^#/, '');
     if (tag && !meta.tags.includes(tag)) set({ tags: [...meta.tags, tag] });
@@ -49,19 +59,25 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
 
   return (
     <div className="write-meta">
-      <input
-        type="text"
+      <textarea
+        ref={titleRef}
         className="write-title"
+        rows={1}
         placeholder="Title"
         aria-label="Post title"
         value={meta.title}
-        onChange={(e) =>
-          set({ title: e.target.value, ...(slugLocked ? {} : { slug: slugify(e.target.value) }) })
-        }
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') e.preventDefault();
+        }}
+        onChange={(e) => {
+          const title = e.target.value.replace(/\n/g, '');
+          set({ title, ...(slugLocked ? {} : { slug: slugify(title) }) });
+        }}
       />
       <textarea
+        ref={summaryRef}
         className="write-summary"
-        rows={2}
+        rows={1}
         placeholder="A brief summary of the blog — shows under the title"
         aria-label="Post summary"
         value={meta.summary}

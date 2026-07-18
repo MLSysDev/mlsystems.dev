@@ -1,0 +1,408 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "Sample Post: Every Block the Editor Supports",
+    "summary": "A reference draft exercising every block type the /write editor supports. Upload it via 'Upload JSON' on /write, inspect how each block renders, then delete what you don't need.",
+    "authors": ["guest"],
+    "writerName": "Author Name",
+    "topicId": "architecture",
+    "topicName": "Architecture",
+    "tags": ["sample", "authoring"],
+    "slug": "your-post-url-slug-here",
+    "coverFileName": "",
+    "ogCard": false,
+    "proposedTopic": "",
+    "newAuthor": null
+  },
+  "blocks": [
+    {
+      "id": "p-intro",
+      "type": "paragraph",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "left" },
+      "content": [
+        { "type": "text", "text": "Inline styling: ", "styles": {} },
+        { "type": "text", "text": "bold", "styles": { "bold": true } },
+        { "type": "text", "text": ", ", "styles": {} },
+        { "type": "text", "text": "italic", "styles": { "italic": true } },
+        { "type": "text", "text": ", ", "styles": {} },
+        { "type": "text", "text": "inline code", "styles": { "code": true } },
+        { "type": "text", "text": ", ", "styles": {} },
+        { "type": "text", "text": "colored text", "styles": { "textColor": "red" } },
+        { "type": "text", "text": ", and a ", "styles": {} },
+        {
+          "type": "link",
+          "href": "https://mlsystems.dev",
+          "content": [{ "type": "text", "text": "link", "styles": {} }]
+        },
+        { "type": "text", "text": ".", "styles": {} }
+      ],
+      "children": []
+    },
+    {
+      "id": "p-centered",
+      "type": "paragraph",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "center" },
+      "content": [
+        {
+          "type": "text",
+          "text": "A center-aligned paragraph (textAlignment: center).",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "h2-sections",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        { "type": "text", "text": "Headings structure the post (this is level 2)", "styles": {} }
+      ],
+      "children": []
+    },
+    {
+      "id": "h3-sub",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 3,
+        "isToggleable": false
+      },
+      "content": [{ "type": "text", "text": "A level-3 subsection", "styles": {} }],
+      "children": []
+    },
+    {
+      "id": "ul-1",
+      "type": "bulletListItem",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "left" },
+      "content": [{ "type": "text", "text": "Bullet list item one", "styles": {} }],
+      "children": []
+    },
+    {
+      "id": "ul-2",
+      "type": "bulletListItem",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "left" },
+      "content": [
+        { "type": "text", "text": "Bullet item two with an ", "styles": {} },
+        { "type": "text", "text": "emphasized", "styles": { "italic": true } },
+        { "type": "text", "text": " word", "styles": {} }
+      ],
+      "children": []
+    },
+    {
+      "id": "ol-1",
+      "type": "numberedListItem",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "left" },
+      "content": [{ "type": "text", "text": "Numbered step one", "styles": {} }],
+      "children": []
+    },
+    {
+      "id": "ol-2",
+      "type": "numberedListItem",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "left" },
+      "content": [{ "type": "text", "text": "Numbered step two", "styles": {} }],
+      "children": []
+    },
+    {
+      "id": "check-1",
+      "type": "checkListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "checked": true
+      },
+      "content": [{ "type": "text", "text": "A completed checklist item", "styles": {} }],
+      "children": []
+    },
+    {
+      "id": "check-2",
+      "type": "checkListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "checked": false
+      },
+      "content": [{ "type": "text", "text": "An open checklist item", "styles": {} }],
+      "children": []
+    },
+    {
+      "id": "toggle-1",
+      "type": "toggleListItem",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "left" },
+      "content": [
+        { "type": "text", "text": "A toggle item — child blocks collapse under it", "styles": {} }
+      ],
+      "children": [
+        {
+          "id": "toggle-1-child",
+          "type": "paragraph",
+          "props": {
+            "backgroundColor": "default",
+            "textColor": "default",
+            "textAlignment": "left"
+          },
+          "content": [
+            {
+              "type": "text",
+              "text": "Hidden detail revealed when the toggle opens.",
+              "styles": {}
+            }
+          ],
+          "children": []
+        }
+      ]
+    },
+    {
+      "id": "quote-1",
+      "type": "quote",
+      "props": { "backgroundColor": "default", "textColor": "default" },
+      "content": [
+        {
+          "type": "text",
+          "text": "A quote block — for pull-quotes and cited passages.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "note-1",
+      "type": "note",
+      "props": {},
+      "content": [
+        {
+          "type": "text",
+          "text": "A note callout — the highlighted aside used for a section's key takeaway.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "code-1",
+      "type": "codeBlock",
+      "props": { "language": "python" },
+      "content": [
+        {
+          "type": "text",
+          "text": "def params(d_in: int, d_out: int) -> int:\n    \"\"\"One linear layer: weights + biases.\"\"\"\n    return d_in * d_out + d_out",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "math-1",
+      "type": "math",
+      "props": {
+        "latex": "\\text{params} = d_{\\text{in}} \\times d_{\\text{out}} + d_{\\text{out}}"
+      },
+      "children": []
+    },
+    {
+      "id": "sep-1",
+      "type": "separator",
+      "props": {},
+      "children": []
+    },
+    {
+      "id": "table-1",
+      "type": "table",
+      "props": { "textColor": "default" },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [null, null, null],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "Input", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "Encoding", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "Vector length", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "A word", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "learned embedding", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "~768", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "28×28 image", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "flattened pixels", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [{ "type": "text", "text": "784", "styles": {} }],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "fig-1",
+      "type": "figure",
+      "props": {
+        "fileName": "",
+        "src": "https://placehold.co/720x400/f5f1e8/b3502d?text=Replace+this+figure",
+        "alt": "Describe the image for screen readers",
+        "caption": "A figure with a placeholder src so it previews — the writer replaces it with a real image in the editor.",
+        "width": 360
+      },
+      "children": []
+    },
+    {
+      "id": "gallery-1",
+      "type": "gallery",
+      "props": {
+        "fileNames": "[]",
+        "alts": "[]",
+        "min": ""
+      },
+      "children": []
+    },
+    {
+      "id": "video-1",
+      "type": "video",
+      "props": {
+        "videoId": "aircAruvnKk",
+        "caption": "A YouTube embed — props.videoId is the 11-character YouTube video id."
+      },
+      "children": []
+    },
+    {
+      "id": "svg-1",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 470 160\" role=\"img\" aria-label=\"Three circles connected left to right by lines, labelled input, hidden, output.\" style=\"width:100%;max-width:520px;height:auto;color:currentColor;font-family:ui-sans-serif,system-ui,sans-serif\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"><circle cx=\"80\" cy=\"70\" r=\"22\"/><circle cx=\"235\" cy=\"70\" r=\"22\"/><circle cx=\"390\" cy=\"70\" r=\"22\"/><path d=\"M102 70h111M257 70h111\"/><g fill=\"currentColor\" stroke=\"none\" font-size=\"13\" text-anchor=\"middle\"><text x=\"80\" y=\"120\">input</text><text x=\"235\" y=\"120\">hidden</text><text x=\"390\" y=\"120\">output</text></g></svg>",
+        "caption": "An inline SVG diagram — use currentColor so it adapts to light/dark theme."
+      },
+      "children": []
+    },
+    {
+      "id": "component-1",
+      "type": "customComponent",
+      "props": {
+        "componentName": "ParamCounter",
+        "source": "export default function ParamCounter() {\n  const layers = [784, 128, 10];\n  const params = layers.slice(1).reduce((sum, d, i) => sum + layers[i] * d + d, 0);\n  return (\n    <div style={{ fontFamily: 'monospace', padding: 16, border: '1px solid currentColor' }}>\n      MLP {layers.join(' → ')} has {params.toLocaleString()} parameters\n    </div>\n  );\n}\n"
+      },
+      "children": []
+    },
+    {
+      "id": "p-outro",
+      "type": "paragraph",
+      "props": { "backgroundColor": "default", "textColor": "default", "textAlignment": "left" },
+      "content": [
+        {
+          "type": "text",
+          "text": "That is every block. Delete what you don't need, keep the shapes exact, and hand the file to a writer to refine.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    }
+  ],
+  "tableVariants": {
+    "table-1": { "border": "rule", "zebra": true }
+  }
+}

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { AllSelection, TextSelection } from 'prosemirror-state';
 import { filterSuggestionItems } from '@blocknote/core';
@@ -29,7 +29,7 @@ import { usePasteImages } from './editor/usePasteImages';
 import { serializePost, type PostMeta, type SBlock, type TableStyle } from './serialize/toMdx';
 import { suggest, validate } from './serialize/validate';
 import { buildZip } from './serialize/toZip';
-import { buildSource } from './serialize/source';
+import { buildSource, parseSource, type ParsedSource } from './serialize/source';
 import { authorPath, buildAuthorJson } from './serialize/author';
 import { fetchExisting } from './serialize/fetchExisting';
 import {
@@ -93,6 +93,8 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [sentFile, setSentFile] = useState<string | null>(null);
   const [siteTheme, setSiteTheme] = useState<'light' | 'dark'>('light');
   const [openError, setOpenError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const uploadInputRef = useRef<HTMLInputElement>(null);
   const [openUrl, setOpenUrl] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const githubEnabled = isGithubConfigured();
@@ -238,25 +240,29 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     setRestore(null);
   };
 
+  const applySource = async (loaded: ParsedSource) => {
+    clearAssets();
+    await clearStoredAssets().catch(() => undefined);
+    setRestore(null);
+    setSentFile(null);
+    setIssues([]);
+    editor.replaceBlocks(editor.document, loaded.blocks as never);
+    setMeta({
+      ...emptyMeta(),
+      ...loaded.meta,
+      authors: Array.isArray(loaded.meta.authors) ? loaded.meta.authors : [],
+    });
+    setTableVariants(loaded.tableVariants ?? {});
+  };
+
   const openExisting = async () => {
     const input = openUrl.trim();
     if (!input) return;
     setOpenError(null);
     setBusy(true);
     try {
-      clearAssets();
       const loaded = await fetchExisting(repoUrl, input);
-      await clearStoredAssets().catch(() => undefined);
-      setRestore(null);
-      setSentFile(null);
-      setIssues([]);
-      editor.replaceBlocks(editor.document, loaded.blocks as never);
-      setMeta({
-        ...emptyMeta(),
-        ...loaded.meta,
-        authors: Array.isArray(loaded.meta.authors) ? loaded.meta.authors : [],
-      });
-      setTableVariants(loaded.tableVariants ?? {});
+      await applySource(loaded);
       setLoadedSlug(loaded.meta.slug || null);
       setOpenUrl('');
       setOpenDialog(false);
@@ -264,6 +270,30 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       setOpenError(err instanceof Error ? err.message : 'That post could not be opened.');
     } finally {
       setBusy(false);
+    }
+  };
+
+  const uploadSourceFile = async (file: File) => {
+    setUploadError(null);
+    try {
+      const parsed = parseSource(await file.text());
+      if (!parsed) {
+        setUploadError('Not a valid write-source .json file.');
+        return;
+      }
+      if (
+        !isEmptyDraft(meta, docBlocks()) &&
+        !window.confirm('Replace your current draft with the uploaded file?')
+      )
+        return;
+      await applySource(parsed);
+      setLoadedSlug(null);
+    } catch (err) {
+      setUploadError(
+        err instanceof Error && err.message
+          ? `Could not load that file: ${err.message}`
+          : 'Could not load that file — its blocks may not match the editor schema.',
+      );
     }
   };
 
@@ -383,6 +413,38 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   return (
     <div className="write-portal">
       <div className="write-topbar">
+        <input
+          ref={uploadInputRef}
+          type="file"
+          accept=".json,application/json"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) void uploadSourceFile(file);
+          }}
+        />
+        <button
+          type="button"
+          className="write-open-link"
+          onClick={() => uploadInputRef.current?.click()}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="13"
+            height="13"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M12 15V4M7 8l5-4 5 4" />
+            <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+          </svg>
+          Upload JSON
+        </button>
         <button
           type="button"
           className="write-open-link"
@@ -394,6 +456,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           Edit a published post ↗
         </button>
       </div>
+      {uploadError && <p className="write-upload-error">{uploadError}</p>}
 
       <OpenExistingDialog
         open={openDialog}
