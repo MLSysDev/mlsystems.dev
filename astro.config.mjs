@@ -212,6 +212,7 @@ export default defineConfig({
         'react',
         'react-dom',
         'react/jsx-runtime',
+        'react/jsx-dev-runtime',
         '@blocknote/core',
         '@blocknote/react',
         '@blocknote/mantine',
