@@ -10,6 +10,8 @@ topicId: 'architecture'
 tags: ['fundamentals', 'perceptron', 'neural-networks', 'parameters', 'flops']
 ---
 
+import NeuronPlayground from './NeuronPlayground';
+
 Almost every explanation of neural networks starts one step too late. It shows you a diagram of circles connected by lines, tells you “these are neurons,” and moves on. But it never answers the question a genuinely curious person asks first:
 
 **What are those circles even looking at?**
@@ -262,6 +264,11 @@ The activation function inserts a **bend** — a non-linearity — between layer
 > Weights and bias let a neuron draw _one_ straight boundary. The activation is what lets many neurons combine into something that isn’t straight at all. No activation, no depth, no deep learning.
 
 That’s the entire atom: **weights** decide what matters, the **bias** frees the boundary from the origin, the **activation** bends the line so depth means something. Three ingredients, each earning its place.
+
+Don’t take my word for it — here is a live neuron. Drag the weight and watch the slope change; drag the bias and watch the boundary slide; switch the activation and watch the line bend:
+
+<NeuronPlayground client:visible />
+
 
 ## Why one neuron is never enough
 
