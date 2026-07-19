@@ -101,9 +101,29 @@ const cell = (text) => ({
   props: { colspan: 1, rowspan: 1, ...D },
 });
 
+const DIR = SRC.replace(/\/index\.mdx$/, '');
+
+function componentSource(name) {
+  const file = `${DIR}/${name}.tsx`;
+  if (fs.existsSync(file)) return fs.readFileSync(file, 'utf8');
+  console.warn(`warning: ${name}.tsx not found next to index.mdx — source left empty`);
+  return '';
+}
+
+function frameProps(attrs) {
+  const title =
+    attrs.match(/title="([^"]*)"/)?.[1] ??
+    JSON.parse(attrs.match(/title=\{("(?:[^"\\]|\\.)*")\}/)?.[1] ?? '""');
+  return {
+    frameTitle: title,
+    frameSize: /size="wide"/.test(attrs) ? 'wide' : 'normal',
+    frameExpand: /(^|\s)expand(\s|$|=)/.test(attrs),
+  };
+}
+
 let rest = body;
 const pattern =
-  /(<Figure caption=(?:"([\s\S]*?)"|\{("(?:[^"\\]|\\.)*")\})>\s*([\s\S]*?)\s*<\/Figure>)|(<Note>\s*([\s\S]*?)\s*<\/Note>)|(```(\w*)\n([\s\S]*?)```)/g;
+  /(<Figure caption=(?:"([\s\S]*?)"|\{("(?:[^"\\]|\\.)*")\})>\s*([\s\S]*?)\s*<\/Figure>)|(<Note>\s*([\s\S]*?)\s*<\/Note>)|(```(\w*)\n([\s\S]*?)```)|(<Interactive\b([^>]*)>\s*<([A-Za-z]\w*)\s+client:visible\s*\/>\s*<\/Interactive>)|(<([A-Z]\w*)\s+client:visible\s*\/>)/g;
 
 let cursor = 0;
 const segments = [];
@@ -120,6 +140,13 @@ while ((m = pattern.exec(rest))) {
   } else if (m[5]) segments.push({ kind: 'note', text: m[6].replace(/\s+/g, ' ').trim() });
   else if (m[7])
     segments.push({ kind: 'code', lang: m[8] || 'text', code: m[9].replace(/\n$/, '') });
+  else if (m[10]) segments.push({ kind: 'component', name: m[12], frame: frameProps(m[11]) });
+  else if (m[13])
+    segments.push({
+      kind: 'component',
+      name: m[14],
+      frame: { frameTitle: '', frameSize: 'normal', frameExpand: false },
+    });
   cursor = m.index + m[0].length;
 }
 if (cursor < rest.length) segments.push({ kind: 'md', text: rest.slice(cursor) });
@@ -129,7 +156,7 @@ function emitMd(text) {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    if (!line.trim()) {
+    if (!line.trim() || /^import\s.+\sfrom\s/.test(line)) {
       i++;
       continue;
     }
@@ -233,6 +260,12 @@ for (const seg of segments) {
   else if (seg.kind === 'note') push('note', {}, inline(seg.text));
   else if (seg.kind === 'code')
     push('codeBlock', { language: seg.lang }, [{ type: 'text', text: seg.code, styles: {} }]);
+  else if (seg.kind === 'component')
+    push('customComponent', {
+      componentName: seg.name,
+      source: componentSource(seg.name),
+      ...seg.frame,
+    });
 }
 
 const doc = {
