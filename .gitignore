@@ -43,3 +43,4 @@ Thumbs.db
 
 # local AI design/planning docs — never committed
 docs/superpowers/
+.gstack/

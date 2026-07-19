@@ -99,6 +99,10 @@ function applyMarks(root: HTMLElement, item: HighlightItem): void {
 
   for (const { node, s, e } of segments) {
     if (node.parentElement?.closest('mark.reader-hl')) continue;
+    // HTML <mark> is a foreign element inside SVG/MathML — wrapping would make
+    // the text disappear. KaTeX output is skipped entirely: its hidden MathML
+    // duplicates the visible text, so marks there corrupt layout and anchors.
+    if (node.parentElement?.closest('svg, math, .katex')) continue;
     if (!node.data.slice(s, e).trim() && segments.length > 1) continue;
     let target = node;
     if (e < target.data.length) target.splitText(e);
@@ -125,6 +129,15 @@ function rangeTouchesMark(range: Range): boolean {
   if (range.endContainer.parentElement?.closest('mark.reader-hl')) return true;
   const frag = range.cloneContents();
   return frag.querySelector?.('mark.reader-hl') != null;
+}
+
+const FOREIGN = 'svg, math, .katex';
+
+function rangeTouchesForeign(range: Range): boolean {
+  if (range.startContainer.parentElement?.closest(FOREIGN)) return true;
+  if (range.endContainer.parentElement?.closest(FOREIGN)) return true;
+  const frag = range.cloneContents();
+  return frag.querySelector?.(FOREIGN) != null;
 }
 
 const ICON_ADD =
@@ -176,7 +189,7 @@ export function initReaderHighlights(root: HTMLElement): void {
       hide();
       return;
     }
-    if (rangeTouchesMark(range) || !selectorFromRange(root, range)) {
+    if (rangeTouchesMark(range) || rangeTouchesForeign(range) || !selectorFromRange(root, range)) {
       hide();
       return;
     }

@@ -3531,6 +3531,12 @@ a.forum-poll-bar:hover .forum-poll-fill {
   }
 }
 
+/* Diagram text is decorative — selecting it invites broken highlights. */
+.article-body svg {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* Reader highlights — client-side, stored in localStorage per post */
 mark.reader-hl {
   background: rgba(255, 220, 60, 0.45);
