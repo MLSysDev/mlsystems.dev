@@ -371,7 +371,39 @@ describe('custom component blocks', () => {
     );
     expect(mdx).toContain("import Viz from './Viz';");
     expect(mdx).toContain('<Viz client:visible />');
+    expect(mdx).not.toContain('<Interactive');
     expect(componentFiles).toEqual([{ fileName: 'Viz.tsx', source }]);
+  });
+
+  it('wraps in <Interactive> when frame options are set', () => {
+    const source = 'export default function Viz() {\n  return <div>hi</div>;\n}';
+    const { mdx } = serializePost(
+      meta,
+      [
+        block('customComponent', {
+          componentName: 'Viz',
+          source,
+          frameTitle: 'Throughput, live',
+          frameSize: 'wide',
+          frameExpand: true,
+        }),
+      ],
+      { tableVariants: {}, today },
+    );
+    expect(mdx).toContain("import Interactive from '../../../components/Interactive';");
+    expect(mdx).toContain(
+      '<Interactive title="Throughput, live" size="wide" expand client:load>\n  <Viz client:visible />\n</Interactive>',
+    );
+  });
+
+  it('omits the wrapper import when only defaults are used', () => {
+    const source = 'export default function Viz() { return null; }';
+    const { mdx } = serializePost(
+      meta,
+      [block('customComponent', { componentName: 'Viz', source, frameSize: 'normal' })],
+      { tableVariants: {}, today },
+    );
+    expect(mdx).not.toContain('Interactive');
   });
 });
 

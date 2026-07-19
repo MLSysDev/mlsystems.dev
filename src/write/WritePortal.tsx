@@ -390,6 +390,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
 
   const handleSelectAll = (e: ReactKeyboardEvent) => {
     if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'a' || e.shiftKey || e.altKey) return;
+    if ((e.target as HTMLElement).closest('input, textarea, select')) return;
     const view = editor.prosemirrorView;
     if (!view) return;
     const { state } = view;

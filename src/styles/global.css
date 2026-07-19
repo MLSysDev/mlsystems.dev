@@ -3725,3 +3725,66 @@ mark.reader-hl:hover {
     padding: 24px 0;
   }
 }
+
+/* ---------- Interactive component frame ---------- */
+
+.ix {
+  margin: 32px 0;
+}
+.ix-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+.ix-title {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  border-bottom: 2px solid var(--accent);
+  padding-bottom: 3px;
+}
+.ix-expand {
+  margin-left: auto;
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--ink-2);
+  border-radius: 5px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.ix-expand:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ix--wide {
+  position: relative;
+  width: min(960px, calc(100vw - 48px));
+  left: 50%;
+  transform: translateX(-50%);
+}
+.ix-dialog {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink-body);
+  padding: 20px 24px;
+  width: min(1100px, calc(100vw - 40px));
+  max-height: calc(100vh - 48px);
+}
+.ix-dialog::backdrop {
+  background: rgba(24, 23, 26, 0.55);
+  backdrop-filter: blur(2px);
+}
+.ix-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}

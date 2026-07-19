@@ -1,6 +1,8 @@
 import type { CSSProperties, ReactNode } from 'react';
 import katex from 'katex';
 import { mdxComponents as C } from '@/components/MDXComponents';
+import Interactive from '@/components/Interactive';
+import LiveComponent from './LiveComponent';
 import { getAssetUrl } from '../storage/assets';
 import { sanitizeSvg } from '../lib/sanitizeSvg';
 import {
@@ -225,10 +227,27 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
     }
     case 'customComponent': {
       const name = String(block.props.componentName ?? '');
-      return (
-        <div key={block.id} className="write-preview-component">
-          ⚡ Interactive component {name ? `<${name}>` : ''} — runs live on the published site
+      const source = String(block.props.source ?? '');
+      const placeholder = source.trim() ? (
+        <LiveComponent name={name} source={source} />
+      ) : (
+        <div className="write-preview-component">
+          ⚡ Interactive component {name ? `<${name}>` : ''} — add code to see it run
         </div>
+      );
+      const title = String(block.props.frameTitle ?? '').trim();
+      const wide = block.props.frameSize === 'wide';
+      const expand = Boolean(block.props.frameExpand);
+      if (!title && !wide && !expand) return <div key={block.id}>{placeholder}</div>;
+      return (
+        <Interactive
+          key={block.id}
+          title={title || undefined}
+          size={wide ? 'wide' : 'normal'}
+          expand={expand}
+        >
+          {placeholder}
+        </Interactive>
       );
     }
     case 'table':

@@ -279,6 +279,8 @@ function serializeGallery(block: SBlock, ctx: Ctx): string {
   return `<Gallery${minAttr}>\n${images}\n</Gallery>`;
 }
 
+const INTERACTIVE_IMPORT = "import Interactive from '../../../components/Interactive';";
+
 function serializeComponent(block: SBlock, ctx: Ctx): string {
   const name = String(block.props.componentName ?? '');
   const source = String(block.props.source ?? '');
@@ -287,7 +289,22 @@ function serializeComponent(block: SBlock, ctx: Ctx): string {
     ctx.componentFiles.push({ fileName: `${name}.tsx`, source });
     ctx.componentImports.push(`import ${name} from './${name}';`);
   }
-  return `<${name} client:visible />`;
+  const el = `<${name} client:visible />`;
+  const title = String(block.props.frameTitle ?? '').trim();
+  const wide = block.props.frameSize === 'wide';
+  const expand = Boolean(block.props.frameExpand);
+  if (!title && !wide && !expand) return el;
+  if (!ctx.componentImports.includes(INTERACTIVE_IMPORT)) {
+    ctx.componentImports.push(INTERACTIVE_IMPORT);
+  }
+  const attrs = [
+    title ? attr('title', title) : null,
+    wide ? 'size="wide"' : null,
+    expand ? 'expand' : null,
+  ]
+    .filter(Boolean)
+    .join(' ');
+  return `<Interactive ${attrs} client:load>\n  ${el}\n</Interactive>`;
 }
 
 function aligned(block: SBlock, s: string): string {
