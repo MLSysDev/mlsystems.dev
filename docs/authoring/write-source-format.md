@@ -257,6 +257,14 @@ Agents **can and should** author complete diagrams this way. Rules: use `stroke=
 
 `source` is a complete TSX module with a default export; `componentName` matches the function name. It ships as a separate file next to the post.
 
+Optional display props (all default off — omit them for a component that renders inline at normal width):
+
+- `frameTitle` (string) — small mono label above the component.
+- `frameSize` (`"normal"` | `"wide"`) — `"wide"` renders at up to 960px, extending past the text column; clamps to the screen on mobile.
+- `frameExpand` (boolean) — adds an expand button that opens the component in a fullscreen overlay (Esc closes, state preserved).
+
+When any of these is set, the published MDX wraps the component in the site's `<Interactive>` frame automatically.
+
 ## Rules of thumb for a good agent draft
 
 1. Use heading level 1 for sections and 2 for subsections — `meta.title` is the page's H1, so editor levels publish one step deeper (level 1 → H2).

@@ -7,6 +7,9 @@ export const createComponentBlock = createReactBlockSpec(
     propSchema: {
       componentName: { default: '' },
       source: { default: '' },
+      frameTitle: { default: '' },
+      frameSize: { default: 'normal', values: ['normal', 'wide'] },
+      frameExpand: { default: false },
     },
     content: 'none',
   },
@@ -19,9 +22,7 @@ export const createComponentBlock = createReactBlockSpec(
 
       return (
         <div className="write-component" contentEditable={false}>
-          <span className="write-block-label">
-            Custom React component — shows here as a placeholder, renders after publish
-          </span>
+          <span className="write-block-label">Custom React component</span>
           <input
             type="text"
             className={badName ? 'write-input-invalid' : undefined}
@@ -41,9 +42,30 @@ export const createComponentBlock = createReactBlockSpec(
             value={block.props.source}
             onChange={(e) => setProps({ source: e.target.value })}
           />
-          {name && !badName && block.props.source && (
-            <div className="write-component-card">⚙ {name}.tsx — ships with your post folder</div>
-          )}
+          <div className="write-component-frame">
+            <select
+              value={block.props.frameSize}
+              onChange={(e) => setProps({ frameSize: e.target.value as 'normal' | 'wide' })}
+              aria-label="Display width"
+            >
+              <option value="normal">Normal width</option>
+              <option value="wide">Wide — extends past the text column</option>
+            </select>
+            <label>
+              <input
+                type="checkbox"
+                checked={block.props.frameExpand}
+                onChange={(e) => setProps({ frameExpand: e.target.checked })}
+              />
+              Expand button
+            </label>
+            <input
+              type="text"
+              placeholder="Frame title (optional)"
+              value={block.props.frameTitle}
+              onChange={(e) => setProps({ frameTitle: e.target.value })}
+            />
+          </div>
         </div>
       );
     },
