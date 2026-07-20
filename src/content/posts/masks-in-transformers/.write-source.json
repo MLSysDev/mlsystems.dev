@@ -1,0 +1,3966 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "Every Mask in a Transformer, Untangled",
+    "summary": "The word \"mask\" means at least four unrelated things in deep learning — what a token can see, what counts toward the loss, what is hidden to create a task, and what is randomly dropped. One field guide to all of them, with why each exists and what breaks without it.",
+    "authors": [
+      "dinesh"
+    ],
+    "writerName": "Author Name",
+    "topicId": "training",
+    "topicName": "Training",
+    "tags": [
+      "masking",
+      "attention",
+      "transformers",
+      "causal-mask",
+      "bert",
+      "diffusion-llm",
+      "fine-tuning"
+    ],
+    "slug": "masks-in-transformers",
+    "coverFileName": "",
+    "ogCard": false,
+    "proposedTopic": "",
+    "newAuthor": null,
+    "date": "2026-07-20"
+  },
+  "blocks": [
+    {
+      "id": "paragraph-1",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "If you read enough about transformers, you hit the word ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "mask",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " everywhere — causal mask, padding mask, attention mask, loss mask, masked language modeling, masked diffusion — and it quietly starts to feel like one slippery concept you never quite pinned down.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-2",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Here’s the secret: it isn’t one concept. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "“Mask” names at least four completely unrelated mechanisms.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " A single token, in a single training step, can be masked in several different senses ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "at once",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and they have nothing to do with each other. That overloading is the entire source of the confusion.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-3",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "This post untangles all of them: what each mask is, ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "why",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " it exists, what you ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "get",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " from it, and — the part most explanations skip — ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "what breaks if you don’t use it.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " By the end, “mask” should never be a fog word again.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-4",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What a mask actually is",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-5",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Strip away the jargon and every mask is the same primitive:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "note-6",
+      "type": "note",
+      "props": {},
+      "content": [
+        {
+          "type": "text",
+          "text": "A mask is a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "0/1 gate that says “ignore this element.”",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " That’s it. What changes between the four families is only ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "which",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " elements and — crucially — ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "ignore them for what purpose?",
+          "styles": {
+            "bold": true
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-7",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Four purposes, four families:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "svg-8",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 720 224\" role=\"img\" aria-label=\"A mask is a 0/1 gate; it splits into four families — SEE (attention masks), SCORE (loss masks), HIDE (objective masks), and DROP (regularization masks).\" style=\"width:100%;max-width:720px;height:auto;color:currentColor;font-family:var(--font-mono);\">\n  <g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.3\">\n    <rect x=\"270\" y=\"12\" width=\"180\" height=\"48\" rx=\"8\" opacity=\"0.6\"/>\n    <rect x=\"20\" y=\"120\" width=\"154\" height=\"86\" rx=\"8\" opacity=\"0.55\"/>\n    <rect x=\"195\" y=\"120\" width=\"154\" height=\"86\" rx=\"8\" opacity=\"0.55\"/>\n    <rect x=\"370\" y=\"120\" width=\"154\" height=\"86\" rx=\"8\" opacity=\"0.55\"/>\n    <rect x=\"546\" y=\"120\" width=\"154\" height=\"86\" rx=\"8\" opacity=\"0.55\"/>\n  </g>\n  <g stroke=\"currentColor\" stroke-width=\"1.1\" opacity=\"0.35\">\n    <line x1=\"360\" y1=\"60\" x2=\"97\" y2=\"120\"/>\n    <line x1=\"360\" y1=\"60\" x2=\"272\" y2=\"120\"/>\n    <line x1=\"360\" y1=\"60\" x2=\"447\" y2=\"120\"/>\n    <line x1=\"360\" y1=\"60\" x2=\"623\" y2=\"120\"/>\n  </g>\n  <g text-anchor=\"middle\" fill=\"currentColor\">\n    <text x=\"360\" y=\"34\" font-size=\"13\" font-weight=\"700\">a mask = a 0/1 gate</text>\n    <text x=\"360\" y=\"50\" font-size=\"10\" opacity=\"0.6\">ignore this element</text>\n  </g>\n  <g text-anchor=\"middle\" font-size=\"13\" font-weight=\"700\" fill=\"var(--accent)\">\n    <text x=\"97\" y=\"148\">SEE</text>\n    <text x=\"272\" y=\"148\">SCORE</text>\n    <text x=\"447\" y=\"148\">HIDE</text>\n    <text x=\"623\" y=\"148\">DROP</text>\n  </g>\n  <g text-anchor=\"middle\" font-size=\"11\" fill=\"currentColor\">\n    <text x=\"97\" y=\"167\">attention masks</text>\n    <text x=\"272\" y=\"167\">loss masks</text>\n    <text x=\"447\" y=\"167\">objective masks</text>\n    <text x=\"623\" y=\"167\">regularization</text>\n  </g>\n  <g text-anchor=\"middle\" font-size=\"9.5\" fill=\"currentColor\" opacity=\"0.55\">\n    <text x=\"97\" y=\"189\">what it may attend to</text>\n    <text x=\"272\" y=\"189\">what counts in the loss</text>\n    <text x=\"447\" y=\"189\">what's hidden to learn</text>\n    <text x=\"623\" y=\"189\">what's randomly dropped</text>\n  </g>\n</svg>",
+        "caption": "One primitive, four purposes. Every 'mask' in deep learning is a 0/1 gate that says 'ignore this' — the families differ only in what they ignore, and why.",
+        "width": 960
+      },
+      "children": []
+    },
+    {
+      "id": "table-9",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Family",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Gates…",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Answers the question",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Lives in",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SEE",
+                    "styles": {
+                      "bold": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "attention",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "which tokens can I look at?",
+                    "styles": {
+                      "italic": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "every attention layer",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "SCORE",
+                    "styles": {
+                      "bold": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "the loss",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "which predictions am I graded on?",
+                    "styles": {
+                      "italic": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "the training objective",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "HIDE",
+                    "styles": {
+                      "bold": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "the input",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "what do I hide to manufacture a task?",
+                    "styles": {
+                      "italic": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "the pretraining objective",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "DROP",
+                    "styles": {
+                      "bold": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "activations",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "what do I randomly kill for robustness?",
+                    "styles": {
+                      "italic": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "regularization",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-10",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "If you want an everyday anchor for each: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "SEE",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a pair of ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "blinders",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (limiting the field of view), ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "SCORE",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "grading rubric",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (which answers get marked), ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "HIDE",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "fill-in-the-blank quiz",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (erase something, then learn to reconstruct it), and ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "DROP",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "practicing with random teammates benched",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (so no single neuron becomes indispensable).",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-11",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Keep that table in your head and every “mask” you meet drops cleanly into one slot.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-12",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Family 1 — SEE: attention masks",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-13",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What it gates:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " for each token (a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "query",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "), which other tokens (the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "keys",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ") it is allowed to attend to. Mechanically, before the attention softmax you set the score of every disallowed (query, key) pair to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "−∞",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", so its weight becomes exactly 0. That’s an N×N grid of allowed/blocked — and the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "shape",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of that grid is the whole story.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-14",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Flip through the shapes:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "customComponent-15",
+      "type": "customComponent",
+      "props": {
+        "componentName": "AttentionMaskExplorer",
+        "source": "import { useState, type CSSProperties } from 'react';\n\nconst N = 8;\nconst CELL = 30;\nconst GX = 44; // grid left offset (row labels)\nconst GY = 46; // grid top offset (col labels)\nconst PAD_FROM = 6; // tokens 6,7 are padding\nconst PREFIX_K = 4; // first 4 tokens are the bidirectional prefix\nconst WINDOW = 4; // sliding-window width\nconst DOC_SPLIT = 4; // packed: doc A = 0..3, doc B = 4..7\n\ntype Mode = 'causal' | 'bidirectional' | 'window' | 'padding' | 'prefix' | 'packed';\n\nconst MODES: { id: Mode; label: string; rule: string; where: string }[] = [\n  {\n    id: 'causal',\n    label: 'causal',\n    rule: 'attend(i, j) = j ≤ i',\n    where: 'Decoder-only LMs (GPT, Llama, Qwen) — the default. A token sees only the past, so training in parallel matches left-to-right generation.',\n  },\n  {\n    id: 'bidirectional',\n    label: 'bidirectional',\n    rule: 'attend(i, j) = always',\n    where: 'Encoders (BERT). Every token sees every other — ideal for understanding, unusable for open-ended generation.',\n  },\n  {\n    id: 'window',\n    label: 'sliding window',\n    rule: `attend(i, j) = 0 ≤ i − j < ${WINDOW}`,\n    where: 'Local attention (Mistral, Longformer). Cost falls from O(n²) to O(n·w); long-range information hops across layers.',\n  },\n  {\n    id: 'padding',\n    label: 'padding',\n    rule: 'causal, and pad tokens are never attended to',\n    where: 'Batching uneven lengths. The short sequences are padded; those pad columns are masked so real tokens ignore the filler.',\n  },\n  {\n    id: 'prefix',\n    label: 'prefix-LM',\n    rule: `attend(i, j) = (j ≤ i) OR (j < ${PREFIX_K})`,\n    where: 'T5 decoder input, UL2 S-denoiser. The prompt/prefix is bidirectional; the generated part stays causal.',\n  },\n  {\n    id: 'packed',\n    label: 'packed docs',\n    rule: 'attend(i, j) = (j ≤ i) AND same document',\n    where: 'Sequence packing. Several examples share one sequence; a block-diagonal mask stops cross-contamination (FlashAttention varlen).',\n  },\n];\n\nfunction allowed(mode: Mode, i: number, j: number): boolean {\n  switch (mode) {\n    case 'bidirectional':\n      return true;\n    case 'causal':\n      return j <= i;\n    case 'window':\n      return j <= i && i - j < WINDOW;\n    case 'padding':\n      return j <= i && i < PAD_FROM && j < PAD_FROM;\n    case 'prefix':\n      return j <= i || j < PREFIX_K;\n    case 'packed':\n      return j <= i && (i < DOC_SPLIT) === (j < DOC_SPLIT);\n  }\n}\n\nconst mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };\n\nexport default function AttentionMaskExplorer() {\n  const [mode, setMode] = useState<Mode>('causal');\n  const active = MODES.find((m) => m.id === mode)!;\n  const W = GX + N * CELL + 6;\n  const H = GY + N * CELL + 6;\n\n  const headColor = (k: number): string => {\n    if (mode === 'padding' && k >= PAD_FROM) return 'var(--ink-3)';\n    if (mode === 'prefix' && k < PREFIX_K) return 'var(--accent)';\n    return 'var(--ink-2)';\n  };\n\n  return (\n    <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '18px 20px', background: 'var(--paper-2)' }}>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>\n        {MODES.map((m) => (\n          <button\n            key={m.id}\n            type=\"button\"\n            onClick={() => setMode(m.id)}\n            style={{\n              ...mono,\n              padding: '5px 11px',\n              borderRadius: 5,\n              cursor: 'pointer',\n              border: `1px solid ${m.id === mode ? 'var(--accent)' : 'var(--line-2)'}`,\n              background: m.id === mode ? 'var(--accent-soft)' : 'transparent',\n              color: m.id === mode ? 'var(--accent)' : 'var(--ink-2)',\n            }}\n          >\n            {m.label}\n          </button>\n        ))}\n      </div>\n\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, alignItems: 'flex-start' }}>\n        <div style={{ flex: '1 1 280px', minWidth: 240, maxWidth: 360 }}>\n          <svg viewBox={`0 0 ${W} ${H}`} style={{ width: '100%', height: 'auto', display: 'block', fontFamily: 'var(--font-mono)' }} role=\"img\" aria-label={`Attention mask matrix for ${active.label} masking. A filled cell means the query row may attend to the key column.`}>\n            <text x={GX + (N * CELL) / 2} y={14} fontSize=\"10\" textAnchor=\"middle\" fill=\"var(--ink-3)\">\n              key j  (attended to) →\n            </text>\n            <text x={12} y={GY + (N * CELL) / 2} fontSize=\"10\" textAnchor=\"middle\" fill=\"var(--ink-3)\" transform={`rotate(-90 12 ${GY + (N * CELL) / 2})`}>\n              query i  (attending) →\n            </text>\n\n            {Array.from({ length: N }).map((_, k) => (\n              <text key={`col-${k}`} x={GX + k * CELL + CELL / 2} y={GY - 8} fontSize=\"10.5\" textAnchor=\"middle\" fill={headColor(k)}>\n                {k}\n              </text>\n            ))}\n            {Array.from({ length: N }).map((_, k) => (\n              <text key={`row-${k}`} x={GX - 9} y={GY + k * CELL + CELL / 2 + 3.5} fontSize=\"10.5\" textAnchor=\"end\" fill={headColor(k)}>\n                {k}\n              </text>\n            ))}\n\n            {Array.from({ length: N }).map((_, i) =>\n              Array.from({ length: N }).map((__, j) => {\n                const on = allowed(mode, i, j);\n                return (\n                  <rect\n                    key={`${i}-${j}`}\n                    x={GX + j * CELL + 1.5}\n                    y={GY + i * CELL + 1.5}\n                    width={CELL - 3}\n                    height={CELL - 3}\n                    rx={3}\n                    fill={on ? 'var(--accent)' : 'var(--ink)'}\n                    opacity={on ? 0.82 : 0.07}\n                    stroke={i === j ? 'var(--accent)' : 'none'}\n                    strokeWidth={i === j ? 1.2 : 0}\n                    strokeOpacity={0.5}\n                  />\n                );\n              }),\n            )}\n\n            {mode === 'packed' && (\n              <g stroke=\"var(--ink-3)\" strokeWidth=\"1.2\" strokeDasharray=\"3 3\" opacity=\"0.7\">\n                <line x1={GX + DOC_SPLIT * CELL} y1={GY} x2={GX + DOC_SPLIT * CELL} y2={GY + N * CELL} />\n                <line x1={GX} y1={GY + DOC_SPLIT * CELL} x2={GX + N * CELL} y2={GY + DOC_SPLIT * CELL} />\n              </g>\n            )}\n            {mode === 'padding' && (\n              <line x1={GX + PAD_FROM * CELL} y1={GY} x2={GX + PAD_FROM * CELL} y2={GY + N * CELL} stroke=\"var(--ink-3)\" strokeWidth=\"1.2\" strokeDasharray=\"3 3\" opacity=\"0.7\" />\n            )}\n          </svg>\n        </div>\n\n        <div style={{ flex: '1 1 220px', minWidth: 200 }}>\n          <div style={{ ...mono, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', marginBottom: 6 }}>{active.label}</div>\n          <div style={{ ...mono, color: 'var(--ink)', background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 6, padding: '8px 12px', marginBottom: 12 }}>{active.rule}</div>\n          <div style={{ ...mono, fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.6 }}>{active.where}</div>\n          {mode === 'packed' && <div style={{ ...mono, fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8 }}>Dashed line = document boundary (tokens 0–3 vs 4–7).</div>}\n          {mode === 'padding' && <div style={{ ...mono, fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8 }}>Tokens 6–7 are padding (greyed) — masked out.</div>}\n          {mode === 'prefix' && <div style={{ ...mono, fontSize: 11.5, color: 'var(--ink-3)', marginTop: 8 }}>Tokens 0–3 (accent) are the prefix — attended by everyone.</div>}\n        </div>\n      </div>\n    </div>\n  );\n}\n",
+        "frameTitle": "Attention mask explorer",
+        "frameCaption": "Each cell (i, j): may query i attend to key j? Filled = yes. Causal is the lower triangle (see only the past); bidirectional is full; sliding-window is a diagonal band; padding blanks the filler columns; prefix-LM makes the prompt bidirectional; packed docs are block-diagonal so examples can't bleed into each other.",
+        "frameSize": "normal",
+        "frameExpand": true
+      },
+      "children": []
+    },
+    {
+      "id": "heading-16",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Causal (the decoder default)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-17",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Rule:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " token ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "i",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " sees only tokens ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "≤ i",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " a decoder is trained on the whole sequence in parallel, predicting each next token. If token ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "i",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " could see token ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "i+1",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", it would peek at the very answer it’s supposed to predict — training would be cheating, and at generation time (where the future genuinely doesn’t exist yet) the model would collapse. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "What you get:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " parallel training that is mathematically identical to left-to-right generation. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Without it:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the model trivially “predicts” by copying the future and is useless the moment you ask it to generate. This mask is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "always on",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " in GPT/Llama/Qwen — it’s what makes them autoregressive.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-18",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Bidirectional (no mask)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-19",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Rule:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " everyone sees everyone. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Where:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " encoders like BERT. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " for ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "understanding",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (classification, retrieval, tagging) you want each token informed by full left-and-right context. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Trade-off:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " you give up open-ended generation — there’s no “next token” discipline. Put a causal mask on an encoder and you kneecap the thing it’s good at; drop the causal mask on a generator and you break it. The mask shape ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "is",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the model’s personality.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-20",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Sliding window (local attention)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-21",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Rule:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " see only the last ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "w",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " tokens. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " full attention is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "O(n²)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " in sequence length — brutal for long context. A window makes it ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "O(n·w)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "What you get:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " long-context models (Mistral, Longformer) at tractable cost; information still travels far by ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "hopping",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " through stacked layers. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Trade-off:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " any single layer’s reach is bounded by ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "w",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-22",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Padding",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-23",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Rule:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " pad tokens are never attended to. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " GPUs want rectangular batches, but real sequences have different lengths, so you pad the short ones with filler. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Without it:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " real tokens would attend to meaningless pad tokens and produce corrupted representations. It’s pure batching hygiene — but forget it and outputs silently degrade. (Related gotcha below: which ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "side",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " you pad on matters.)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-24",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Prefix-LM",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-25",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Rule:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the prefix is bidirectional; everything after it is causal. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Where:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " T5’s decoder input, UL2’s “S-denoiser.” ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " you want the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "prompt",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " understood with full context (like an encoder) while the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "generated",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " part stays properly autoregressive. It’s the hybrid between the first two shapes.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-26",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Packed documents (block-diagonal)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-27",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Rule:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " causal ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "and",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " same-document only. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " short training examples waste GPU if you pad them to full length, so you ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "pack",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " several into one sequence. But then token 5 of example A must not attend to example B — that’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "cross-contamination",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and it silently poisons training. A ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "block-diagonal",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " mask walls each example off. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "What you get:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " near-zero padding waste at full throughput (FlashAttention’s variable-length API / FlexAttention’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "block_diag",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " handle it efficiently). ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Without it:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " packing looks like a free speedup while quietly teaching the model that unrelated documents are context for each other.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "note-28",
+      "type": "note",
+      "props": {},
+      "content": [
+        {
+          "type": "text",
+          "text": "Attention sinks.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Real models dump a surprising amount of attention onto the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "first",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " token — softmax weights must sum to 1, so the model needs a “no-op” place to park leftover attention. Naive sliding-window streaming evicts those first tokens and perplexity ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "explodes",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "StreamingLLM",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " fixes it by always keeping a few initial “sink” tokens plus the sliding window — enabling stable generation over millions of tokens. It’s a masking-policy insight: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "which",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " tokens you keep visible is load-bearing.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-29",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Family 2 — SCORE: loss masks",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-30",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Totally different gate. This one doesn’t touch attention at all — it decides ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "which positions contribute to the loss.",
+          "styles": {
+            "bold": true
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "customComponent-31",
+      "type": "customComponent",
+      "props": {
+        "componentName": "LossMaskStrip",
+        "source": "import { useState, type CSSProperties } from 'react';\n\nconst PROMPT = ['Convert', 'to', 'JSON', ':', 'Ava', 'Kim', ',', '41', ',', 'People', 'Ops'];\nconst COMPLETION = ['{', '\"name\"', ':', '\"Ava Kim\"', ',', '\"age\"', ':', '41', '}', '<eos>'];\n\nconst mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };\n\nfunction Chip({ tok, scored, eos }: { tok: string; scored: boolean; eos?: boolean }) {\n  return (\n    <span\n      style={{\n        ...mono,\n        fontSize: 12,\n        padding: '4px 8px',\n        borderRadius: 5,\n        border: `1px solid ${scored ? 'var(--accent)' : 'var(--line-2)'}`,\n        background: scored ? 'var(--accent-soft)' : 'transparent',\n        color: scored ? 'var(--accent)' : 'var(--ink-3)',\n        whiteSpace: 'nowrap',\n        opacity: scored ? 1 : 0.7,\n        fontWeight: eos && scored ? 700 : 400,\n      }}\n    >\n      {tok}\n    </span>\n  );\n}\n\nexport default function LossMaskStrip() {\n  const [completionOnly, setCompletionOnly] = useState(true);\n  const total = PROMPT.length + COMPLETION.length;\n  const scored = completionOnly ? COMPLETION.length : total;\n  const pct = Math.round((COMPLETION.length / total) * 100);\n\n  return (\n    <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '18px 20px', background: 'var(--paper-2)' }}>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 16 }}>\n        <button\n          type=\"button\"\n          onClick={() => setCompletionOnly((v) => !v)}\n          style={{\n            ...mono,\n            padding: '5px 12px',\n            borderRadius: 6,\n            cursor: 'pointer',\n            border: `1px solid ${completionOnly ? 'var(--accent)' : 'var(--line-2)'}`,\n            background: completionOnly ? 'var(--accent-soft)' : 'transparent',\n            color: completionOnly ? 'var(--accent)' : 'var(--ink-2)',\n          }}\n        >\n          loss: {completionOnly ? 'completion-only (masked)' : 'all tokens (unmasked)'}\n        </button>\n        <span style={{ ...mono, fontSize: 11.5, color: 'var(--ink-3)' }}>\n          scored on {scored} / {total} tokens\n        </span>\n      </div>\n\n      <div style={{ ...mono, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-3)', marginBottom: 6 }}>prompt (the input — given)</div>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>\n        {PROMPT.map((tok, i) => (\n          <Chip key={`p-${i}`} tok={tok} scored={!completionOnly} />\n        ))}\n      </div>\n\n      <div style={{ ...mono, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', marginBottom: 6 }}>completion (the target — always scored)</div>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>\n        {COMPLETION.map((tok, i) => (\n          <Chip key={`c-${i}`} tok={tok} scored eos={tok === '<eos>'} />\n        ))}\n      </div>\n\n      <div style={{ ...mono, fontSize: 11.5, color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 16 }}>\n        {completionOnly ? (\n          <>\n            Prompt tokens have <strong>label = −100</strong> — seen as context, never scored. All {COMPLETION.length} completion tokens\n            (including <strong>&lt;eos&gt;</strong>, so it learns to stop) drive the loss.\n          </>\n        ) : (\n          <>\n            Every token is scored — so {100 - pct}% of the gradient is spent learning to <em>regenerate the instruction</em>, diluting the\n            signal for the JSON you actually care about.\n          </>\n        )}\n      </div>\n    </div>\n  );\n}\n",
+        "frameTitle": "What actually gets scored",
+        "frameCaption": "SFT glues prompt + completion into one sequence and trains by next-token prediction. Toggle the loss: 'completion-only' masks the prompt (label = −100 — seen as context, never scored), so 100% of the signal trains the answer. 'all tokens' scores the prompt too — wasting most of the gradient teaching the model to regurgitate its own instructions.",
+        "frameSize": "normal",
+        "frameExpand": true
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-32",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Mechanism:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " alongside the tokens you build a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "labels",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " array; masked positions get the sentinel ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "−100",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (PyTorch’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "ignore_index",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "), which contributes zero loss and zero direct gradient. The sequence loss is the average of cross-entropy over the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "scored",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " positions only.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-33",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " in fine-tuning you concatenate ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "[prompt][completion]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " into one sequence. The prompt is the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "input",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — handed to the model for free at inference. You only want it to learn to produce the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "completion",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Without masking:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " if the prompt is 50 tokens and the completion 10, ~83% of your gradient goes into learning to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "regenerate the instruction text",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — capacity spent on something you never need, diluting the signal for the actual answer. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "What you get:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " every bit of learning signal aimed at the response.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-34",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Two boundary facts everyone gets wrong at least once:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-35",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The first completion token ",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "is",
+          "styles": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " scored.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " The pair ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "(full prompt → first answer token)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is exactly “start the answer given the prompt” — the most important pair. Masking the prompt never means masking through the first completion token.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-36",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The EOS token ",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "is",
+          "styles": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " scored.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Score it or the model never learns to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "stop",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " and rambles forever. Forgetting EOS is the classic loss-mask bug.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-37",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "And a subtlety: masked-in-loss does ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "not",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " mean “no gradient at all.” The prompt tokens are still attended to, so gradient still flows into their representations via attention — the model learns to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "represent",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the prompt well, it just isn’t asked to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "generate",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " it.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "quote-38",
+      "type": "quote",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "For the full mechanical deep-dive on this family specifically — the token-by-token ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "labels = −100",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " construction, multi-turn assistant masking, and whether masking saves compute — this is the one family with its own companion piece.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-39",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Family 3 — HIDE: objective masks",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-40",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Now the role of masking ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "flips completely.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " In Families 1–2 the mask ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "hides",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " things from attention or loss. Here the mask ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "creates the task",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": you deliberately hide part of the input and train the model to reconstruct it. The mask ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "is",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the supervision.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "customComponent-41",
+      "type": "customComponent",
+      "props": {
+        "componentName": "DiffusionUnmask",
+        "source": "import { useEffect, useState, type CSSProperties } from 'react';\n\nconst PROMPT = ['Convert', 'to', 'JSON', ':', 'Ava', ',', '41'];\n// target tokens + the diffusion step at which each is revealed (structure first,\n// values last — deliberately NOT left-to-right, to show parallel denoising).\nconst TARGET: { tok: string; step: number }[] = [\n  { tok: '{', step: 1 },\n  { tok: '\"name\"', step: 2 },\n  { tok: ':', step: 3 },\n  { tok: '\"Ava\"', step: 2 },\n  { tok: ',', step: 4 },\n  { tok: '\"age\"', step: 1 },\n  { tok: ':', step: 3 },\n  { tok: '41', step: 4 },\n  { tok: '}', step: 1 },\n];\nconst STEPS = 4;\n\nconst mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };\n\nexport default function DiffusionUnmask() {\n  const [step, setStep] = useState(0);\n  const [playing, setPlaying] = useState(false);\n\n  useEffect(() => {\n    if (!playing) return;\n    const id = setInterval(() => setStep((s) => (s >= STEPS ? s : s + 1)), 720);\n    return () => clearInterval(id);\n  }, [playing]);\n\n  useEffect(() => {\n    if (step >= STEPS) setPlaying(false);\n  }, [step]);\n\n  const revealed = TARGET.filter((t) => t.step <= step).length;\n\n  return (\n    <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '18px 20px', background: 'var(--paper-2)' }}>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 16 }}>\n        <button\n          type=\"button\"\n          onClick={() => {\n            if (step >= STEPS) setStep(0);\n            setPlaying((p) => !p);\n          }}\n          style={{ ...mono, padding: '6px 16px', borderRadius: 6, cursor: 'pointer', border: '1px solid var(--accent)', background: 'var(--accent-soft)', color: 'var(--accent)' }}\n        >\n          {playing ? '❚❚ pause' : step >= STEPS ? '↻ replay' : '▶ denoise'}\n        </button>\n        <button\n          type=\"button\"\n          onClick={() => {\n            setPlaying(false);\n            setStep(0);\n          }}\n          style={{ ...mono, padding: '6px 12px', borderRadius: 6, cursor: 'pointer', border: '1px solid var(--line-2)', background: 'transparent', color: 'var(--ink-2)' }}\n        >\n          reset\n        </button>\n        <span style={{ ...mono, fontSize: 11.5, color: 'var(--ink-3)', marginLeft: 'auto' }}>\n          step {step} / {STEPS} · {revealed}/{TARGET.length} unmasked\n        </span>\n      </div>\n\n      <div style={{ ...mono, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-3)', marginBottom: 6 }}>prompt (never masked)</div>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 14 }}>\n        {PROMPT.map((tok, i) => (\n          <span key={`p-${i}`} style={{ ...mono, padding: '4px 8px', borderRadius: 5, border: '1px solid var(--line-2)', color: 'var(--ink-2)' }}>\n            {tok}\n          </span>\n        ))}\n      </div>\n\n      <div style={{ ...mono, fontSize: 10.5, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--accent)', marginBottom: 6 }}>completion (starts fully masked, unmasked in parallel)</div>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>\n        {TARGET.map((t, i) => {\n          const shown = t.step <= step;\n          return (\n            <span\n              key={`t-${i}`}\n              style={{\n                ...mono,\n                minWidth: 24,\n                textAlign: 'center',\n                padding: '4px 8px',\n                borderRadius: 5,\n                border: `1px solid ${shown ? 'var(--accent)' : 'var(--line-2)'}`,\n                borderStyle: shown ? 'solid' : 'dashed',\n                background: shown ? 'var(--accent-soft)' : 'var(--paper)',\n                color: shown ? 'var(--accent)' : 'var(--ink-3)',\n                transition: 'all 160ms',\n              }}\n            >\n              {shown ? t.tok : '▨'}\n            </span>\n          );\n        })}\n      </div>\n\n      <div style={{ ...mono, fontSize: 11.5, color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 16 }}>\n        A masked <strong>diffusion</strong> LM starts from an all-<strong>▨</strong> completion and unmasks positions <em>in parallel</em>,\n        coarse-to-fine — not one token left-to-right. The prompt is held fixed the whole time (it is the part that is never masked).\n      </div>\n    </div>\n  );\n}\n",
+        "frameTitle": "Masked diffusion: unmasking in parallel",
+        "frameCaption": "A diffusion LM (LLaDA, Gemini Diffusion) starts from an all-masked completion and reveals positions in parallel, coarse-to-fine — not one token left-to-right. The prompt is the part that is never masked. This is why Gemini Diffusion hits ~1,479 tok/s, roughly 5× a comparable autoregressive model: it decodes many positions per step.",
+        "frameSize": "normal",
+        "frameExpand": true
+      },
+      "children": []
+    },
+    {
+      "id": "heading-42",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Masked Language Modeling (BERT)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-43",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " randomly replace ~",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "15%",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of tokens with ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "[MASK]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " and train the model (bidirectionally) to predict the originals. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " it manufactures a supervised task from raw text while letting every token use both-side context. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "The 80/10/10 wrinkle:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of the chosen 15%, only 80% become ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "[MASK]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", 10% become a random token, 10% are left unchanged — because ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "[MASK]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " never appears at inference time, so training purely on it would create a train/serve mismatch. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "What you get:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " strong bidirectional representations for understanding tasks.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-44",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Span corruption (T5)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-45",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " mask contiguous ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "spans",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (avg length ~3, ~15% of tokens), replace each with a single sentinel, and have the decoder emit the missing spans. UL2 generalizes this into a menu of denoisers (R = normal spans, S = prefix-LM, X = extreme/long spans). ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " spans force the model to generate multi-token chunks, closer to real generation than single-token MLM.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-46",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Masked diffusion LMs (the 2026 twist)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-47",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the forward process masks a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "random fraction",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "t ~ U[0,1]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of tokens; the reverse process learns to predict all masked tokens at once, and generation runs it iteratively — start fully masked, unmask in parallel over a handful of steps (the component above). ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why it’s exciting:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " decoding many positions per step instead of strictly one-at-a-time. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Gemini Diffusion",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (Google, 2025) reported ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "~1,479 tokens/second — roughly 5× a comparable autoregressive model.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " LLaDA showed the recipe scales to compete with strong AR baselines. Same masking primitive as BERT, aimed at generation instead of understanding.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-48",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Masked autoencoders (vision, for contrast)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-49",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " hide ~",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "75%",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of image patches and reconstruct them (MAE). It’s the same idea one modality over — proof that “hide input to create a task” is a general recipe, not a text trick.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-50",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Family 4 — DROP: regularization masks",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-51",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The loosest use of the word, included so the field guide is complete. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Dropout",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " applies a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "random",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " binary mask that zeroes a fraction of activations ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "during training only",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (scaling the survivors to compensate). ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Why:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " it stops neurons from co-adapting into fragile combinations, which reduces overfitting. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Key difference from the others:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " it’s random, it’s for regularization, and it’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "off at inference",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — the other three families are deterministic and structural. (DropPath / stochastic depth is the same idea applied to whole layers.)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-52",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "One token, five masks at once",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-53",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Here’s the payoff — why the word felt so slippery. Take a single ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "completion token",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", sitting in a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "packed, padded, multi-example SFT batch",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and watch how many independent masks touch it simultaneously:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-54",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Mask",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Effect on this one token",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "causal",
+                    "styles": {
+                      "bold": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " (SEE)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "may attend to earlier tokens in its own example",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "document",
+                    "styles": {
+                      "bold": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " (SEE)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "may ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "not",
+                    "styles": {
+                      "italic": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " attend to the other packed example",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "padding",
+                    "styles": {
+                      "bold": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " (SEE)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "ignores the batch’s pad tokens",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "loss / completion",
+                    "styles": {
+                      "bold": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " (SCORE)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "it ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "is",
+                    "styles": {
+                      "italic": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " scored (it’s part of the answer)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "dropout",
+                    "styles": {
+                      "bold": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " (DROP)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "some of its activations are randomly zeroed this step",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-55",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Five separate gates on one token, spanning three of the four families (three SEE, one SCORE, one DROP) — and if it were a diffusion-LM token instead of an SFT one, HIDE would make it all four. Nobody was ever confused about ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "one",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " thing called masking — they were quietly conflating a fistful of them.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-56",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Which model uses which",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-57",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Model family",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Attention shape",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Objective mask",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Loss mask (if fine-tuned)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Decoder-only (GPT, Llama, Qwen)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "causal (+ window / packing)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "none (next-token)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "completion-only",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Encoder (BERT)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "bidirectional",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "MLM (15%, 80/10/10)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "—",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Encoder–decoder (T5)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "enc: bidirectional · dec: causal",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "span corruption",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "target-side",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Diffusion LM (LLaDA, Gemini Diffusion)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "bidirectional",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "masked diffusion (",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "t ~ U[0,1]",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": ")",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "completion-only",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Vision (ViT / MAE)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "bidirectional",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "patch masking (~75%)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "—",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "heading-58",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Gotchas & confusions",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-59",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The traps, collected — most of these are silent (no error, just worse results):",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-60",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Attention mask ≠ loss mask ≠ MLM mask.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " The single biggest confusion. They gate different things (what you ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "see",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " vs what you’re ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "scored on",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " vs what’s ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "hidden to learn",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "). Always ask which family.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-61",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Masked ≠ hidden, masked ≠ no-gradient.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " A loss-masked prompt token is still seen (attention) and still gets gradient through attention — it’s just not a prediction ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "target",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-62",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Forget to score EOS → the model never stops.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Include the end token in the completion loss.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-63",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Don’t mask through the first completion token",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — that transition (prompt → first answer token) is the most important thing to learn.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-64",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Packing without a document mask → silent cross-contamination.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Looks like a free speedup; actually teaches the model that unrelated examples are each other’s context.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-65",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Padding side matters.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " For causal decoders you typically ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "left-pad",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " at generation time (so the real last token is at the true end and positions line up), while training often right-pads. Mixing them up produces garbage or misaligned outputs.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-66",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[MASK]",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " train/serve mismatch",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — the reason for BERT’s 80/10/10: the mask token never appears at inference, so you can’t train exclusively on it.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-67",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Don’t compare masked vs unmasked loss values.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Different denominators (different token counts) — the numbers aren’t on the same scale.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-68",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Masking doesn’t save transformer compute.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Completion-only loss skips only the tiny cross-entropy at masked positions; the full sequence still runs through every layer. Masking is about ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "signal quality",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", not speed. (The real cost lever is not paying for prompt tokens you don’t train on — hence packing.)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-69",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Dropout is training-only.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Leaving it on at inference makes outputs noisy and non-deterministic.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-70",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The one-line mental model",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "quote-71",
+      "type": "quote",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A mask is a 0/1 gate. When you meet one, don’t ask “what’s a mask?” — ask “ignore ",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "what",
+          "styles": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", for ",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "what purpose",
+          "styles": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "?”",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " The answer lands it in one of four families, and everything else follows.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-72",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Get that reflex and every mask in every paper — causal, padding, block-diagonal, MLM, diffusion, dropout — is just a different answer to the same two questions.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    }
+  ],
+  "tableVariants": {}
+}
