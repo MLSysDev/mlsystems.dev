@@ -268,19 +268,16 @@ Rules: use `stroke="currentColor"`/`fill="currentColor"` so it follows the theme
 
 ## Mermaid diagram
 
-Mermaid diagrams are authored in the `/write` editor (or as a `mermaid` block in the `.write-source.json`), where the diagram is drawn. In the published MDX it appears as a `<Figure>` holding the rendered SVG plus the **readable diagram source** in a comment, so it can be edited by hand and reopened as an editable diagram:
+Write the diagram as a fenced `mermaid` block with its source:
 
-```mdx
-<Figure width={960}>
-  {/* mermaid
-  flowchart TD
-    A[Input] --> B[Model] --> C[Output]
-  */}
-  <svg class="mermaid-diagram">…rendered…</svg>
-</Figure>
+````md
+```mermaid
+flowchart TD
+  A[Input] --> B[Model] --> C[Output]
 ```
+````
 
-You don't hand-write the SVG — the editor renders it from the source. To add a diagram directly in MDX by hand, use an [inline SVG diagram](#inline-svg-diagram) instead.
+**Note:** a mermaid fence does not render to a diagram on its own — on the published page it shows as a code block. To turn it into a rendered diagram, open the post in the [`/write`](https://mlsystems.dev/write) editor: it loads the fence as an editable Mermaid block, draws it, and bakes the finished SVG into the post on publishing. So writing the fence here is a convenient way to draft and carry a diagram's source (it survives an edit round-trip and can be copied); the editor does the actual rendering.
 
 ---
 
