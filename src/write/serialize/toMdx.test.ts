@@ -427,9 +427,8 @@ describe('mermaid blocks', () => {
     expect(mdx).toContain('<Figure caption="Flow" width={960}>');
     expect(mdx).toContain('class="mermaid-diagram"');
     expect(mdx).toContain('<style>{`#mmd-1 .node{fill:#eee;}`}</style>');
-    // source is carried in the MDX so it survives a sidecar-less re-edit
-    const b64 = mdx.match(/data-mermaid="([^"]*)"/)?.[1] ?? '';
-    expect(Buffer.from(b64, 'base64').toString('utf8')).toBe('flowchart LR\n A-->B');
+    // source is carried in the MDX, readable, so it survives a sidecar-less re-edit
+    expect(mdx).toContain('{/* mermaid\nflowchart LR\n A-->B\n*/}');
   });
 
   it('round-trips through the MDX converter back to an editable mermaid block', () => {

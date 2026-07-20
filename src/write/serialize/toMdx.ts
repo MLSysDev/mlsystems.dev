@@ -310,15 +310,6 @@ function jsxSafeStyle(svg: string): string {
   });
 }
 
-// UTF-8-safe base64 so the diagram's source survives inside an HTML attribute
-// (labels can contain quotes, angle brackets, and non-ASCII).
-function encodeMermaidSource(src: string): string {
-  const bytes = new TextEncoder().encode(src);
-  let bin = '';
-  for (const b of bytes) bin += String.fromCharCode(b);
-  return btoa(bin);
-}
-
 function serializeMermaid(block: SBlock): string {
   let svg = sanitizeSvg(String(block.props.svg ?? '')).trim();
   if (!svg) return '';
@@ -326,14 +317,15 @@ function serializeMermaid(block: SBlock): string {
   svg = /^<svg[^>]*\sclass="/.test(svg)
     ? svg.replace(/^(<svg[^>]*\sclass=")/, '$1mermaid-diagram ')
     : svg.replace(/^<svg/, '<svg class="mermaid-diagram"');
-  // Carry the diagram source in the MDX itself so re-editing from index.mdx
-  // (no sidecar) still recovers an editable mermaid block, not a static svg.
-  const source = String(block.props.source ?? '');
-  if (source) svg = svg.replace(/^<svg/, `<svg data-mermaid="${encodeMermaidSource(source)}"`);
   svg = jsxSafeStyle(svg);
+  // Keep the diagram's source in the MDX as a readable JSX comment (renders
+  // nothing): a person can edit the raw mermaid by hand, and reopening the post
+  // recovers an editable mermaid block instead of a flattened svg.
+  const source = String(block.props.source ?? '').trim();
+  const note = source && !source.includes('*/') ? `{/* mermaid\n${source}\n*/}\n` : '';
   const caption = String(block.props.caption ?? '');
   const captionAttr = caption ? ` ${attr('caption', caption)}` : '';
-  return `<Figure${captionAttr} width={960}>\n${svg}\n</Figure>`;
+  return `<Figure${captionAttr} width={960}>\n${note}${svg}\n</Figure>`;
 }
 
 const INTERACTIVE_IMPORT = "import Interactive from '../../../components/Interactive';";

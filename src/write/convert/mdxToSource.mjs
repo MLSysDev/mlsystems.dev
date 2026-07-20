@@ -88,33 +88,20 @@ function unwrapJsxStyle(svg) {
   );
 }
 
-function decodeMermaidSource(b64) {
-  try {
-    if (typeof atob === 'function') {
-      const bin = atob(b64);
-      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
-      return new TextDecoder().decode(bytes);
-    }
-    return Buffer.from(b64, 'base64').toString('utf8');
-  } catch {
-    return '';
-  }
-}
-
 function figureSegment(attrs, inner) {
   const caption = frameAttr(attrs, 'caption').replace(/\s+/g, ' ').trim();
   const width = Number(attrs.match(/width=\{(\d+)\}/)?.[1] ?? '') || '';
-  if (/^<svg[\s>]/.test(inner)) {
-    const svg = unwrapJsxStyle(inner);
-    const b64 = svg.match(/^<svg[^>]*\sdata-mermaid="([^"]*)"/)?.[1];
-    if (b64) {
-      const source = decodeMermaidSource(b64);
-      if (source) {
-        const clean = svg.replace(/(<svg[^>]*?)\sdata-mermaid="[^"]*"/, '$1');
-        return { kind: 'mermaid', caption, source, svg: clean };
-      }
+  // A leading {/* mermaid ... */} comment carries the editable diagram source.
+  const mmd = inner.match(/^\{\/\*\s*mermaid\s*\n([\s\S]*?)\n\*\/\}\s*/);
+  if (mmd) {
+    const source = mmd[1].trim();
+    const svg = unwrapJsxStyle(inner.slice(mmd[0].length).trim());
+    if (source && /^<svg[\s>]/.test(svg)) {
+      return { kind: 'mermaid', caption, source, svg };
     }
-    return { kind: 'figure', caption, svg };
+  }
+  if (/^<svg[\s>]/.test(inner)) {
+    return { kind: 'figure', caption, svg: unwrapJsxStyle(inner) };
   }
   const img =
     inner.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/) ?? inner.match(/^<img[^>]*\ssrc="([^"]+)"[^>]*>$/);
