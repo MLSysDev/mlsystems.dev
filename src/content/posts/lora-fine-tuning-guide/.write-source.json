@@ -1,0 +1,3532 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "Intuitive Guide to LoRA: Fine-Tuning a Model by 0.2% of weights",
+    "summary": "You don't need a massive tech budget or a cluster of high-end GPUs to train your own AI. LoRA allows developers to fine-tune giant models right on a standard laptop. Here is the zero-jargon, first-principles explanation of the clever shortcut that leveled the playing field.",
+    "authors": [
+      "dinesh"
+    ],
+    "writerName": "Author Name",
+    "topicId": "training",
+    "topicName": "Training",
+    "tags": [
+      "lora",
+      "fine-tuning",
+      "peft",
+      "low-rank",
+      "adapters",
+      "qlora"
+    ],
+    "slug": "lora-fine-tuning-guide",
+    "coverFileName": "",
+    "ogCard": false,
+    "proposedTopic": "",
+    "newAuthor": null,
+    "date": "2026-07-19"
+  },
+  "blocks": [
+    {
+      "id": "paragraph-1",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Last week I fine-tuned a 0.6-billion-parameter language model on my laptop. It went from failing a task 87% of the time to nailing it 100% of the time — in about ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "40 seconds",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", using ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "3 GB",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of memory, by training just ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "0.2%",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " of the model’s parameters.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-2",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Every number in that sentence should feel slightly impossible. Fine-tuning a model usually means updating ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "all",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " its weights — that’s the whole idea of “tuning.” How do you change a model’s behavior by leaving 99.8% of it frozen? What are you even training, if not the model?",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-3",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The answer is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "LoRA",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — Low-Rank Adaptation — and it’s one of those ideas that feels like a magic trick until you see the mechanism, at which point it becomes obviously, almost boringly, correct. This post builds it from the ground up: what fine-tuning actually is, why it’s so expensive, the one bet LoRA makes, and exactly how two tiny matrices pull it off. Two playgrounds along the way let you feel the trick instead of taking my word for it.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-4",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Let’s start before LoRA, with plain fine-tuning.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-5",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Fine-tuning is just ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "W + ΔW",
+          "styles": {
+            "code": true
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-6",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A neural network is a stack of weight matrices. Running it is a chain of matrix multiplies: an input vector $x$ meets a weight matrix $W$, producing an output $h = Wx$ that flows to the next layer. Those $W$ matrices — hundreds of millions to billions of numbers — ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "are",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the model. All its knowledge lives in them.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-7",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Fine-tuning",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " changes that knowledge. You show the model examples of the behavior you want, and for each weight matrix you compute an ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "update",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — call it $\\Delta W$ — that nudges the model toward the target. Then you apply it:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "math-8",
+      "type": "math",
+      "props": {
+        "latex": "W' = W + \\Delta W"
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-9",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "That’s the whole loop: run a forward pass, use backpropagation to compute a $\\Delta W$ that lowers the loss, add it to $W$, repeat.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "svg-10",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 640 190\" role=\"img\" aria-label=\"Three stages: forward pass through weights W, backprop producing delta-W, and updated weights W prime equals W plus delta-W.\" style=\"width:100%;max-width:640px;height:auto;color:currentColor;font-family:var(--font-mono);\">\n  <g fill=\"none\" stroke=\"currentColor\">\n    <rect x=\"16\" y=\"40\" width=\"150\" height=\"110\" rx=\"8\" stroke-width=\"1.4\" opacity=\"0.5\"/>\n    <rect x=\"245\" y=\"40\" width=\"150\" height=\"110\" rx=\"8\" stroke-width=\"1.4\" opacity=\"0.5\"/>\n    <rect x=\"474\" y=\"40\" width=\"150\" height=\"110\" rx=\"8\" stroke-width=\"1.4\" opacity=\"0.5\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"12\" text-anchor=\"middle\">\n    <text x=\"91\" y=\"30\" opacity=\"0.7\">1 · forward</text>\n    <text x=\"320\" y=\"30\" opacity=\"0.7\">2 · backprop</text>\n    <text x=\"549\" y=\"30\" opacity=\"0.7\">3 · update</text>\n    <text x=\"91\" y=\"100\">W</text>\n    <text x=\"91\" y=\"122\" font-size=\"10\" opacity=\"0.6\">pretrained</text>\n    <text x=\"320\" y=\"95\">get ΔW</text>\n    <text x=\"320\" y=\"118\" font-size=\"10\" opacity=\"0.6\">via gradients</text>\n    <text x=\"549\" y=\"100\" fill=\"var(--accent)\">W′ = W + ΔW</text>\n  </g>\n  <g stroke=\"var(--accent)\" stroke-width=\"2\" marker-end=\"url(#lora-arrow)\">\n    <line x1=\"170\" y1=\"95\" x2=\"240\" y2=\"95\"/>\n    <line x1=\"399\" y1=\"95\" x2=\"469\" y2=\"95\"/>\n  </g>\n  <defs>\n    <marker id=\"lora-arrow\" markerWidth=\"9\" markerHeight=\"9\" refX=\"7\" refY=\"3\" orient=\"auto\">\n      <path d=\"M0,0 L7,3 L0,6 Z\" fill=\"var(--accent)\"/>\n    </marker>\n  </defs>\n</svg>",
+        "caption": "Ordinary fine-tuning: a forward pass, backprop produces a weight update ΔW, and the weights become W′ = W + ΔW. Note ΔW is a full matrix — exactly the same shape as W."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-11",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "This works perfectly. It’s how essentially every fine-tuned model was made for years. But look closely at that $\\Delta W$: it has ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "exactly the same shape as $W$",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". If $W$ is a $1000 \\times 1000$ matrix, then $\\Delta W$ is a million numbers too. You’re learning and storing a second copy of the model’s size, for every matrix, plus optimizer bookkeeping on top. This is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "full fine-tuning",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and its cost is the whole problem.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-12",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The problem: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "ΔW",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is as big as the model",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-13",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Here’s what “as big as the model” costs in practice. For each trainable number you don’t just store the number — you store its gradient and (for the Adam optimizer) two running statistics, roughly ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "~16 bytes per parameter",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " during training.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-14",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Model",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Parameters",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Full-tune training memory (rough)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "0.6B",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "600M",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "~10 GB",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "7B",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "7B",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "~112 GB (multiple GPUs)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "70B",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "70B",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "~1.1 TB (a cluster)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-15",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "That’s why full fine-tuning a 7B model doesn’t fit on your laptop, or even on one datacenter GPU. And it feels wasteful: to teach a model to emit clean JSON, do we really need to relearn a fresh million-number update for ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "every",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " weight matrix? That question — ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "is the update really as complex as the model?",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — is the crack LoRA pries open.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-16",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The bet: the update is simpler than the model",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-17",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "LoRA’s founding bet is a claim about $\\Delta W$, not about $W$:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "note-18",
+      "type": "note",
+      "props": {},
+      "content": [
+        {
+          "type": "text",
+          "text": "The pretrained model is genuinely complex — it took trillions of tokens to build. But the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "change",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " needed to adapt it to one narrow task is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "simple",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". In linear-algebra terms, $\\Delta W$ is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "low-rank",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": its information lives in only a handful of directions, even though it’s written as a big matrix.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-19",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "“Low-rank” has a precise, visual meaning, and it’s worth ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "seeing",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " before we use it. Any matrix can be built up as a sum of simple rank-1 pieces, ordered from most to least important. A ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "low-rank",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " matrix is one where the first few pieces already capture almost everything — the rest is nearly noise.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-20",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Drag the rank slider below. On the left is a full matrix; on the right is the same matrix rebuilt from only its first $r$ pieces. Watch how few you need before the two are indistinguishable:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "customComponent-21",
+      "type": "customComponent",
+      "props": {
+        "componentName": "RankReconstruction",
+        "source": "import { useState, type CSSProperties } from 'react';\n\nconst N = 14;\nconst CELL = 18; // grid pitch (gap between cells = CELL - DOT)\nconst DOT = 14; // drawn cell size → 4px of breathing room between cells\n\nconst mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };\nconst label: CSSProperties = {\n  fontFamily: 'var(--font-mono)',\n  fontSize: 10.5,\n  textTransform: 'uppercase',\n  letterSpacing: '0.07em',\n  color: 'var(--ink-3)',\n};\n\n// A structured target matrix = sum of N rank-1 outer products with fast-decaying\n// weights (stand-ins for singular values). Orthogonal cosine bases make this behave\n// like a real SVD: the first few ranks carry almost all the energy — LoRA's bet.\nfunction basis(freq: number, size: number): number[] {\n  const v: number[] = [];\n  for (let k = 0; k < size; k++) v.push(Math.cos((freq * Math.PI * (k + 0.5)) / size));\n  return v;\n}\nconst SIGMA = Array.from({ length: N }, (_, i) => Math.pow(0.5, i));\nconst U = Array.from({ length: N }, (_, i) => basis(i + 1, N));\nconst V = Array.from({ length: N }, (_, i) => basis(i + 1, N));\n\nfunction reconstruct(rank: number): number[][] {\n  const M: number[][] = Array.from({ length: N }, () => new Array(N).fill(0));\n  for (let i = 0; i < rank; i++) {\n    for (let x = 0; x < N; x++) {\n      for (let y = 0; y < N; y++) M[x][y] += SIGMA[i] * U[i][x] * V[i][y];\n    }\n  }\n  return M;\n}\n\nconst TARGET = reconstruct(N);\nconst MAXABS = Math.max(...TARGET.flat().map((v) => Math.abs(v)));\nconst TOTAL_ENERGY = SIGMA.reduce((s, v) => s + v * v, 0);\n\nfunction energyCaptured(rank: number): number {\n  let e = 0;\n  for (let i = 0; i < rank; i++) e += SIGMA[i] * SIGMA[i];\n  return e / TOTAL_ENERGY;\n}\n\nfunction Heat({ M, title }: { M: number[][]; title: string }) {\n  const size = N * CELL;\n  return (\n    <div style={{ flex: '1 1 40%', minWidth: 140, maxWidth: 320 }}>\n      <div style={{ ...label, marginBottom: 8 }}>{title}</div>\n      <svg\n        viewBox={`0 0 ${size} ${size}`}\n        style={{ width: '100%', height: 'auto', display: 'block' }}\n        role=\"img\"\n        aria-label={title}\n      >\n        {M.map((row, x) =>\n          row.map((val, y) => {\n            const mag = Math.min(1, Math.abs(val) / MAXABS);\n            return (\n              <rect\n                key={`${x}-${y}`}\n                x={y * CELL}\n                y={x * CELL}\n                width={DOT}\n                height={DOT}\n                rx={2}\n                fill={val >= 0 ? 'var(--accent)' : 'var(--ink)'}\n                opacity={0.06 + 0.94 * mag}\n              />\n            );\n          }),\n        )}\n      </svg>\n    </div>\n  );\n}\n\nfunction Stat({ k, v, accent }: { k: string; v: string; accent?: boolean }) {\n  return (\n    <div>\n      <div style={label}>{k}</div>\n      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 18, color: accent ? 'var(--accent)' : 'var(--ink)', marginTop: 3 }}>\n        {v}\n      </div>\n    </div>\n  );\n}\n\nexport default function RankReconstruction() {\n  const [r, setR] = useState(3);\n  const recon = reconstruct(r);\n  const energy = energyCaptured(r);\n  const err = Math.sqrt(Math.max(0, 1 - energy));\n  const loraParams = r * (N + N);\n  const fullParams = N * N;\n  const maxSigma = SIGMA[0];\n\n  return (\n    <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '20px', background: 'var(--paper-2)' }}>\n      <label style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>\n        <span style={{ ...mono, width: 74, flexShrink: 0 }}>\n          rank r <strong style={{ color: 'var(--ink)' }}>{r}</strong>\n        </span>\n        <input\n          type=\"range\"\n          min={1}\n          max={N}\n          step={1}\n          value={r}\n          onChange={(e) => setR(Number(e.target.value))}\n          style={{ width: '100%', accentColor: 'var(--accent)' }}\n          aria-label=\"reconstruction rank\"\n        />\n      </label>\n\n      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 'clamp(12px, 4vw, 32px)', alignItems: 'flex-start', marginBottom: 24 }}>\n        <Heat M={TARGET} title={`full matrix · rank ${N}`} />\n        <Heat M={recon} title={`rebuilt from rank ${r}`} />\n      </div>\n\n      <div style={{ ...label, marginBottom: 7 }}>how much each rank contributes (its singular value)</div>\n      <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 48, marginBottom: 22 }}>\n        {SIGMA.map((s, i) => (\n          <div\n            key={i}\n            title={`rank ${i + 1}`}\n            style={{\n              flex: 1,\n              height: `${Math.max(3, (s / maxSigma) * 100)}%`,\n              borderRadius: '2px 2px 0 0',\n              background: i < r ? 'var(--accent)' : 'var(--line-2)',\n              transition: 'background 120ms',\n            }}\n          />\n        ))}\n      </div>\n\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px 36px', padding: '14px 16px', borderRadius: 6, background: 'var(--paper)', border: '1px solid var(--line)' }}>\n        <Stat k=\"energy captured\" v={`${(energy * 100).toFixed(1)}%`} accent />\n        <Stat k=\"reconstruction error\" v={`${(err * 100).toFixed(1)}%`} />\n        <Stat k=\"numbers used\" v={`${loraParams} / ${fullParams}`} />\n      </div>\n    </div>\n  );\n}\n",
+        "frameTitle": "What rank captures",
+        "frameCaption": "Drag r from 1. The first bars are tall — those ranks hold almost all the matrix's energy — so the rebuilt grid matches the original almost immediately, while the later, tiny bars barely change anything. That is LoRA's bet: a fine-tune's update is low-rank, so a small r captures nearly all of it.",
+        "frameSize": "normal",
+        "frameExpand": true
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-22",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Notice the collapse: by rank 4 or 5 the reconstruction is essentially perfect, at a fraction of the numbers. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "If a fine-tune’s $\\Delta W$ has this property — and empirically it does — then storing the full $\\Delta W$ is enormously wasteful.",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " You could store just the first few pieces. That’s precisely what LoRA does.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-23",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The trick: write ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "ΔW",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " as ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "A · B",
+          "styles": {
+            "code": true
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-24",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Instead of learning a full $\\Delta W$, LoRA learns it ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "already factored",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " into two skinny matrices whose product reconstructs a low-rank update:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "math-25",
+      "type": "math",
+      "props": {
+        "latex": "\\Delta W \\approx A \\, B, \\qquad A \\in \\mathbb{R}^{\\,d_{out}\\times r}, \\quad B \\in \\mathbb{R}^{\\,r\\times d_{in}}"
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-26",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The shared inner dimension $r$ — the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "rank",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — is small (think 8, 16, 32). One matrix is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "tall and skinny",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", the other ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "short and wide",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and they meet at the tiny $r$:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "svg-27",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 560 220\" role=\"img\" aria-label=\"A large square matrix delta-W equals a tall matrix A times a wide matrix B, meeting at a small dimension r.\" style=\"width:100%;max-width:560px;height:auto;color:currentColor;font-family:var(--font-mono);\">\n  <g fill=\"var(--accent-soft)\" stroke=\"var(--accent)\" stroke-width=\"1.4\">\n    <rect x=\"20\" y=\"40\" width=\"120\" height=\"120\" rx=\"4\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"13\" text-anchor=\"middle\">\n    <text x=\"80\" y=\"105\" font-size=\"18\">ΔW</text>\n    <text x=\"80\" y=\"180\" opacity=\"0.7\">d_out × d_in</text>\n    <text x=\"170\" y=\"105\" font-size=\"20\">=</text>\n  </g>\n  <g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\">\n    <rect x=\"210\" y=\"40\" width=\"44\" height=\"120\" rx=\"4\"/>\n    <rect x=\"300\" y=\"82\" width=\"200\" height=\"36\" rx=\"4\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"13\" text-anchor=\"middle\">\n    <text x=\"232\" y=\"105\">A</text>\n    <text x=\"232\" y=\"180\" opacity=\"0.7\">d_out × r</text>\n    <text x=\"277\" y=\"105\" font-size=\"18\">×</text>\n    <text x=\"400\" y=\"105\">B</text>\n    <text x=\"400\" y=\"140\" opacity=\"0.7\">r × d_in</text>\n  </g>\n  <g stroke=\"var(--accent)\" stroke-width=\"1.2\" fill=\"none\">\n    <path d=\"M210 168 L254 168\" marker-start=\"url(#lora-tick)\" marker-end=\"url(#lora-tick)\"/>\n  </g>\n  <text x=\"232\" y=\"206\" fill=\"var(--accent)\" font-size=\"12\" text-anchor=\"middle\">r (small)</text>\n  <defs>\n    <marker id=\"lora-tick\" markerWidth=\"6\" markerHeight=\"10\" refX=\"3\" refY=\"5\" orient=\"auto\">\n      <line x1=\"3\" y1=\"1\" x2=\"3\" y2=\"9\" stroke=\"var(--accent)\" stroke-width=\"1.4\"/>\n    </marker>\n  </defs>\n</svg>",
+        "caption": "ΔW (d_out × d_in) is never stored directly. It is the product of a tall A and a wide B that meet at a small shared dimension r — the rank. Applied to an input, B first squeezes it down to r numbers, then A expands back to full size."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-28",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Why two matrices instead of one?",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " Because a single matrix the size of $\\Delta W$ would just ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "be",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " $\\Delta W$ — no savings. The magic is that a tall × wide product ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "reconstructs",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " a big matrix from few numbers, and forcing them through the narrow $r$ is exactly what makes the result low-rank. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "A·B",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " isn’t notation for a single thing; it’s a genuine factorization that trades a big matrix for two small factors.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "note-29",
+      "type": "note",
+      "props": {},
+      "content": [
+        {
+          "type": "text",
+          "text": "Letter conventions differ between sources — some write $\\Delta W = BA$ with the letters swapped. Don’t track the letters; track the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "shapes",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": one matrix is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "(d_out × r)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", the other ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "(r × d_in)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", and they share the small ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "r",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Applied to an input, the wide one squeezes it ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "down",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "r",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " numbers, the tall one expands it back ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "up",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-30",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "And crucially, you never choose the big dimensions. $d_{out}$ and $d_{in}$ come from the model’s architecture; the library reads them off each weight and sizes $A$ and $B$ automatically. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "The only number you pick is $r$.",
+          "styles": {
+            "bold": true
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-31",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 2,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The bottleneck: shrink to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "r",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", then expand",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-32",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "This factorization has a physical meaning worth holding onto, because it ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "is",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the intuition for why LoRA works. Reading the adapter in the order it actually runs — right to left, since $ABx = A(Bx)$ — it does two things:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-33",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "$B$ is a ",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "down-projection",
+          "styles": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " It takes the full $d_{in}$-dimensional input and squeezes it into just $r$ numbers. With only $r$ slots to write into, it is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "forced",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " to keep the few input directions that matter for this task and discard the rest — it writes a summary.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-34",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "$A$ is an ",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "up-projection",
+          "styles": {
+            "bold": true,
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " It takes those $r$ summary numbers and expands them back into a full $d_{out}$-dimensional adjustment — deciding how each captured direction should nudge the output.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-35",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "So the update can never be arbitrary: it must pass through an $r$-wide ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "bottleneck",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — read at most $r$ features going in, write at most $r$ patterns coming out. ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "That squeeze is the low-rank property, enforced by construction.",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " And it’s enough, because — as the reconstruction playground showed — the change a fine-tune actually needs lives in only a handful of directions. LoRA doesn’t ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "hope",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the update is simple; it builds a pipe too narrow for it to be anything else, and lets training find the best simple update that fits through.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-36",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Where the savings actually come from",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-37",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Now the payoff — and an honest surprise. Count the numbers. A full update is $d_{out} \\times d_{in}$ parameters. The LoRA version is $A$ plus $B$: $r \\times (d_{out} + d_{in})$. So the saving is real only when",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "math-38",
+      "type": "math",
+      "props": {
+        "latex": "r \\times (d_{out} + d_{in}) \\;<\\; d_{out} \\times d_{in}"
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-39",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "For a square $d \\times d$ matrix, that simplifies to a clean rule: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "LoRA saves when $r < d/2$.",
+          "styles": {
+            "bold": true
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-40",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The surprise: on a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "small",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " matrix, LoRA saves nothing. A $4\\times4$ update is 16 numbers; factored at $r=2$ it’s $2\\times(4+4) = 16$ — identical. That’s the break-even point. The savings are a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "big-matrix",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " phenomenon, and they grow explosively with size. Feel it:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "customComponent-41",
+      "type": "customComponent",
+      "props": {
+        "componentName": "LoRABudget",
+        "source": "import { useState, type CSSProperties } from 'react';\n\nconst mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };\n\nconst PRESETS = [\n  { label: 'toy · 4', d: 4 },\n  { label: 'GPT-2 · 768', d: 768 },\n  { label: 'small · 2048', d: 2048 },\n  { label: 'Llama attn · 4096', d: 4096 },\n];\n\nfunction fmt(n: number): string {\n  if (n >= 1e9) return (n / 1e9).toFixed(2) + 'B';\n  if (n >= 1e6) return (n / 1e6).toFixed(2) + 'M';\n  if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';\n  return String(Math.round(n));\n}\n\nfunction Bar({ label, value, frac, accent }: { label: string; value: number; frac: number; accent: boolean }) {\n  const pct = Math.min(100, Math.max(1.5, frac * 100));\n  return (\n    <div style={{ marginBottom: 8 }}>\n      <div style={{ ...mono, display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>\n        <span>{label}</span>\n        <span style={{ color: accent ? 'var(--accent)' : 'var(--ink-2)' }}>{fmt(value)} params</span>\n      </div>\n      <div style={{ height: 14, background: 'var(--paper)', border: '1px solid var(--line)', borderRadius: 4, overflow: 'hidden' }}>\n        <div style={{ width: `${pct}%`, height: '100%', background: accent ? 'var(--accent)' : 'var(--line-2)' }} />\n      </div>\n    </div>\n  );\n}\n\nexport default function LoRABudget() {\n  const [d, setD] = useState(4096);\n  const [r, setR] = useState(16);\n\n  const clampedR = Math.min(r, d);\n  const full = d * d;\n  const lora = 2 * clampedR * d;\n  const breakEven = d / 2;\n  const ratio = full / lora; // = d / (2r)\n  const saves = clampedR < breakEven;\n\n  return (\n    <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '18px 20px 20px', background: 'var(--paper-2)' }}>\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14, alignItems: 'center' }}>\n        <span style={{ ...mono, color: 'var(--ink-3)' }}>weight matrix (d × d)</span>\n        {PRESETS.map((p) => (\n          <button\n            key={p.d}\n            type=\"button\"\n            onClick={() => setD(p.d)}\n            style={{\n              ...mono,\n              padding: '4px 10px',\n              borderRadius: 5,\n              cursor: 'pointer',\n              border: `1px solid ${p.d === d ? 'var(--accent)' : 'var(--line-2)'}`,\n              background: p.d === d ? 'var(--accent-soft)' : 'transparent',\n              color: p.d === d ? 'var(--accent)' : 'var(--ink-2)',\n            }}\n          >\n            {p.label}\n          </button>\n        ))}\n      </div>\n\n      <label style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>\n        <span style={{ ...mono, width: 88, flexShrink: 0 }}>\n          rank r <strong style={{ color: 'var(--ink)' }}>{clampedR}</strong>\n        </span>\n        <input\n          type=\"range\"\n          min={1}\n          max={Math.max(2, d)}\n          step={1}\n          value={clampedR}\n          onChange={(e) => setR(Number(e.target.value))}\n          style={{ width: '100%', accentColor: 'var(--accent)' }}\n          aria-label=\"rank r\"\n        />\n      </label>\n\n      <Bar label=\"full ΔW  =  d × d\" value={full} frac={1} accent={false} />\n      <Bar label=\"LoRA  =  2 · r · d\" value={lora} frac={lora / full} accent />\n\n      <div style={{ ...mono, marginTop: 14, padding: '10px 14px', borderRadius: 6, background: 'var(--paper)', border: '1px solid var(--line)' }}>\n        d = {d}, r = {clampedR} → full = {fmt(full)}, LoRA = {fmt(lora)}.{' '}\n        {saves ? (\n          <>\n            LoRA is <strong style={{ color: 'var(--accent)' }}>{ratio.toFixed(1)}× smaller</strong>.\n          </>\n        ) : (\n          <>\n            <strong style={{ color: 'var(--ink)' }}>No saving</strong> — at r ≥ d/2 the full update is as cheap or cheaper.\n          </>\n        )}\n      </div>\n    </div>\n  );\n}\n",
+        "frameTitle": "The LoRA budget",
+        "frameCaption": "Break-even is r = d/2. Try toy · 4 at r=2 (break-even — the savings vanish), then Llama attn · 4096 at r=16 (~128× smaller). Real matrices are thousands wide, so a small r always wins big.",
+        "frameSize": "normal",
+        "frameExpand": true
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-42",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Set it to the toy $4$ at $r=2$ and the bars are equal — no win. Now jump to a real attention matrix ($4096$) at $r=16$: the full update is 16.7 million numbers, LoRA’s is 131 thousand — ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "128× smaller",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", for the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "same-shaped",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " update. Because real weight matrices are thousands wide and $r$ stays tiny, LoRA sits far below the $d/2$ break-even and the savings are enormous. That 0.2% from the opening is this ratio, summed over every matrix in the model.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-43",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "This also answers “why not just make $A$ and $B$ full-size?” Full-size factors would be ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "more",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " numbers than $\\Delta W$ itself — and no longer low-rank. The whole point is the skinny shared bottleneck.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-44",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Why untrained matrices don’t break the model",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-45",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Here’s the objection that trips everyone up: $A$ and $B$ are new matrices. They know ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "nothing",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — not language, not your task. If we bolt them onto a carefully pretrained model, shouldn’t they inject garbage and wreck it?",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-46",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The fix is a beautiful one-liner. In our letter convention, $A$ starts random and ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "$B$ starts as all zeros",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (some libraries swap the letters). Because one factor is zero, the product is exactly zero:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "math-47",
+      "type": "math",
+      "props": {
+        "latex": "\\Delta W = A\\,B = A \\cdot 0 = 0\n\\quad\\Longrightarrow\\quad\nh = Wx + 0 = Wx"
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-48",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "At step zero, the adapter contributes ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "nothing",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". The model behaves ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "exactly",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " like the untouched base. Training then moves the zero matrix off zero and reshapes the random matrix with it, so the adapter grows from no-op to useful correction.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-49",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Moment",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Adapter math",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "What the model receives",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Before training",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "$B = 0$, so $ABx = 0$",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "$h = Wx$ — exactly the frozen base",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "During training",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "$B$ becomes nonzero, $A$ also adjusts",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "$h = Wx + ABx$ — base output plus a learned nudge",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "After training",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "$AB$ is the learned low-rank update",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Same base model, different activations flowing forward",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-50",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "So the untrained adapter never starts as “random garbage that corrupts the model.” It starts as a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "zero delta",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". The only thing training is allowed to learn is the extra nudge the frozen model needs: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "“given the features the frozen model already computed here, push the activation this way.”",
+          "styles": {
+            "italic": true
+          }
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-51",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "How it’s wired: a side path, not a new layer",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-52",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "So where does the adapter physically sit? Not as a new layer stacked on top, and not as a separate model running in parallel. It sits ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "beside each weight matrix it adapts",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". The same input $x$ flows into both the frozen $W$ and the adapter, and their outputs are ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "summed",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ":",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "math-53",
+      "type": "math",
+      "props": {
+        "latex": "h = W x + A B x = (W + \\Delta W)\\,x"
+      },
+      "children": []
+    },
+    {
+      "id": "svg-54",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 560 210\" role=\"img\" aria-label=\"Input x feeds a frozen matrix W and, in parallel, a down-projection to rank r then an up-projection; the two outputs sum into h.\" style=\"width:100%;max-width:560px;height:auto;color:currentColor;font-family:var(--font-mono);\">\n  <g fill=\"currentColor\" font-size=\"13\" text-anchor=\"middle\">\n    <text x=\"30\" y=\"110\">x</text>\n  </g>\n  <g fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\">\n    <rect x=\"150\" y=\"30\" width=\"150\" height=\"46\" rx=\"6\" opacity=\"0.55\"/>\n    <rect x=\"150\" y=\"120\" width=\"70\" height=\"46\" rx=\"6\"/>\n    <rect x=\"250\" y=\"120\" width=\"70\" height=\"46\" rx=\"6\"/>\n  </g>\n  <g fill=\"currentColor\" font-size=\"12\" text-anchor=\"middle\">\n    <text x=\"225\" y=\"58\">W · x   (frozen)</text>\n    <text x=\"185\" y=\"148\">B</text>\n    <text x=\"185\" y=\"185\" font-size=\"10\" opacity=\"0.65\">down → r</text>\n    <text x=\"285\" y=\"148\">A</text>\n    <text x=\"285\" y=\"185\" font-size=\"10\" opacity=\"0.65\">up → d_out</text>\n  </g>\n  <circle cx=\"410\" cy=\"100\" r=\"16\" fill=\"none\" stroke=\"var(--accent)\" stroke-width=\"1.6\"/>\n  <text x=\"410\" y=\"105\" fill=\"var(--accent)\" font-size=\"16\" text-anchor=\"middle\">+</text>\n  <text x=\"486\" y=\"105\" fill=\"var(--accent)\" font-size=\"14\" text-anchor=\"middle\">h</text>\n  <g stroke=\"currentColor\" stroke-width=\"1.6\" fill=\"none\" opacity=\"0.7\" marker-end=\"url(#lora-a2)\">\n    <path d=\"M40 100 L60 100 L60 53 L146 53\"/>\n    <path d=\"M40 100 L60 100 L60 143 L146 143\"/>\n    <path d=\"M300 53 L410 53 L410 82\"/>\n    <path d=\"M320 143 L410 143 L410 118\"/>\n    <path d=\"M220 143 L246 143\"/>\n  </g>\n  <line x1=\"426\" y1=\"100\" x2=\"474\" y2=\"100\" stroke=\"var(--accent)\" stroke-width=\"1.8\" marker-end=\"url(#lora-a3)\"/>\n  <defs>\n    <marker id=\"lora-a2\" markerWidth=\"9\" markerHeight=\"9\" refX=\"7\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L7,3 L0,6 Z\" fill=\"currentColor\"/></marker>\n    <marker id=\"lora-a3\" markerWidth=\"9\" markerHeight=\"9\" refX=\"7\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L7,3 L0,6 Z\" fill=\"var(--accent)\"/></marker>\n  </defs>\n</svg>",
+        "caption": "LoRA is a side path. The input feeds both the frozen W and the low-rank adapter (down to r, back up); the two outputs are added. The base weights never change — but the activation h passed to the next layer does."
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-55",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The static diagram shows the wiring. The animation below shows what happens ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "inside",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " the lower path: $B$ compresses many input features into $r$ bottleneck slots, $A$ expands those few slots into a full-size correction, and the correction gets added to the frozen output. Toggle the adapter off to see the step-0 case, where $B = 0$ makes every bottleneck slot zero.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "customComponent-56",
+      "type": "customComponent",
+      "props": {
+        "componentName": "SidePathFlow",
+        "source": "import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';\n\nconst mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };\n\nconst X = [0.82, 0.34, 0.68, 0.22, 0.74, 0.46, 0.58, 0.28];\nconst WX = [0.52, 0.38, 0.64, 0.44, 0.57, 0.35];\nconst B_MIX = [\n  [0.9, 0.16, 0.7, 0.12, 0.62, 0.2, 0.74, 0.3],\n  [0.12, 0.82, 0.28, 0.78, 0.22, 0.72, 0.36, 0.68],\n  [0.48, 0.22, 0.16, 0.66, 0.86, 0.42, 0.24, 0.58],\n];\nconst A_MIX = [\n  [0.76, 0.28, 0.52],\n  [0.18, 0.78, 0.34],\n  [0.58, 0.2, 0.76],\n  [0.32, 0.56, 0.82],\n  [0.72, 0.34, 0.22],\n  [0.28, 0.74, 0.5],\n];\n// W is d_out × d_in (6 × 8) — the full, dense frozen matrix.\nconst W_MIX = Array.from({ length: 6 }, (_, r) =>\n  Array.from({ length: 8 }, (_, c) => 0.55 + 0.35 * Math.abs(Math.sin((r + 1.3) * (c + 1.7)))),\n);\n\nfunction wavg(values: number[], weights: number[]): number {\n  const total = weights.reduce((a, b) => a + b, 0);\n  return values.reduce((a, v, i) => a + v * weights[i], 0) / total;\n}\nfunction nodeY(i: number, n: number, cy: number, gap: number): number {\n  return cy + (i - (n - 1) / 2) * gap;\n}\n// smoothstep reveal: 0 before a, 1 after b\nfunction ss(a: number, b: number, t: number): number {\n  if (t <= a) return 0;\n  if (t >= b) return 1;\n  const u = (t - a) / (b - a);\n  return u * u * (3 - 2 * u);\n}\n\ntype Pt = [number, number];\n// Position along a polyline at fraction f (0..1), by arc length.\nfunction pointAt(pts: Pt[], f: number): Pt {\n  const seg: number[] = [];\n  let total = 0;\n  for (let i = 1; i < pts.length; i++) {\n    const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);\n    seg.push(d);\n    total += d;\n  }\n  let dist = f * total;\n  for (let i = 0; i < seg.length; i++) {\n    if (dist <= seg[i]) {\n      const k = seg[i] ? dist / seg[i] : 0;\n      return [pts[i][0] + (pts[i + 1][0] - pts[i][0]) * k, pts[i][1] + (pts[i + 1][1] - pts[i][1]) * k];\n    }\n    dist -= seg[i];\n  }\n  return pts[pts.length - 1];\n}\n\n// deliberate grid so every label sits on its object\nconst X_CX = 52;\nconst X_CY = 150;\nconst X_GAP = 15;\nconst WX_CX = 258;\nconst WX_CY = 64;\nconst WX_GAP = 11;\nconst Z_CX = 298;\nconst Z_CY = 194;\nconst Z_GAP = 22;\nconst D_CX = 452;\nconst D_CY = 194;\nconst D_GAP = 12;\nconst PLUS_X = 556;\nconst PLUS_Y = 128;\nconst H_CX = 628;\nconst H_CY = 128;\nconst H_GAP = 12;\nconst B_X = 150;\nconst B_Y = 178;\nconst A_X = 356;\nconst A_Y = 160;\nconst CELL = 9;\nconst CGAP = 3;\nconst W_X = 148;\nconst W_Y = 44;\nconst W_CELL = 5.5;\nconst W_GAP = 1.5;\n\n// dot routes, sampled to hug the actual (curved) arrows\nconst TOP_ROUTE: Pt[] = [\n  [60, 122],\n  [106, 82],\n  [140, 64],\n  [212, 64],\n  [258, 64],\n  [350, 74],\n  [429, 88],\n  [495, 104],\n  [541, 120],\n  [556, 128],\n  [628, 128],\n];\nconst BOT_ROUTE: Pt[] = [\n  [60, 176],\n  [108, 189],\n  [148, 194],\n  [243, 194],\n  [298, 194],\n  [356, 194],\n  [389, 194],\n  [452, 194],\n  [487, 179],\n  [511, 164],\n  [529, 150],\n  [543, 138],\n  [556, 128],\n  [628, 128],\n];\n\nfunction Vector({\n  values,\n  cx,\n  cy,\n  gap,\n  color,\n  opacity = 1,\n}: {\n  values: number[];\n  cx: number;\n  cy: number;\n  gap: number;\n  color: string;\n  opacity?: number;\n}) {\n  return (\n    <g opacity={opacity}>\n      {values.map((value, i) => (\n        <rect\n          key={`${cx}-${i}`}\n          x={cx - 5}\n          y={nodeY(i, values.length, cy, gap) - 5}\n          width={10}\n          height={10}\n          rx={3}\n          fill={color}\n          opacity={0.16 + 0.72 * Math.min(1, value)}\n        />\n      ))}\n    </g>\n  );\n}\n\nfunction Grid({\n  x,\n  y,\n  mix,\n  active,\n  color = 'var(--accent)',\n  cell = CELL,\n  gap = CGAP,\n  base = 0.1,\n  scale = 0.34,\n}: {\n  x: number;\n  y: number;\n  mix: number[][];\n  active: number;\n  color?: string;\n  cell?: number;\n  gap?: number;\n  base?: number;\n  scale?: number;\n}) {\n  return (\n    <g>\n      {mix.map((row, r) =>\n        row.map((value, c) => (\n          <rect\n            key={`${r}-${c}`}\n            x={x + c * (cell + gap)}\n            y={y + r * (cell + gap)}\n            width={cell}\n            height={cell}\n            rx={2}\n            fill={color}\n            opacity={(base + value * scale) * active}\n          />\n        )),\n      )}\n    </g>\n  );\n}\n\nexport default function SidePathFlow() {\n  const [enabled, setEnabled] = useState(true);\n  const [t, setT] = useState(0);\n  const raf = useRef(0);\n\n  useEffect(() => {\n    let start: number | null = null;\n    const loop = (now: number) => {\n      if (start === null) start = now;\n      setT(((now - start) / 3400) % 1);\n      raf.current = requestAnimationFrame(loop);\n    };\n    raf.current = requestAnimationFrame(loop);\n    return () => cancelAnimationFrame(raf.current);\n  }, []);\n\n  const on = enabled;\n  const z = useMemo(() => (on ? B_MIX.map((w) => wavg(X, w)) : [0, 0, 0]), [on]);\n  const delta = useMemo(() => A_MIX.map((w) => wavg(z, w) * 0.9), [z]);\n\n  // reveal factors, driven by where the single dot is along its route\n  const wxOn = ss(0.28, 0.42, t);\n  const bOn = on ? ss(0.12, 0.3, t) : 0;\n  const zOn = on ? ss(0.34, 0.46, t) : 0;\n  const aOn = on ? ss(0.5, 0.68, t) : 0;\n  const abOn = on ? ss(0.66, 0.76, t) : 0;\n  const hOn = ss(0.88, 1, t); // both dots deliver to h at the end\n\n  const topDot = pointAt(TOP_ROUTE, t);\n  const botDot = pointAt(BOT_ROUTE, t);\n\n  return (\n    <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '18px 20px', background: 'var(--paper-2)' }}>\n      <svg\n        viewBox=\"0 0 700 268\"\n        style={{ width: '100%', height: 'auto', display: 'block', color: 'var(--ink)', fontFamily: 'var(--font-mono)' }}\n        role=\"img\"\n        aria-label=\"LoRA side path. A grey dot carries x through the frozen W into Wx; an accent dot carries x through B into the bottleneck z, through A into the ABx correction; the two meet at + and light up h. Each stage lights up as the dot reaches it.\"\n      >\n        <defs>\n          <marker id=\"spf-arrow\" markerWidth=\"8\" markerHeight=\"8\" refX=\"6\" refY=\"3\" orient=\"auto\">\n            <path d=\"M0,0 L6,3 L0,6 Z\" fill=\"currentColor\" />\n          </marker>\n        </defs>\n\n        {/* input x */}\n        <Vector values={X} cx={X_CX} cy={X_CY} gap={X_GAP} color=\"var(--ink)\" />\n        <text x={X_CX} y={80} fontSize=\"12\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.8\">x</text>\n        <text x={X_CX} y={222} fontSize=\"10\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.55\">d_in features</text>\n\n        {/* TOP: frozen path  x -> W -> Wx */}\n        <path d=\"M60 122 C96 92, 120 66, 140 64\" stroke=\"currentColor\" strokeWidth=\"1.2\" fill=\"none\" opacity=\"0.28\" markerEnd=\"url(#spf-arrow)\" />\n        <rect x=\"142\" y=\"38\" width=\"68\" height=\"52\" rx=\"6\" fill=\"none\" stroke=\"currentColor\" strokeWidth=\"1.2\" opacity=\"0.5\" />\n        <Grid x={W_X} y={W_Y} mix={W_MIX} active={1} color=\"currentColor\" cell={W_CELL} gap={W_GAP} base={0.12} scale={0.2} />\n        <text x=\"176\" y=\"30\" fontSize=\"10\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.6\">frozen W · not trained</text>\n        <text x=\"176\" y=\"104\" fontSize=\"10\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.55\">d_out × d_in · dense</text>\n        <path d=\"M212 64 L252 64\" stroke=\"currentColor\" strokeWidth=\"1.2\" fill=\"none\" opacity=\"0.4\" markerEnd=\"url(#spf-arrow)\" />\n        <Vector values={WX} cx={WX_CX} cy={WX_CY} gap={WX_GAP} color=\"var(--line-2)\" opacity={0.3 + 0.7 * wxOn} />\n        <text x={WX_CX} y={106} fontSize=\"10\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.55\">Wx</text>\n\n        {/* BOTTOM: adapter path  x -> B -> z -> A -> ABx */}\n        <path d=\"M60 176 C96 186, 122 194, 148 194\" stroke=\"var(--accent)\" strokeWidth=\"1.2\" fill=\"none\" opacity={on ? 0.5 : 0.15} markerEnd=\"url(#spf-arrow)\" />\n        <Grid x={B_X} y={B_Y} mix={B_MIX} active={on ? 0.12 + 0.88 * bOn : 0.12} />\n        <text x=\"196\" y=\"171\" fontSize=\"13\" textAnchor=\"middle\" fill=\"currentColor\" opacity={on ? 0.9 : 0.3}>B</text>\n        <text x=\"196\" y=\"231\" fontSize=\"10\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.6\">r × d_in · wide</text>\n\n        <path d=\"M243 194 L292 194\" stroke=\"var(--accent)\" strokeWidth=\"1.2\" fill=\"none\" opacity={on ? 0.5 : 0.1} markerEnd=\"url(#spf-arrow)\" />\n        <Vector values={z} cx={Z_CX} cy={Z_CY} gap={Z_GAP} color=\"var(--accent)\" opacity={on ? 0.25 + 0.75 * zOn : 0.4} />\n        <text x={Z_CX} y={158} fontSize=\"10.5\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.7\">z = Bx</text>\n\n        <path d=\"M304 194 L354 194\" stroke=\"var(--accent)\" strokeWidth=\"1.2\" fill=\"none\" opacity={on ? 0.5 : 0.1} markerEnd=\"url(#spf-arrow)\" />\n        <Grid x={A_X} y={A_Y} mix={A_MIX} active={on ? 0.12 + 0.88 * aOn : 0.12} />\n        <text x=\"372\" y=\"150\" fontSize=\"13\" textAnchor=\"middle\" fill=\"currentColor\" opacity={on ? 0.9 : 0.3}>A</text>\n        <text x=\"372\" y=\"247\" fontSize=\"10\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.6\">d_out × r · tall</text>\n\n        <path d=\"M389 194 L446 194\" stroke=\"var(--accent)\" strokeWidth=\"1.2\" fill=\"none\" opacity={on ? 0.5 : 0.1} markerEnd=\"url(#spf-arrow)\" />\n        <Vector values={delta} cx={D_CX} cy={D_CY} gap={D_GAP} color=\"var(--accent)\" opacity={on ? 0.2 + 0.8 * abOn : 0.3} />\n        <text x={D_CX} y={150} fontSize=\"10\" textAnchor=\"middle\" fill=\"var(--accent)\" opacity={on ? 0.8 : 0.3}>ABx</text>\n\n        {/* merge into h */}\n        <path d=\"M264 64 C380 74, 496 100, 541 120\" stroke=\"currentColor\" strokeWidth=\"1.1\" fill=\"none\" opacity=\"0.28\" markerEnd=\"url(#spf-arrow)\" />\n        <path d=\"M458 190 C500 178, 528 150, 543 138\" stroke=\"var(--accent)\" strokeWidth=\"1.1\" fill=\"none\" opacity={on ? 0.2 + 0.4 * abOn : 0} markerEnd=\"url(#spf-arrow)\" />\n        <circle cx={PLUS_X} cy={PLUS_Y} r=\"14\" fill=\"none\" stroke=\"var(--accent)\" strokeWidth=\"1.4\" opacity=\"0.8\" />\n        <text x={PLUS_X} y={PLUS_Y + 5} fontSize=\"16\" textAnchor=\"middle\" fill=\"var(--accent)\">+</text>\n        <path d=\"M570 128 L621 128\" stroke=\"currentColor\" strokeWidth=\"1.1\" fill=\"none\" opacity=\"0.4\" markerEnd=\"url(#spf-arrow)\" />\n\n        {/* h = grey Wx base + accent ABx correction, both revealed as the dots arrive */}\n        <g>\n          {WX.map((base, i) => {\n            const cy = nodeY(i, WX.length, H_CY, H_GAP);\n            const corr = on ? Math.min(1, delta[i]) : 0;\n            return (\n              <g key={`h-${i}`}>\n                <rect x={H_CX - 5} y={cy - 5} width={10} height={10} rx={3} fill=\"var(--ink)\" opacity={(0.16 + 0.72 * base) * (0.18 + 0.82 * hOn)} />\n                {corr > 0.01 && (\n                  <rect x={H_CX - 5} y={cy - 5} width={10} height={10} rx={3} fill=\"var(--accent)\" opacity={(0.3 + 0.6 * corr) * hOn} />\n                )}\n              </g>\n            );\n          })}\n        </g>\n        <text x={H_CX} y={80} fontSize=\"12\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.8\">h</text>\n        <text x={H_CX} y={180} fontSize=\"10\" textAnchor=\"middle\" fill=\"currentColor\" opacity=\"0.6\">{on ? 'h = Wx + ABx' : 'h = Wx'}</text>\n\n        {/* one dot per route, riding exactly on its arrow */}\n        <circle cx={topDot[0]} cy={topDot[1]} r=\"4.5\" fill=\"var(--ink)\" opacity=\"0.9\" />\n        {on && <circle cx={botDot[0]} cy={botDot[1]} r=\"4.5\" fill=\"var(--accent)\" opacity=\"0.95\" />}\n      </svg>\n\n      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12, flexWrap: 'wrap' }}>\n        <button\n          type=\"button\"\n          onClick={() => setEnabled((v) => !v)}\n          style={{\n            ...mono,\n            padding: '5px 12px',\n            borderRadius: 6,\n            cursor: 'pointer',\n            border: `1px solid ${enabled ? 'var(--accent)' : 'var(--line-2)'}`,\n            background: enabled ? 'var(--accent-soft)' : 'transparent',\n            color: enabled ? 'var(--accent)' : 'var(--ink-2)',\n          }}\n        >\n          adapter: {enabled ? 'on' : 'off (B = 0)'}\n        </button>\n      </div>\n    </div>\n  );\n}\n",
+        "frameTitle": "The side path, inside the bottleneck",
+        "frameCaption": "B squeezes x down to the r-dimensional bottleneck z; A expands z back into the correction ABx, which is added to the frozen Wx. Every correction must pass through those r nodes. Toggle the adapter off (B = 0) for the step-0 case, where h = Wx",
+        "frameSize": "wide",
+        "frameExpand": true
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-57",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "This settles two common misreadings at once:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-58",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The base weights $W$ ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "never change",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — they stay frozen, read-only.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-59",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "But the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "activation $h$ passed to the next layer does change",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — it’s the original $Wx$ plus the adapter’s nudge. The correction ripples forward through the rest of the frozen network.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-60",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "One more detail: “adapting the last few layers” doesn’t mean one adapter per layer. Each ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "targeted weight matrix",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (in a transformer: attention’s query/key/value/output, the MLP projections) gets its own $A$–$B$ pair. “The adapter” you save at the end is the whole collection of these small pairs — a few megabytes total.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-61",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Zooming all the way out, here’s where those pairs actually live inside the model:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "svg-62",
+      "type": "svg",
+      "props": {
+        "code": "<svg viewBox=\"0 0 700 320\" role=\"img\" aria-label=\"A transformer block containing six weight matrices — Q, K, V, O, MLP up and MLP down — each drawn as a large frozen bar with a small trainable LoRA adapter beside it. The block repeats N times, between token input and output.\" style=\"width:100%;max-width:700px;height:auto;color:currentColor;font-family:var(--font-mono);\">\n  <text x=\"20\" y=\"150\" fill=\"currentColor\" font-size=\"13\">tokens</text>\n  <line x1=\"78\" y1=\"146\" x2=\"124\" y2=\"146\" stroke=\"currentColor\" stroke-width=\"1.6\" opacity=\"0.7\" marker-end=\"url(#bp-arrow)\"/>\n\n  <rect x=\"130\" y=\"22\" width=\"440\" height=\"256\" rx=\"10\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" opacity=\"0.4\"/>\n  <text x=\"350\" y=\"15\" fill=\"currentColor\" font-size=\"11\" text-anchor=\"middle\" opacity=\"0.65\">transformer block · ×N layers</text>\n\n  <text x=\"152\" y=\"48\" fill=\"currentColor\" font-size=\"11\" opacity=\"0.7\">attention</text>\n  <text x=\"152\" y=\"68\" fill=\"currentColor\" font-size=\"12\">Q</text>\n  <rect x=\"196\" y=\"56\" width=\"300\" height=\"16\" rx=\"3\" fill=\"var(--line-2)\"/>\n  <rect x=\"500\" y=\"56\" width=\"30\" height=\"16\" rx=\"3\" fill=\"var(--accent)\"/>\n  <text x=\"152\" y=\"96\" fill=\"currentColor\" font-size=\"12\">K</text>\n  <rect x=\"196\" y=\"84\" width=\"300\" height=\"16\" rx=\"3\" fill=\"var(--line-2)\"/>\n  <rect x=\"500\" y=\"84\" width=\"30\" height=\"16\" rx=\"3\" fill=\"var(--accent)\"/>\n  <text x=\"152\" y=\"124\" fill=\"currentColor\" font-size=\"12\">V</text>\n  <rect x=\"196\" y=\"112\" width=\"300\" height=\"16\" rx=\"3\" fill=\"var(--line-2)\"/>\n  <rect x=\"500\" y=\"112\" width=\"30\" height=\"16\" rx=\"3\" fill=\"var(--accent)\"/>\n  <text x=\"152\" y=\"152\" fill=\"currentColor\" font-size=\"12\">O</text>\n  <rect x=\"196\" y=\"140\" width=\"300\" height=\"16\" rx=\"3\" fill=\"var(--line-2)\"/>\n  <rect x=\"500\" y=\"140\" width=\"30\" height=\"16\" rx=\"3\" fill=\"var(--accent)\"/>\n\n  <text x=\"152\" y=\"176\" fill=\"currentColor\" font-size=\"11\" opacity=\"0.7\">MLP</text>\n  <text x=\"152\" y=\"196\" fill=\"currentColor\" font-size=\"12\">up</text>\n  <rect x=\"196\" y=\"184\" width=\"300\" height=\"16\" rx=\"3\" fill=\"var(--line-2)\"/>\n  <rect x=\"500\" y=\"184\" width=\"30\" height=\"16\" rx=\"3\" fill=\"var(--accent)\"/>\n  <text x=\"146\" y=\"224\" fill=\"currentColor\" font-size=\"12\">down</text>\n  <rect x=\"196\" y=\"212\" width=\"300\" height=\"16\" rx=\"3\" fill=\"var(--line-2)\"/>\n  <rect x=\"500\" y=\"212\" width=\"30\" height=\"16\" rx=\"3\" fill=\"var(--accent)\"/>\n\n  <line x1=\"570\" y1=\"146\" x2=\"624\" y2=\"146\" stroke=\"currentColor\" stroke-width=\"1.6\" opacity=\"0.7\" marker-end=\"url(#bp-arrow)\"/>\n  <text x=\"632\" y=\"150\" fill=\"currentColor\" font-size=\"13\">output</text>\n\n  <rect x=\"150\" y=\"294\" width=\"16\" height=\"12\" rx=\"2\" fill=\"var(--line-2)\"/>\n  <text x=\"172\" y=\"304\" fill=\"currentColor\" font-size=\"11\" opacity=\"0.75\">frozen weight (W)</text>\n  <rect x=\"320\" y=\"294\" width=\"16\" height=\"12\" rx=\"2\" fill=\"var(--accent)\"/>\n  <text x=\"342\" y=\"304\" fill=\"currentColor\" font-size=\"11\" opacity=\"0.75\">LoRA adapter (A·B) — trainable</text>\n\n  <defs>\n    <marker id=\"bp-arrow\" markerWidth=\"9\" markerHeight=\"9\" refX=\"7\" refY=\"3\" orient=\"auto\"><path d=\"M0,0 L7,3 L0,6 Z\" fill=\"currentColor\"/></marker>\n  </defs>\n</svg>",
+        "caption": "The bigger picture. Inside every transformer block, LoRA leaves each real weight matrix (attention's Q/K/V/O and the MLP projections) frozen, and clips a small trainable A·B beside it. The block repeats N times, so the adapters ride along in every layer. Everything grey is frozen; only the small accent pieces train."
+      },
+      "children": []
+    },
+    {
+      "id": "heading-63",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What rank controls",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-64",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "You met $r$ as the bottleneck width. It’s the one real knob, and it trades capacity against cost:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-65",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "small $r$",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (say 8) → a simpler update, fewer parameters, less memory — but it may underfit a genuinely complex change.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-66",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "large $r$",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (say 128) → a richer update, more parameters — often overkill for a narrow task.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-67",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The reason small $r$ usually suffices is exactly what the reconstruction playground showed: the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "update",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " a fine-tune needs lives in a few directions, so a few ranks rebuild almost all of it. Start at 16; raise it only if the model can’t fit the task. (Its partner $\\alpha$, ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "lora_alpha",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", just scales the adapter’s contribution — a rule of thumb is $\\alpha \\approx 2r$.)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-68",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What you actually set in code",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-69",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Most LoRA libraries hide the matrix shapes for you. You don’t manually create $A \\in \\mathbb{R}^{d_{out}\\times r}$ and $B \\in \\mathbb{R}^{r\\times d_{in}}$; you choose a few knobs, point LoRA at some existing weight matrices, and the library clips the right adapter beside each one.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-70",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "In a typical Hugging Face PEFT setup, the config looks like this:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "codeBlock-71",
+      "type": "codeBlock",
+      "props": {
+        "language": "python"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "from peft import LoraConfig\n\nlora_config = LoraConfig(\n    r=16,\n    lora_alpha=32,\n    target_modules=[\"q_proj\", \"v_proj\", \"o_proj\", \"up_proj\", \"down_proj\"],\n    lora_dropout=0.05,\n    bias=\"none\",\n    task_type=\"CAUSAL_LM\",\n)",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-72",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Each field maps back to the picture you’ve already built:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-73",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "r",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is the bottleneck width. It decides how many directions the update can use.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-74",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "lora_alpha",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a scale on the adapter output. Many implementations apply the adapter as $Wx + \\frac{\\alpha}{r}ABx$, so ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "alpha = 2r",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " makes the LoRA path start with a scale of about 2 once it has learned something.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-75",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "target_modules",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " decides ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "where",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " adapters are attached. Attention projections (",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "q_proj",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "k_proj",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "v_proj",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "o_proj",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ") change how tokens read and write information; MLP projections (",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "up_proj",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "down_proj",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", sometimes ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "gate_proj",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ") change the feed-forward transformations. More targets means more trainable parameters and often more capacity.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-76",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "lora_dropout",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " randomly drops part of the adapter path during training. It can help small datasets, and is often set to ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "0",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " or ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "0.05",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-77",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "bias=\"none\"",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " means only the LoRA matrices train. Some setups also train biases, but the clean LoRA story is: freeze the base, train the low-rank side paths.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-78",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The important thing: ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "target_modules",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " does not mean “replace those modules.” It means “for every matching frozen matrix, add a small $A$–$B$ side path.” If you target five matrix names across 24 transformer blocks, you get 120 little adapters — still tiny compared with the base model.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-79",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Two useful starting recipes:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-80",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Situation",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Good first try",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Clean formatting / extraction / style",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "r=8",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " or ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "16",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": ", attention only",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Harder instruction tuning",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "r=16",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " or ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "32",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": ", attention + MLP",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Very tiny dataset",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "lower ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "r",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": ", add ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "lora_dropout=0.05",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Underfitting after training",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "raise ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "r",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": ", add more target modules, or train longer",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Memorizing / unstable eval",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "lower ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "r",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": ", add dropout, improve data",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-81",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "That is the practical loop: start small, check whether the model can fit the training task and generalize to held-out examples, then increase rank or target more matrices only when the adapter is clearly too weak.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-82",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "After training: merge, or keep a stack of adapters",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-83",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Because $\\Delta W = AB$ is just a matrix, you have two choices when you’re done:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "numberedListItem-84",
+      "type": "numberedListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Merge it in:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " compute $W' = W + AB$ once, and you have an ordinary model with ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "zero",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " extra inference cost — indistinguishable from a fully fine-tuned one.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "numberedListItem-85",
+      "type": "numberedListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Keep it separate:",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " ship the tiny $A$–$B$ files as an ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "adapter",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " and snap them onto the frozen base at load time.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-86",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Option 2 is quietly powerful. One base model can host ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "many",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " swappable adapters — one per task, per customer, per style — each only megabytes. Serving “500 fine-tunes” becomes serving one base model plus 500 small adapters, hot-swapped per request. That economics is only possible because the adapter is low-rank.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "customComponent-87",
+      "type": "customComponent",
+      "props": {
+        "componentName": "MultiLoRASwap",
+        "source": "import { useState, type CSSProperties } from 'react';\n\nconst mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };\nconst label: CSSProperties = {\n  fontFamily: 'var(--font-mono)',\n  fontSize: 10.5,\n  textTransform: 'uppercase',\n  letterSpacing: '0.07em',\n  color: 'var(--ink-3)',\n};\n\nconst ADAPTERS = [\n  {\n    id: 'json',\n    name: 'JSON extractor',\n    size: '3.9 MB',\n    prompt: 'Ava Kim, 41, Sales, joined 2019-03-02',\n    output: '{\"name\":\"Ava Kim\",\"age\":41,\"department\":\"Sales\",\"start_date\":\"2019-03-02\"}',\n  },\n  {\n    id: 'sql',\n    name: 'SQL writer',\n    size: '4.1 MB',\n    prompt: 'users in Sales older than 30',\n    output: \"SELECT * FROM users WHERE department = 'Sales' AND age > 30;\",\n  },\n  {\n    id: 'fr',\n    name: 'FR translator',\n    size: '3.8 MB',\n    prompt: 'Good morning, how are you?',\n    output: 'Bonjour, comment allez-vous ?',\n  },\n  {\n    id: 'sum',\n    name: 'Summarizer',\n    size: '4.0 MB',\n    prompt: 'The meeting covered budget, hiring, and the Q3 roadmap in detail.',\n    output: 'Budget, hiring, and Q3 roadmap discussed.',\n  },\n];\n\nexport default function MultiLoRASwap() {\n  const [i, setI] = useState(0);\n  const a = ADAPTERS[i];\n\n  return (\n    <div style={{ border: '1px solid var(--line)', borderRadius: 8, padding: '20px', background: 'var(--paper-2)' }}>\n      <div style={{ display: 'flex', alignItems: 'stretch', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>\n        <div style={{ flex: '1 1 200px', padding: '12px 14px', borderRadius: 6, border: '1px dashed var(--line-2)', background: 'var(--paper)' }}>\n          <div style={label}>frozen base · shared</div>\n          <div style={{ ...mono, color: 'var(--ink)', marginTop: 4 }}>Qwen3-0.6B</div>\n          <div style={{ ...mono, color: 'var(--ink-3)', fontSize: 11 }}>1.2 GB · loaded once</div>\n        </div>\n        <div style={{ alignSelf: 'center', ...mono, color: 'var(--ink-3)' }}>+</div>\n        <div style={{ flex: '1 1 200px', padding: '12px 14px', borderRadius: 6, border: '1px solid var(--accent)', background: 'var(--accent-soft)' }}>\n          <div style={{ ...label, color: 'var(--accent)' }}>adapter · swapped</div>\n          <div style={{ ...mono, color: 'var(--ink)', marginTop: 4 }}>{a.name}</div>\n          <div style={{ ...mono, color: 'var(--ink-3)', fontSize: 11 }}>{a.size} · hot-swappable</div>\n        </div>\n      </div>\n\n      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>\n        {ADAPTERS.map((ad, idx) => (\n          <button\n            key={ad.id}\n            type=\"button\"\n            onClick={() => setI(idx)}\n            style={{\n              ...mono,\n              padding: '5px 12px',\n              borderRadius: 5,\n              cursor: 'pointer',\n              border: `1px solid ${idx === i ? 'var(--accent)' : 'var(--line-2)'}`,\n              background: idx === i ? 'var(--accent-soft)' : 'transparent',\n              color: idx === i ? 'var(--accent)' : 'var(--ink-2)',\n            }}\n          >\n            {ad.name}\n          </button>\n        ))}\n      </div>\n\n      <div style={{ ...label, marginBottom: 6 }}>input</div>\n      <div style={{ ...mono, padding: '10px 14px', borderRadius: 6, background: 'var(--paper)', border: '1px solid var(--line)', marginBottom: 10, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{a.prompt}</div>\n      <div style={{ ...label, marginBottom: 6 }}>output · same frozen base, {a.name} adapter</div>\n      <div style={{ ...mono, padding: '10px 14px', borderRadius: 6, background: 'var(--paper)', border: '1px solid var(--accent)', color: 'var(--ink)', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{a.output}</div>\n    </div>\n  );\n}\n",
+        "frameTitle": "One base, many adapters",
+        "frameCaption": "The 1.2 GB base loads once and never changes. Each skill is a ~4 MB adapter snapped on top and swapped per request — so a serving stack can offer hundreds of fine-tunes without hundreds of full models.",
+        "frameSize": "normal",
+        "frameExpand": true
+      },
+      "children": []
+    },
+    {
+      "id": "heading-88",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The real numbers: a 0.6B model on a laptop",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-89",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Back to the opening. The model was ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "Qwen3-0.6B",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — 596 million parameters. With LoRA at $r=16$ on its linear layers, the trainable adapter was ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "1.4 million parameters — 0.24% of the model",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Training touched only those; the 596M base stayed frozen, so the memory that would have gone to gradients and optimizer state for 596M parameters simply never got allocated. Peak memory: ~3 GB. Wall-clock: ~40 seconds for a few hundred steps.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-90",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Push it further and you get ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "QLoRA",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": quantize the frozen base to 4-bit (it’s read-only, so precision matters less), and even the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "frozen",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " copy shrinks ~4×. That’s how a 7B model fine-tunes in ~8 GB — a single consumer GPU — instead of ~112 GB.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-91",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "When not to reach for LoRA",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-92",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "LoRA is a low-rank ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "adjustment",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " to existing knowledge. It shines at installing behaviors and skills the base can already almost do. It’s the wrong tool when:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-93",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "You need to inject ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "large-scale new knowledge",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (a new language, a whole domain the base never saw). That’s a high-rank change; you likely need continued pretraining or full fine-tuning.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "bulletListItem-94",
+      "type": "bulletListItem",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Your rank is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "too low for a genuinely complex task",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — the adapter underfits. Raise $r$, or reconsider.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-95",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The honest framing: LoRA bets your change is simple. When that bet holds — which is most day-to-day fine-tuning — you get 99% of full fine-tuning’s benefit for ~0.2% of its cost. When it doesn’t, no bottleneck will save you.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "separator-96",
+      "type": "separator",
+      "props": {},
+      "children": []
+    },
+    {
+      "id": "heading-97",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Recap — the whole idea in one breath",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-98",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Fine-tuning adds an update $\\Delta W$ to each weight. Full fine-tuning learns that update as a matrix ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "as big as the model",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " — expensive. LoRA bets the update is ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "low-rank",
+          "styles": {
+            "bold": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " (it lives in a few directions), so it learns $\\Delta W = A B$ — two skinny matrices sharing a small rank $r$ — instead. One is zero-initialized so the adapter starts as a no-op and grows a delta; it rides on top of the frozen model, changing only the activation passed forward, never the weights themselves. On real (large) matrices this is dozens to hundreds of times cheaper, which is how you fine-tune a billion-parameter model, on a laptop, by changing 0.2% of it.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-99",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "That’s not a magic trick. It’s a bet about the shape of change — and it’s usually right.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    }
+  ],
+  "tableVariants": {
+    "table-14": {
+      "border": "lined",
+      "zebra": true
+    },
+    "table-49": {
+      "border": "lined",
+      "zebra": true
+    },
+    "table-80": {
+      "border": "lined",
+      "zebra": true
+    }
+  }
+}
