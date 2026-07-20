@@ -78,7 +78,7 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
         ref={summaryRef}
         className="write-summary"
         rows={1}
-        placeholder="A brief summary of the blog — shows under the title"
+        placeholder="A brief summary of the blog "
         aria-label="Post summary"
         value={meta.summary}
         onChange={(e) => set({ summary: e.target.value })}

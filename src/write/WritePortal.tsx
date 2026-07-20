@@ -730,11 +730,11 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       </div>
       {githubEnabled && (
         <p className="write-actions-note" style={previewOn ? { display: 'none' } : undefined}>
-          Your post is submitted as a pull request on GitHub for us to review.
+          NOTE: Post is submitted as a pull request on GitHub for review.
         </p>
       )}
       <p className="write-actions-note" style={previewOn ? { display: 'none' } : undefined}>
-        Not done yet? Download your post and upload it here later to continue.
+        Not done yet? Wanna Draft? Download your post and upload it here later to continue.
       </p>
 
       <PublishDialog
