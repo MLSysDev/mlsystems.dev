@@ -1855,13 +1855,13 @@ a.hashtag:hover {
 }
 
 .article-body blockquote {
-  border-left: 2px solid var(--accent);
-  margin: 24px 0;
-  padding: 4px 0 4px 20px;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 22px;
-  line-height: 1.4;
+  border-left: 3px solid var(--accent);
+  margin: 28px 0;
+  padding: 2px 0 2px 22px;
+  font-family: var(--font-read);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
   color: var(--ink-2);
 }
 .article-body blockquote > p:last-child {
