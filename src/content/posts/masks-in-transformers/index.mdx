@@ -1,0 +1,222 @@
+---
+title: 'Every Mask in a Transformer, Untangled'
+summary: 'The word "mask" means at least four unrelated things in deep learning — what a token can see, what counts toward the loss, what is hidden to create a task, and what is randomly dropped. One field guide to all of them, with why each exists and what breaks without it.'
+authors: ['dinesh']
+date: '2026-07-20'
+readMin: 18
+topic: 'Training'
+topicId: 'training'
+tags: ['masking', 'attention', 'transformers', 'causal-mask', 'bert', 'diffusion-llm', 'fine-tuning']
+---
+
+import Interactive from '../../../components/Interactive';
+import AttentionMaskExplorer from './AttentionMaskExplorer';
+import LossMaskStrip from './LossMaskStrip';
+import DiffusionUnmask from './DiffusionUnmask';
+
+If you read enough about transformers, you hit the word **mask** everywhere — causal mask, padding mask, attention mask, loss mask, masked language modeling, masked diffusion — and it quietly starts to feel like one slippery concept you never quite pinned down.
+
+Here's the secret: it isn't one concept. **"Mask" names at least four completely unrelated mechanisms.** A single token, in a single training step, can be masked in several different senses *at once*, and they have nothing to do with each other. That overloading is the entire source of the confusion.
+
+This post untangles all of them: what each mask is, **why** it exists, what you **get** from it, and — the part most explanations skip — **what breaks if you don't use it.** By the end, "mask" should never be a fog word again.
+
+## What a mask actually is
+
+Strip away the jargon and every mask is the same primitive:
+
+<Note>A mask is a **0/1 gate that says "ignore this element."** That's it. What changes between the four families is only *which* elements and — crucially — **ignore them for what purpose?**</Note>
+
+Four purposes, four families:
+
+<Figure caption="One primitive, four purposes. Every 'mask' in deep learning is a 0/1 gate that says 'ignore this' — the families differ only in what they ignore, and why." width={960}>
+{/* mermaid
+flowchart TD
+  M["a mask = a 0/1 gate<br/><b>ignore this element</b>"]
+  M --> S1["<b>SEE</b><br/>attention masks"]
+  M --> S2["<b>SCORE</b><br/>loss masks"]
+  M --> S3["<b>HIDE</b><br/>objective masks"]
+  M --> S4["<b>DROP</b><br/>regularization masks"]
+  S1 --> a1["what a token<br/>may attend to"]
+  S2 --> a2["what counts<br/>in the loss"]
+  S3 --> a3["what's hidden<br/>to create the task"]
+  S4 --> a4["what's randomly<br/>zeroed for robustness"]
+*/}
+<svg class="mermaid-diagram" viewBox="0 0 720 224" role="img" aria-label="A mask is a 0/1 gate; it splits into four families — SEE (attention masks), SCORE (loss masks), HIDE (objective masks), and DROP (regularization masks)." style="width:100%;max-width:720px;height:auto;color:currentColor;font-family:var(--font-mono);">
+  <g fill="none" stroke="currentColor" stroke-width="1.3">
+    <rect x="270" y="12" width="180" height="48" rx="8" opacity="0.6"/>
+    <rect x="20" y="120" width="154" height="86" rx="8" opacity="0.55"/>
+    <rect x="195" y="120" width="154" height="86" rx="8" opacity="0.55"/>
+    <rect x="370" y="120" width="154" height="86" rx="8" opacity="0.55"/>
+    <rect x="546" y="120" width="154" height="86" rx="8" opacity="0.55"/>
+  </g>
+  <g stroke="currentColor" stroke-width="1.1" opacity="0.35">
+    <line x1="360" y1="60" x2="97" y2="120"/>
+    <line x1="360" y1="60" x2="272" y2="120"/>
+    <line x1="360" y1="60" x2="447" y2="120"/>
+    <line x1="360" y1="60" x2="623" y2="120"/>
+  </g>
+  <g text-anchor="middle" fill="currentColor">
+    <text x="360" y="34" font-size="13" font-weight="700">a mask = a 0/1 gate</text>
+    <text x="360" y="50" font-size="10" opacity="0.6">ignore this element</text>
+  </g>
+  <g text-anchor="middle" font-size="13" font-weight="700" fill="var(--accent)">
+    <text x="97" y="148">SEE</text>
+    <text x="272" y="148">SCORE</text>
+    <text x="447" y="148">HIDE</text>
+    <text x="623" y="148">DROP</text>
+  </g>
+  <g text-anchor="middle" font-size="11" fill="currentColor">
+    <text x="97" y="167">attention masks</text>
+    <text x="272" y="167">loss masks</text>
+    <text x="447" y="167">objective masks</text>
+    <text x="623" y="167">regularization</text>
+  </g>
+  <g text-anchor="middle" font-size="9.5" fill="currentColor" opacity="0.55">
+    <text x="97" y="189">what it may attend to</text>
+    <text x="272" y="189">what counts in the loss</text>
+    <text x="447" y="189">what's hidden to learn</text>
+    <text x="623" y="189">what's randomly dropped</text>
+  </g>
+</svg>
+</Figure>
+
+| Family | Gates… | Answers the question | Lives in |
+| --- | --- | --- | --- |
+| **SEE** | attention | *which tokens can I look at?* | every attention layer |
+| **SCORE** | the loss | *which predictions am I graded on?* | the training objective |
+| **HIDE** | the input | *what do I hide to manufacture a task?* | the pretraining objective |
+| **DROP** | activations | *what do I randomly kill for robustness?* | regularization |
+
+If you want an everyday anchor for each: **SEE** is a pair of **blinders** (limiting the field of view), **SCORE** is a **grading rubric** (which answers get marked), **HIDE** is a **fill-in-the-blank quiz** (erase something, then learn to reconstruct it), and **DROP** is **practicing with random teammates benched** (so no single neuron becomes indispensable).
+
+Keep that table in your head and every "mask" you meet drops cleanly into one slot.
+
+## Family 1 — SEE: attention masks
+
+**What it gates:** for each token (a *query*), which other tokens (the *keys*) it is allowed to attend to. Mechanically, before the attention softmax you set the score of every disallowed (query, key) pair to **−∞**, so its weight becomes exactly 0. That's an N×N grid of allowed/blocked — and the *shape* of that grid is the whole story.
+
+Flip through the shapes:
+
+<Interactive title="Attention mask explorer" caption="Each cell (i, j): may query i attend to key j? Filled = yes. Causal is the lower triangle (see only the past); bidirectional is full; sliding-window is a diagonal band; padding blanks the filler columns; prefix-LM makes the prompt bidirectional; packed docs are block-diagonal so examples can't bleed into each other." size="wide" expand client:load>
+  <AttentionMaskExplorer client:visible />
+</Interactive>
+
+### Causal (the decoder default)
+
+**Rule:** token `i` sees only tokens `≤ i`. **Why:** a decoder is trained on the whole sequence in parallel, predicting each next token. If token `i` could see token `i+1`, it would peek at the very answer it's supposed to predict — training would be cheating, and at generation time (where the future genuinely doesn't exist yet) the model would collapse. **What you get:** parallel training that is mathematically identical to left-to-right generation. **Without it:** the model trivially "predicts" by copying the future and is useless the moment you ask it to generate. This mask is *always on* in GPT/Llama/Qwen — it's what makes them autoregressive.
+
+### Bidirectional (no mask)
+
+**Rule:** everyone sees everyone. **Where:** encoders like BERT. **Why:** for *understanding* (classification, retrieval, tagging) you want each token informed by full left-and-right context. **Trade-off:** you give up open-ended generation — there's no "next token" discipline. Put a causal mask on an encoder and you kneecap the thing it's good at; drop the causal mask on a generator and you break it. The mask shape *is* the model's personality.
+
+### Sliding window (local attention)
+
+**Rule:** see only the last `w` tokens. **Why:** full attention is `O(n²)` in sequence length — brutal for long context. A window makes it `O(n·w)`. **What you get:** long-context models (Mistral, Longformer) at tractable cost; information still travels far by *hopping* through stacked layers. **Trade-off:** any single layer's reach is bounded by `w`.
+
+### Padding
+
+**Rule:** pad tokens are never attended to. **Why:** GPUs want rectangular batches, but real sequences have different lengths, so you pad the short ones with filler. **Without it:** real tokens would attend to meaningless pad tokens and produce corrupted representations. It's pure batching hygiene — but forget it and outputs silently degrade. (Related gotcha below: which *side* you pad on matters.)
+
+### Prefix-LM
+
+**Rule:** the prefix is bidirectional; everything after it is causal. **Where:** T5's decoder input, UL2's "S-denoiser." **Why:** you want the *prompt* understood with full context (like an encoder) while the *generated* part stays properly autoregressive. It's the hybrid between the first two shapes.
+
+### Packed documents (block-diagonal)
+
+**Rule:** causal *and* same-document only. **Why:** short training examples waste GPU if you pad them to full length, so you **pack** several into one sequence. But then token 5 of example A must not attend to example B — that's **cross-contamination**, and it silently poisons training. A **block-diagonal** mask walls each example off. **What you get:** near-zero padding waste at full throughput (FlashAttention's variable-length API / FlexAttention's `block_diag` handle it efficiently). **Without it:** packing looks like a free speedup while quietly teaching the model that unrelated documents are context for each other.
+
+<Note>**Attention sinks.** Real models dump a surprising amount of attention onto the *first* token — softmax weights must sum to 1, so the model needs a "no-op" place to park leftover attention. Naive sliding-window streaming evicts those first tokens and perplexity *explodes*. **StreamingLLM** fixes it by always keeping a few initial "sink" tokens plus the sliding window — enabling stable generation over millions of tokens. It's a masking-policy insight: *which* tokens you keep visible is load-bearing.</Note>
+
+## Family 2 — SCORE: loss masks
+
+Totally different gate. This one doesn't touch attention at all — it decides **which positions contribute to the loss.**
+
+<Interactive title="What actually gets scored" caption="SFT glues prompt + completion into one sequence and trains by next-token prediction. Toggle the loss: 'completion-only' masks the prompt (label = −100 — seen as context, never scored), so 100% of the signal trains the answer. 'all tokens' scores the prompt too — wasting most of the gradient teaching the model to regurgitate its own instructions." expand client:load>
+  <LossMaskStrip client:visible />
+</Interactive>
+
+**Mechanism:** alongside the tokens you build a `labels` array; masked positions get the sentinel **`−100`** (PyTorch's `ignore_index`), which contributes zero loss and zero direct gradient. The sequence loss is the average of cross-entropy over the *scored* positions only.
+
+**Why:** in fine-tuning you concatenate `[prompt][completion]` into one sequence. The prompt is the *input* — handed to the model for free at inference. You only want it to learn to produce the *completion*. **Without masking:** if the prompt is 50 tokens and the completion 10, ~83% of your gradient goes into learning to *regenerate the instruction text* — capacity spent on something you never need, diluting the signal for the actual answer. **What you get:** every bit of learning signal aimed at the response.
+
+Two boundary facts everyone gets wrong at least once:
+
+- **The first completion token *is* scored.** The pair `(full prompt → first answer token)` is exactly "start the answer given the prompt" — the most important pair. Masking the prompt never means masking through the first completion token.
+- **The EOS token *is* scored.** Score it or the model never learns to *stop* and rambles forever. Forgetting EOS is the classic loss-mask bug.
+
+And a subtlety: masked-in-loss does **not** mean "no gradient at all." The prompt tokens are still attended to, so gradient still flows into their representations via attention — the model learns to *represent* the prompt well, it just isn't asked to *generate* it.
+
+> For the full mechanical deep-dive on this family specifically — the token-by-token `labels = −100` construction, multi-turn assistant masking, and whether masking saves compute — this is the one family with its own companion piece.
+
+## Family 3 — HIDE: objective masks
+
+Now the role of masking **flips completely.** In Families 1–2 the mask *hides* things from attention or loss. Here the mask **creates the task**: you deliberately hide part of the input and train the model to reconstruct it. The mask *is* the supervision.
+
+<Interactive title="Masked diffusion: unmasking in parallel" caption="A diffusion LM (LLaDA, Gemini Diffusion) starts from an all-masked completion and reveals positions in parallel, coarse-to-fine — not one token left-to-right. The prompt is the part that is never masked. This is why Gemini Diffusion hits ~1,479 tok/s, roughly 5× a comparable autoregressive model: it decodes many positions per step." expand client:load>
+  <DiffusionUnmask client:visible />
+</Interactive>
+
+### Masked Language Modeling (BERT)
+
+**What:** randomly replace ~**15%** of tokens with `[MASK]` and train the model (bidirectionally) to predict the originals. **Why:** it manufactures a supervised task from raw text while letting every token use both-side context. **The 80/10/10 wrinkle:** of the chosen 15%, only 80% become `[MASK]`, 10% become a random token, 10% are left unchanged — because `[MASK]` never appears at inference time, so training purely on it would create a train/serve mismatch. **What you get:** strong bidirectional representations for understanding tasks.
+
+### Span corruption (T5)
+
+**What:** mask contiguous *spans* (avg length ~3, ~15% of tokens), replace each with a single sentinel, and have the decoder emit the missing spans. UL2 generalizes this into a menu of denoisers (R = normal spans, S = prefix-LM, X = extreme/long spans). **Why:** spans force the model to generate multi-token chunks, closer to real generation than single-token MLM.
+
+### Masked diffusion LMs (the 2026 twist)
+
+**What:** the forward process masks a *random fraction* `t ~ U[0,1]` of tokens; the reverse process learns to predict all masked tokens at once, and generation runs it iteratively — start fully masked, unmask in parallel over a handful of steps (the component above). **Why it's exciting:** decoding many positions per step instead of strictly one-at-a-time. **Gemini Diffusion** (Google, 2025) reported **~1,479 tokens/second — roughly 5× a comparable autoregressive model.** LLaDA showed the recipe scales to compete with strong AR baselines. Same masking primitive as BERT, aimed at generation instead of understanding.
+
+### Masked autoencoders (vision, for contrast)
+
+**What:** hide ~**75%** of image patches and reconstruct them (MAE). It's the same idea one modality over — proof that "hide input to create a task" is a general recipe, not a text trick.
+
+## Family 4 — DROP: regularization masks
+
+The loosest use of the word, included so the field guide is complete. **Dropout** applies a *random* binary mask that zeroes a fraction of activations **during training only** (scaling the survivors to compensate). **Why:** it stops neurons from co-adapting into fragile combinations, which reduces overfitting. **Key difference from the others:** it's random, it's for regularization, and it's **off at inference** — the other three families are deterministic and structural. (DropPath / stochastic depth is the same idea applied to whole layers.)
+
+## One token, five masks at once
+
+Here's the payoff — why the word felt so slippery. Take a single **completion token**, sitting in a **packed, padded, multi-example SFT batch**, and watch how many independent masks touch it simultaneously:
+
+| Mask | Effect on this one token |
+| --- | --- |
+| **causal** (SEE) | may attend to earlier tokens in its own example |
+| **document** (SEE) | may *not* attend to the other packed example |
+| **padding** (SEE) | ignores the batch's pad tokens |
+| **loss / completion** (SCORE) | it *is* scored (it's part of the answer) |
+| **dropout** (DROP) | some of its activations are randomly zeroed this step |
+
+Five separate gates on one token, spanning three of the four families (three SEE, one SCORE, one DROP) — and if it were a diffusion-LM token instead of an SFT one, HIDE would make it all four. Nobody was ever confused about *one* thing called masking — they were quietly conflating a fistful of them.
+
+## Which model uses which
+
+| Model family | Attention shape | Objective mask | Loss mask (if fine-tuned) |
+| --- | --- | --- | --- |
+| Decoder-only (GPT, Llama, Qwen) | causal (+ window / packing) | none (next-token) | completion-only |
+| Encoder (BERT) | bidirectional | MLM (15%, 80/10/10) | — |
+| Encoder–decoder (T5) | enc: bidirectional · dec: causal | span corruption | target-side |
+| Diffusion LM (LLaDA, Gemini Diffusion) | bidirectional | masked diffusion (`t ~ U[0,1]`) | completion-only |
+| Vision (ViT / MAE) | bidirectional | patch masking (~75%) | — |
+
+## Gotchas & confusions
+
+The traps, collected — most of these are silent (no error, just worse results):
+
+- **Attention mask ≠ loss mask ≠ MLM mask.** The single biggest confusion. They gate different things (what you *see* vs what you're *scored on* vs what's *hidden to learn*). Always ask which family.
+- **Masked ≠ hidden, masked ≠ no-gradient.** A loss-masked prompt token is still seen (attention) and still gets gradient through attention — it's just not a prediction *target*.
+- **Forget to score EOS → the model never stops.** Include the end token in the completion loss.
+- **Don't mask through the first completion token** — that transition (prompt → first answer token) is the most important thing to learn.
+- **Packing without a document mask → silent cross-contamination.** Looks like a free speedup; actually teaches the model that unrelated examples are each other's context.
+- **Padding side matters.** For causal decoders you typically **left-pad** at generation time (so the real last token is at the true end and positions line up), while training often right-pads. Mixing them up produces garbage or misaligned outputs.
+- **`[MASK]` train/serve mismatch** — the reason for BERT's 80/10/10: the mask token never appears at inference, so you can't train exclusively on it.
+- **Don't compare masked vs unmasked loss values.** Different denominators (different token counts) — the numbers aren't on the same scale.
+- **Masking doesn't save transformer compute.** Completion-only loss skips only the tiny cross-entropy at masked positions; the full sequence still runs through every layer. Masking is about *signal quality*, not speed. (The real cost lever is not paying for prompt tokens you don't train on — hence packing.)
+- **Dropout is training-only.** Leaving it on at inference makes outputs noisy and non-deterministic.
+
+## The one-line mental model
+
+> **A mask is a 0/1 gate. When you meet one, don't ask "what's a mask?" — ask "ignore *what*, for *what purpose*?"** The answer lands it in one of four families, and everything else follows.
+
+Get that reflex and every mask in every paper — causal, padding, block-diagonal, MLM, diffusion, dropout — is just a different answer to the same two questions.
