@@ -237,8 +237,13 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
     case 'svg': {
       const code = sanitizeSvg(String(block.props.code ?? '')).trim();
       if (!code) return null;
+      const width = block.props.width;
       return (
-        <C.Figure key={block.id} caption={String(block.props.caption ?? '') || undefined}>
+        <C.Figure
+          key={block.id}
+          caption={String(block.props.caption ?? '') || undefined}
+          width={width !== '' && width != null ? Number(width) : undefined}
+        >
           <div dangerouslySetInnerHTML={{ __html: code }} />
         </C.Figure>
       );
