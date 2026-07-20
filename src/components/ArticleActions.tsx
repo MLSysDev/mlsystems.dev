@@ -128,6 +128,13 @@ export default function ArticleActions({
         >
           ↗ Share
         </button>
+        <a
+          className="btn"
+          href={`/write?edit=${slug}`}
+          title="Open this post in the editor to fix or improve it"
+        >
+          ✎ Improve
+        </a>
       </div>
       <div
         style={{

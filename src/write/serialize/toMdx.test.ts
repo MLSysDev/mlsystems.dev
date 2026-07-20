@@ -8,6 +8,7 @@ import {
   type SBlock,
   type TableStyle,
 } from './toMdx';
+import { convertMdx } from '../convert/mdxToSource.mjs';
 
 const t = (text: string, styles: Record<string, boolean | string> = {}): InlineRun => ({
   type: 'text',
@@ -424,8 +425,26 @@ describe('mermaid blocks', () => {
       { tableVariants: {}, today },
     );
     expect(mdx).toContain('<Figure caption="Flow" width={960}>');
-    expect(mdx).toContain('<svg class="mermaid-diagram" id="mmd-1"');
+    expect(mdx).toContain('class="mermaid-diagram"');
     expect(mdx).toContain('<style>{`#mmd-1 .node{fill:#eee;}`}</style>');
+    // source is carried in the MDX so it survives a sidecar-less re-edit
+    const b64 = mdx.match(/data-mermaid="([^"]*)"/)?.[1] ?? '';
+    expect(Buffer.from(b64, 'base64').toString('utf8')).toBe('flowchart LR\n A-->B');
+  });
+
+  it('round-trips through the MDX converter back to an editable mermaid block', () => {
+    const svg = '<svg id="mmd-1" viewBox="0 0 100 50"><g><path d="M0 0h10"/></g></svg>';
+    const source = 'flowchart TD\n  M["a<br/><b>b</b>"] --> S1["café"]';
+    const { mdx } = serializePost(meta, [block('mermaid', { source, svg, caption: 'Flow' })], {
+      tableVariants: {},
+      today,
+    });
+    const { doc } = convertMdx(mdx, { slug: 'x' });
+    const merm = doc.blocks.find((b) => b.type === 'mermaid');
+    expect(merm).toBeTruthy();
+    expect(merm?.props.source).toBe(source);
+    expect(merm?.props.caption).toBe('Flow');
+    expect(String(merm?.props.svg)).not.toContain('data-mermaid');
   });
 
   it('emits nothing when the diagram was never rendered', () => {

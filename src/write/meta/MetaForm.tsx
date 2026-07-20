@@ -8,6 +8,8 @@ import { addCroppedCover } from './cropCover';
 
 export type Option = { id: string; name: string };
 
+const MAX_TAGS = 5;
+
 type Props = {
   authors: Option[];
   topics: Option[];
@@ -53,7 +55,9 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
 
   const addTag = () => {
     const tag = tagInput.trim().toLowerCase().replace(/^#/, '');
-    if (tag && !meta.tags.includes(tag)) set({ tags: [...meta.tags, tag] });
+    if (tag && !meta.tags.includes(tag) && meta.tags.length < MAX_TAGS) {
+      set({ tags: [...meta.tags, tag] });
+    }
     setTagInput('');
   };
 
@@ -230,20 +234,23 @@ export function MetaForm({ authors, topics, meta, images, onChange }: Props) {
                 #{tag} ✕
               </button>
             ))}
-            <input
-              type="text"
-              placeholder={meta.tags.length ? '' : 'attention, kernels…'}
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ',') {
-                  e.preventDefault();
-                  addTag();
-                }
-              }}
-              onBlur={addTag}
-            />
+            {meta.tags.length < MAX_TAGS && (
+              <input
+                type="text"
+                placeholder={meta.tags.length ? '' : 'attention, kernels…'}
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ',') {
+                    e.preventDefault();
+                    addTag();
+                  }
+                }}
+                onBlur={addTag}
+              />
+            )}
           </span>
+          <span className="write-field-hint">Up to {MAX_TAGS} tags.</span>
         </label>
       </div>
 

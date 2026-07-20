@@ -92,6 +92,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [issues, setIssues] = useState<string[]>([]);
   const [storageOff, setStorageOff] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [autoLoading, setAutoLoading] = useState(false);
   const [sentFile, setSentFile] = useState<string | null>(null);
   const [siteTheme, setSiteTheme] = useState<'light' | 'dark'>('light');
   const [openError, setOpenError] = useState<string | null>(null);
@@ -142,6 +143,8 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   }, []);
 
   useEffect(() => {
+    // A deep-link edit (?edit=slug) loads that post instead — skip the restore prompt.
+    if (new URLSearchParams(window.location.search).get('edit')) return;
     const draft = loadDraft();
     if (draft && !isEmptyDraft(draft.meta, draft.blocks)) setRestore({ savedAt: draft.savedAt });
   }, []);
@@ -275,6 +278,34 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       setBusy(false);
     }
   };
+
+  // Deep link from a published post's "Improve" button: /write?edit=<slug>.
+  // Load that post straight into the editor, then drop the param so a refresh
+  // doesn't reload it over later edits.
+  useEffect(() => {
+    const slug = new URLSearchParams(window.location.search).get('edit');
+    if (!slug) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('edit');
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    (async () => {
+      setBusy(true);
+      setAutoLoading(true);
+      setOpenError(null);
+      try {
+        const loaded = await fetchExisting(repoUrl, slug);
+        await applySource(loaded);
+        setLoadedSlug(loaded.meta.slug || null);
+      } catch (err) {
+        setOpenError(err instanceof Error ? err.message : 'That post could not be opened.');
+        setOpenUrl(slug);
+        setOpenDialog(true);
+      } finally {
+        setBusy(false);
+        setAutoLoading(false);
+      }
+    })();
+  }, []);
 
   const uploadPostZip = async (file: File) => {
     setUploadError(null);
@@ -463,6 +494,11 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
 
   return (
     <div className="write-portal">
+      {autoLoading && (
+        <div className="write-autoloading" role="status">
+          Loading the post into the editor…
+        </div>
+      )}
       <div className="write-topbar">
         <input
           ref={uploadInputRef}

@@ -109,7 +109,7 @@ Shared default props: `{ "backgroundColor": "default", "textColor": "default", "
 
 One single run with `\n` between lines.
 
-**`language` options** (use `text` for plain text): `text`, `python`, `typescript`, `tsx`, `javascript`, `jsx`, `json`, `jsonc`, `jsonl`, `shellscript` (bash), `sql`, `c`, `cpp`, `csharp`, `java`, `kotlin`, `swift`, `objective-c`, `rust`, `ruby`, `scala`, `haskell`, `lua`, `julia`, `r`, `php`, `html`, `css`, `scss`, `sass`, `less`, `postcss`, `vue`, `vue-html`, `svelte`, `markdown`, `mdx`, `latex`, `yaml`, `xml`, `graphql`, `regexp`, `mermaid`, `wasm`, `wgsl`, `glsl`, `haml`, `pug`.
+**`language` options** (use `text` for plain text): `text`, `python`, `typescript`, `tsx`, `javascript`, `jsx`, `json`, `jsonc`, `jsonl`, `shellscript` (bash), `sql`, `c`, `cpp`, `csharp`, `java`, `kotlin`, `swift`, `objective-c`, `rust`, `ruby`, `scala`, `haskell`, `lua`, `julia`, `r`, `php`, `html`, `css`, `scss`, `sass`, `less`, `postcss`, `vue`, `vue-html`, `svelte`, `markdown`, `mdx`, `latex`, `yaml`, `xml`, `graphql`, `regexp`, `wasm`, `wgsl`, `glsl`, `haml`, `pug`.
 
 ### Table
 
@@ -262,9 +262,9 @@ Agents **can and should** author complete diagrams this way. Rules: use `stroke=
 }
 ```
 
-`source` is the mermaid diagram text. Leave `svg` empty — the /write editor renders the diagram and fills it in; the published page then ships that static SVG (readers load no mermaid library). A post with an unrendered mermaid block must be opened in the editor once before publishing.
+`source` is the mermaid diagram text — this is the one and only way to create a diagram. Leave `svg` empty; the /write editor renders the diagram and fills it in, and the published page ships that static SVG (readers load no mermaid library). A post with an unrendered mermaid block must be opened in the editor once before publishing.
 
-The MDX→JSON converter maps ` ```mermaid ` fenced blocks to mermaid blocks (unrendered). A _published_ mermaid figure converts back as a static `svg` block — the editable mermaid source only survives via the post's `.write-source.json` sidecar, which is the canonical re-edit path.
+The diagram source is preserved everywhere: it lives in this JSON, and the editor also embeds it in the published MDX (on the figure's `<svg>`), so reopening a post — from its `.write-source.json` sidecar **or** from `index.mdx` alone — always loads back as an editable mermaid block, never a flattened SVG.
 
 ### Custom React component (interactive embeds)
 

@@ -88,11 +88,33 @@ function unwrapJsxStyle(svg) {
   );
 }
 
+function decodeMermaidSource(b64) {
+  try {
+    if (typeof atob === 'function') {
+      const bin = atob(b64);
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      return new TextDecoder().decode(bytes);
+    }
+    return Buffer.from(b64, 'base64').toString('utf8');
+  } catch {
+    return '';
+  }
+}
+
 function figureSegment(attrs, inner) {
   const caption = frameAttr(attrs, 'caption').replace(/\s+/g, ' ').trim();
   const width = Number(attrs.match(/width=\{(\d+)\}/)?.[1] ?? '') || '';
   if (/^<svg[\s>]/.test(inner)) {
-    return { kind: 'figure', caption, svg: unwrapJsxStyle(inner) };
+    const svg = unwrapJsxStyle(inner);
+    const b64 = svg.match(/^<svg[^>]*\sdata-mermaid="([^"]*)"/)?.[1];
+    if (b64) {
+      const source = decodeMermaidSource(b64);
+      if (source) {
+        const clean = svg.replace(/(<svg[^>]*?)\sdata-mermaid="[^"]*"/, '$1');
+        return { kind: 'mermaid', caption, source, svg: clean };
+      }
+    }
+    return { kind: 'figure', caption, svg };
   }
   const img =
     inner.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/) ?? inner.match(/^<img[^>]*\ssrc="([^"]+)"[^>]*>$/);
@@ -346,8 +368,10 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
     else if (seg.kind === 'code')
       push('codeBlock', { language: seg.lang }, [{ type: 'text', text: seg.code, styles: {} }]);
     else if (seg.kind === 'mermaid') {
-      warnings.push('Mermaid diagram: it will draw once the block is opened in the editor.');
-      push('mermaid', { source: seg.source, svg: '', caption: '' });
+      if (!seg.svg) {
+        warnings.push('Mermaid diagram: it will draw once the block is opened in the editor.');
+      }
+      push('mermaid', { source: seg.source, svg: seg.svg ?? '', caption: seg.caption ?? '' });
     } else if (seg.kind === 'component')
       push('customComponent', {
         componentName: seg.name,

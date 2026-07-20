@@ -71,11 +71,11 @@ const title =
 
     <header class="page-head">
       <h1 class="page-h1">
-        <span class="page-h1-by">Articles by</span>
+        <span class="page-h1-by">Articles by</span>{' '}
         <a href={`/authors/${author.id}`} class="page-h1-name">{author.data.name}</a>
       </h1>
       <p class="page-lede">
-        {page.total}
+        {page.total}{' '}
         {page.total === 1 ? 'article' : 'articles'}.
       </p>
     </header>

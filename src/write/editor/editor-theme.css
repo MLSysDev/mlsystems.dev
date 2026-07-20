@@ -183,6 +183,12 @@
 .write-author-hint {
   color: var(--ink-4);
 }
+.write-field-hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ink-4);
+}
 .write-author-links {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1482,4 +1488,15 @@
   height: auto;
   display: block;
   margin-inline: auto;
+}
+
+.write-autoloading {
+  margin: 0 0 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
