@@ -268,16 +268,21 @@ Rules: use `stroke="currentColor"`/`fill="currentColor"` so it follows the theme
 
 ## Mermaid diagram
 
-Write the diagram as a fenced `mermaid` block with its source:
+In MDX a mermaid diagram is a **baked SVG figure**, not a ` ```mermaid ` fence. It's the same shape as an [inline SVG diagram](#inline-svg-diagram), with two additions: a `mermaid-diagram` class, and the original diagram source carried (base64) in `data-mermaid` so it stays editable:
 
-````md
-```mermaid
-flowchart TD
-  A[Input] --> B[Model] --> C[Output]
+```mdx
+<Figure width={960}>
+  <svg class="mermaid-diagram" data-mermaid="<base64 of the mermaid source>"
+       viewBox="0 0 400 120" role="img" aria-label="what the diagram shows"
+       style="color:currentColor">
+    <!-- the rendered diagram -->
+  </svg>
+</Figure>
 ```
-````
 
-The diagram is drawn when the file is opened in `/write`, which bakes the rendered SVG into the published post (readers load no mermaid library). A post containing a `mermaid` fence should be opened in the editor once before publishing so the diagram renders. The editor keeps the original source, so it stays editable.
+You don't hand-write that SVG: the `/write` editor renders your mermaid source into it and embeds it on publish (so readers load no mermaid library, and the diagram stays editable via `data-mermaid`). A raw ` ```mermaid ` fence committed straight into `index.mdx` will **not** render on the site — it shows as a plain code block.
+
+So: to put a diagram in MDX **by hand**, write it as an [inline SVG diagram](#inline-svg-diagram) above. To use **mermaid**, author it in the editor's Mermaid block (or as a `mermaid` block in the `.write-source.json`), and it becomes the figure above on publish.
 
 ---
 
