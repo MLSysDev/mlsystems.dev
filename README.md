@@ -23,19 +23,19 @@ Requires **Node.js 20+**.
 
 ## What's in this repo
 
-A static-first Astro site with MDX content collections, React islands for interactivity, typed frontmatter, and ~0 KB of JavaScript on content pages.
+A static-first Astro site with typed content collections, React islands for interactivity, and ~0 KB of JavaScript on content pages. Posts are Markdown with a few ready-made React components mixed in.
 
-See [**docs/architecture.md**](docs/architecture.md) for the full file layout and design principles.
+Writing a post or tool? See [**docs/writing.md**](docs/writing.md).
 
 ---
 
 ## Contributing
 
-We want this to be a **community-built** resource. Anyone can contribute — open a PR.
+We want this to be a **community-built** resource.
 
-- **Want to write a post?** → See [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/writing-articles.md](docs/writing-articles.md)
+- **Want to write a post?** → Draft it in the [visual editor](https://mlsystems.dev/write) — no Git or setup needed. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full flow.
 - **Want to suggest a topic?** → Open a [GitHub Discussion](https://github.com/orgs/MLSysDev/discussions)
-- **Found a bug?** → Open an [Issue](https://github.com/MLSysDev/mlsystems.dev/issues)
+- **Found a bug or want to improve the site?** → Open an [Issue](https://github.com/MLSysDev/mlsystems.dev/issues) or a PR
 - **Want to chat?** → Join the [Discord](https://discord.gg/pxEvXN28tc)
 
 All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
@@ -44,7 +44,7 @@ All contributors are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md
 
 ## Tech stack
 
-[Astro 5](https://astro.build) · [MDX](https://mdxjs.com) · [React 19](https://react.dev) (islands only) · [Shiki](https://shiki.style) · TypeScript strict mode · plain CSS with custom properties
+[Astro 5](https://astro.build) · Markdown + [React 19](https://react.dev) (islands only) · [Shiki](https://shiki.style) · [KaTeX](https://katex.org) · TypeScript strict mode · plain CSS with custom properties
 
 ---
 

@@ -10,59 +10,36 @@ There are three main ways to contribute:
 
 ---
 
-## 1. Writing a blog post
+## 1. Writing a post
 
-### Step 1 — Open a "Blog Post Idea" issue first
+You don't need Git, Markdown, or any local setup. Everything happens in a visual editor.
 
-Before writing, open a [Blog Post Idea](.github/ISSUE_TEMPLATE/blog-post-idea.md) issue with:
+### Step 1 — Share your idea
 
-- Working title
-- A 2–3 sentence summary
-- Who the target reader is (beginner / practitioner / researcher)
-- Roughly what you'll cover
+Open a thread in [Blog ideas](https://github.com/orgs/MLSysDev/discussions/categories/blog-ideas) with a working title, a couple of sentences on what you'll cover, and who it's for. This avoids two people writing the same post and lets us give you feedback early. Prefer email? Send the same to **admin@mlsystems.dev**.
 
-This avoids two people writing the same post and lets us give you feedback on scope early. We aim to respond within a few days.
+### Step 2 — Draft it
 
-### Step 2 — Write your post
+Write in the [visual editor](https://mlsystems.dev/write) — headings, images, tables, video, and math, all point-and-click. The preview shows exactly how it will read. Your draft stays in your browser until you send it.
 
-1. Fork the repo and create a branch: `post/your-slug-here`
-2. Add your post under `src/content/blog/your-slug-here.mdx`
-3. Use the frontmatter schema (validated automatically on build):
+Not finished in one sitting? Download your post and upload it back later to pick up where you left off — text, images, and all.
 
-   ```mdx
-   ---
-   title: 'Your Post Title'
-   description: 'A 1-2 sentence summary that shows up in search and social previews.'
-   pubDate: 2026-05-21
-   author: 'your-github-handle'
-   tags: ['inference', 'vllm', 'kv-cache']
-   cover: './cover.png' # optional, relative to the post file
-   draft: false
-   ---
+### Step 3 — Send it to us
 
-   Your content here, in Markdown + MDX.
-   ```
+When it's ready, hit **Submit post**. If you'd rather not use GitHub, download the post and email it to **admin@mlsystems.dev** instead.
 
-4. If you have a cover image or inline diagrams, put them in `src/content/blog/your-slug-here/` alongside the `.mdx` file and import them.
+### Step 4 — We review, then publish
 
-5. Add yourself to `src/content/authors/your-github-handle.json` (first-time contributors only):
+We turn every submission into a pull request and review it there — a moderator checks it for clarity, correctness, and readability before it goes public. That's why you don't open the PR yourself: it keeps a consistent bar and a second pair of eyes on everything that ships. Once it's ready, we publish it and credit you.
 
-   ```json
-   {
-     "name": "Your Name",
-     "bio": "One-sentence bio.",
-     "github": "your-github-handle",
-     "twitter": "optional",
-     "website": "optional"
-   }
-   ```
+### Becoming an author
 
-### Step 3 — Open a Pull Request
+Your first post is also how you get listed as an author — there's no separate application. Two ways:
 
-- PR title: `post: <your post title>`
-- Fill out the PR template
-- A preview deploy will be generated automatically — check that everything renders correctly
-- Tag a maintainer for review
+- **In the editor** — when you draft your first post, add yourself as a new author right there (name, short bio, links). It travels with your post.
+- **By email** — send the same details to **admin@mlsystems.dev**.
+
+Either way, **give us an email address so we can confirm it's really you** before your name goes on a post. That address is just for verification — the public email shown on your profile is a separate, optional field. See [docs/becoming-an-author.md](docs/becoming-an-author.md) for the full field list.
 
 ### What we look for in a post
 
@@ -87,7 +64,7 @@ See [LICENSE](LICENSE) for the full terms.
 
 ## 2. Suggesting a topic
 
-If you want to read about something but don't want to write it yourself, open a [Topic Suggestion](.github/ISSUE_TEMPLATE/topic-suggestion.md) issue. Other contributors can claim it by commenting on the issue.
+If you want to read about something but don't want to write it yourself, post it in [Discussions](https://github.com/orgs/MLSysDev/discussions). Other contributors can claim it by replying to the thread.
 
 ---
 
@@ -97,7 +74,7 @@ Site improvements (design, accessibility, performance, new interactive component
 
 - Open an issue first for anything non-trivial so we can align on direction.
 - For small fixes (typos, broken links, minor CSS), feel free to PR directly.
-- Run `pnpm build` locally before pushing to catch type errors and broken content schemas.
+- Run `npm run build` locally before pushing to catch type errors and broken content schemas.
 
 ---
 
