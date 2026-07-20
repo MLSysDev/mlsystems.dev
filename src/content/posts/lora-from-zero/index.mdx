@@ -1,0 +1,395 @@
+---
+title: 'LoRA From Zero: Fine-Tuning a Model by Changing 0.2% of It'
+summary: 'Full fine-tuning learns a weight update as big as the model itself. LoRA learns that same update as two tiny matrices instead — tuning 0.2% of the parameters, on a laptop. Here is exactly why that works.'
+authors: ['dinesh']
+date: '2026-07-19'
+readMin: 17
+topic: 'Training'
+topicId: 'training'
+tags: ['lora', 'fine-tuning', 'peft', 'low-rank', 'adapters', 'qlora']
+---
+
+import Interactive from '../../../components/Interactive';
+import LoRABudget from './LoRABudget';
+import RankReconstruction from './RankReconstruction';
+import SidePathFlow from './SidePathFlow';
+import MultiLoRASwap from './MultiLoRASwap';
+
+Last week I fine-tuned a 0.6-billion-parameter language model on my laptop. It went from failing a task 87% of the time to nailing it 100% of the time — in about **40 seconds**, using **3 GB** of memory, by training just **0.2%** of the model's parameters.
+
+Every number in that sentence should feel slightly impossible. Fine-tuning a model usually means updating *all* its weights — that's the whole idea of "tuning." How do you change a model's behavior by leaving 99.8% of it frozen? What are you even training, if not the model?
+
+The answer is **LoRA** — Low-Rank Adaptation — and it's one of those ideas that feels like a magic trick until you see the mechanism, at which point it becomes obviously, almost boringly, correct. This post builds it from the ground up: what fine-tuning actually is, why it's so expensive, the one bet LoRA makes, and exactly how two tiny matrices pull it off. Two playgrounds along the way let you feel the trick instead of taking my word for it.
+
+Let's start before LoRA, with plain fine-tuning.
+
+## Fine-tuning is just `W + ΔW`
+
+A neural network is a stack of weight matrices. Running it is a chain of matrix multiplies: an input vector $x$ meets a weight matrix $W$, producing an output $h = Wx$ that flows to the next layer. Those $W$ matrices — hundreds of millions to billions of numbers — *are* the model. All its knowledge lives in them.
+
+**Fine-tuning** changes that knowledge. You show the model examples of the behavior you want, and for each weight matrix you compute an *update* — call it $\Delta W$ — that nudges the model toward the target. Then you apply it:
+
+$$
+W' = W + \Delta W
+$$
+
+That's the whole loop: run a forward pass, use backpropagation to compute a $\Delta W$ that lowers the loss, add it to $W$, repeat.
+
+<Figure caption="Ordinary fine-tuning: a forward pass, backprop produces a weight update ΔW, and the weights become W′ = W + ΔW. Note ΔW is a full matrix — exactly the same shape as W.">
+<svg viewBox="0 0 640 190" role="img" aria-label="Three stages: forward pass through weights W, backprop producing delta-W, and updated weights W prime equals W plus delta-W." style="width:100%;max-width:640px;height:auto;color:currentColor;font-family:var(--font-mono);">
+  <g fill="none" stroke="currentColor">
+    <rect x="16" y="40" width="150" height="110" rx="8" stroke-width="1.4" opacity="0.5"/>
+    <rect x="245" y="40" width="150" height="110" rx="8" stroke-width="1.4" opacity="0.5"/>
+    <rect x="474" y="40" width="150" height="110" rx="8" stroke-width="1.4" opacity="0.5"/>
+  </g>
+  <g fill="currentColor" font-size="12" text-anchor="middle">
+    <text x="91" y="30" opacity="0.7">1 · forward</text>
+    <text x="320" y="30" opacity="0.7">2 · backprop</text>
+    <text x="549" y="30" opacity="0.7">3 · update</text>
+    <text x="91" y="100">W</text>
+    <text x="91" y="122" font-size="10" opacity="0.6">pretrained</text>
+    <text x="320" y="95">get ΔW</text>
+    <text x="320" y="118" font-size="10" opacity="0.6">via gradients</text>
+    <text x="549" y="100" fill="var(--accent)">W′ = W + ΔW</text>
+  </g>
+  <g stroke="var(--accent)" stroke-width="2" marker-end="url(#lora-arrow)">
+    <line x1="170" y1="95" x2="240" y2="95"/>
+    <line x1="399" y1="95" x2="469" y2="95"/>
+  </g>
+  <defs>
+    <marker id="lora-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/>
+    </marker>
+  </defs>
+</svg>
+</Figure>
+
+This works perfectly. It's how essentially every fine-tuned model was made for years. But look closely at that $\Delta W$: it has *exactly the same shape as $W$*. If $W$ is a $1000 \times 1000$ matrix, then $\Delta W$ is a million numbers too. You're learning and storing a second copy of the model's size, for every matrix, plus optimizer bookkeeping on top. This is **full fine-tuning**, and its cost is the whole problem.
+
+## The problem: `ΔW` is as big as the model
+
+Here's what "as big as the model" costs in practice. For each trainable number you don't just store the number — you store its gradient and (for the Adam optimizer) two running statistics, roughly **~16 bytes per parameter** during training.
+
+<Table variant="lined" zebra>
+
+| Model | Parameters | Full-tune training memory (rough) |
+| ----- | ---------- | --------------------------------- |
+| 0.6B  | 600M       | ~10 GB |
+| 7B    | 7B         | ~112 GB (multiple GPUs) |
+| 70B   | 70B        | ~1.1 TB (a cluster) |
+
+</Table>
+
+That's why full fine-tuning a 7B model doesn't fit on your laptop, or even on one datacenter GPU. And it feels wasteful: to teach a model to emit clean JSON, do we really need to relearn a fresh million-number update for *every* weight matrix? That question — *is the update really as complex as the model?* — is the crack LoRA pries open.
+
+## The bet: the update is simpler than the model
+
+LoRA's founding bet is a claim about $\Delta W$, not about $W$:
+
+<Note>The pretrained model is genuinely complex — it took trillions of tokens to build. But the **change** needed to adapt it to one narrow task is *simple*. In linear-algebra terms, $\Delta W$ is **low-rank**: its information lives in only a handful of directions, even though it's written as a big matrix.</Note>
+
+"Low-rank" has a precise, visual meaning, and it's worth *seeing* before we use it. Any matrix can be built up as a sum of simple rank-1 pieces, ordered from most to least important. A **low-rank** matrix is one where the first few pieces already capture almost everything — the rest is nearly noise.
+
+Drag the rank slider below. On the left is a full matrix; on the right is the same matrix rebuilt from only its first $r$ pieces. Watch how few you need before the two are indistinguishable:
+
+<Interactive title="What rank captures" caption="Drag r from 1. The first bars are tall — those ranks hold almost all the matrix's energy — so the rebuilt grid matches the original almost immediately, while the later, tiny bars barely change anything. That is LoRA's bet: a fine-tune's update is low-rank, so a small r captures nearly all of it." expand client:load>
+  <RankReconstruction client:visible />
+</Interactive>
+
+Notice the collapse: by rank 4 or 5 the reconstruction is essentially perfect, at a fraction of the numbers. **If a fine-tune's $\Delta W$ has this property — and empirically it does — then storing the full $\Delta W$ is enormously wasteful.** You could store just the first few pieces. That's precisely what LoRA does.
+
+## The trick: write `ΔW` as `A · B`
+
+Instead of learning a full $\Delta W$, LoRA learns it *already factored* into two skinny matrices whose product reconstructs a low-rank update:
+
+$$
+\Delta W \approx A \, B, \qquad A \in \mathbb{R}^{\,d_{out}\times r}, \quad B \in \mathbb{R}^{\,r\times d_{in}}
+$$
+
+The shared inner dimension $r$ — the **rank** — is small (think 8, 16, 32). One matrix is *tall and skinny*, the other *short and wide*, and they meet at the tiny $r$:
+
+<Figure caption="ΔW (d_out × d_in) is never stored directly. It is the product of a tall A and a wide B that meet at a small shared dimension r — the rank. Applied to an input, B first squeezes it down to r numbers, then A expands back to full size.">
+<svg viewBox="0 0 560 220" role="img" aria-label="A large square matrix delta-W equals a tall matrix A times a wide matrix B, meeting at a small dimension r." style="width:100%;max-width:560px;height:auto;color:currentColor;font-family:var(--font-mono);">
+  <g fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4">
+    <rect x="20" y="40" width="120" height="120" rx="4"/>
+  </g>
+  <g fill="currentColor" font-size="13" text-anchor="middle">
+    <text x="80" y="105" font-size="18">ΔW</text>
+    <text x="80" y="180" opacity="0.7">d_out × d_in</text>
+    <text x="170" y="105" font-size="20">=</text>
+  </g>
+  <g fill="none" stroke="currentColor" stroke-width="1.4">
+    <rect x="210" y="40" width="44" height="120" rx="4"/>
+    <rect x="300" y="82" width="200" height="36" rx="4"/>
+  </g>
+  <g fill="currentColor" font-size="13" text-anchor="middle">
+    <text x="232" y="105">A</text>
+    <text x="232" y="180" opacity="0.7">d_out × r</text>
+    <text x="277" y="105" font-size="18">×</text>
+    <text x="400" y="105">B</text>
+    <text x="400" y="140" opacity="0.7">r × d_in</text>
+  </g>
+  <g stroke="var(--accent)" stroke-width="1.2" fill="none">
+    <path d="M210 168 L254 168" marker-start="url(#lora-tick)" marker-end="url(#lora-tick)"/>
+  </g>
+  <text x="232" y="206" fill="var(--accent)" font-size="12" text-anchor="middle">r (small)</text>
+  <defs>
+    <marker id="lora-tick" markerWidth="6" markerHeight="10" refX="3" refY="5" orient="auto">
+      <line x1="3" y1="1" x2="3" y2="9" stroke="var(--accent)" stroke-width="1.4"/>
+    </marker>
+  </defs>
+</svg>
+</Figure>
+
+**Why two matrices instead of one?** Because a single matrix the size of $\Delta W$ would just *be* $\Delta W$ — no savings. The magic is that a tall × wide product *reconstructs* a big matrix from few numbers, and forcing them through the narrow $r$ is exactly what makes the result low-rank. `A·B` isn't notation for a single thing; it's a genuine factorization that trades a big matrix for two small factors.
+
+<Note>Letter conventions differ between sources — some write $\Delta W = BA$ with the letters swapped. Don't track the letters; track the **shapes**: one matrix is `(d_out × r)`, the other `(r × d_in)`, and they share the small `r`. Applied to an input, the wide one squeezes it *down* to `r` numbers, the tall one expands it back *up*.</Note>
+
+And crucially, you never choose the big dimensions. $d_{out}$ and $d_{in}$ come from the model's architecture; the library reads them off each weight and sizes $A$ and $B$ automatically. **The only number you pick is $r$.**
+
+### The bottleneck: shrink to `r`, then expand
+
+This factorization has a physical meaning worth holding onto, because it *is* the intuition for why LoRA works. Reading the adapter in the order it actually runs — right to left, since $ABx = A(Bx)$ — it does two things:
+
+- **$B$ is a _down-projection_.** It takes the full $d_{in}$-dimensional input and squeezes it into just $r$ numbers. With only $r$ slots to write into, it is *forced* to keep the few input directions that matter for this task and discard the rest — it writes a summary.
+- **$A$ is an _up-projection_.** It takes those $r$ summary numbers and expands them back into a full $d_{out}$-dimensional adjustment — deciding how each captured direction should nudge the output.
+
+So the update can never be arbitrary: it must pass through an $r$-wide **bottleneck** — read at most $r$ features going in, write at most $r$ patterns coming out. *That squeeze is the low-rank property, enforced by construction.* And it's enough, because — as the reconstruction playground showed — the change a fine-tune actually needs lives in only a handful of directions. LoRA doesn't *hope* the update is simple; it builds a pipe too narrow for it to be anything else, and lets training find the best simple update that fits through.
+
+## Where the savings actually come from
+
+Now the payoff — and an honest surprise. Count the numbers. A full update is $d_{out} \times d_{in}$ parameters. The LoRA version is $A$ plus $B$: $r \times (d_{out} + d_{in})$. So the saving is real only when
+
+$$
+r \times (d_{out} + d_{in}) \;<\; d_{out} \times d_{in}
+$$
+
+For a square $d \times d$ matrix, that simplifies to a clean rule: **LoRA saves when $r < d/2$.**
+
+The surprise: on a *small* matrix, LoRA saves nothing. A $4\times4$ update is 16 numbers; factored at $r=2$ it's $2\times(4+4) = 16$ — identical. That's the break-even point. The savings are a *big-matrix* phenomenon, and they grow explosively with size. Feel it:
+
+<Interactive title="The LoRA budget" caption="Break-even is r = d/2. Try toy · 4 at r=2 (break-even — the savings vanish), then Llama attn · 4096 at r=16 (~128× smaller). Real matrices are thousands wide, so a small r always wins big." expand client:load>
+  <LoRABudget client:visible />
+</Interactive>
+
+Set it to the toy $4$ at $r=2$ and the bars are equal — no win. Now jump to a real attention matrix ($4096$) at $r=16$: the full update is 16.7 million numbers, LoRA's is 131 thousand — **128× smaller**, for the *same-shaped* update. Because real weight matrices are thousands wide and $r$ stays tiny, LoRA sits far below the $d/2$ break-even and the savings are enormous. That 0.2% from the opening is this ratio, summed over every matrix in the model.
+
+This also answers "why not just make $A$ and $B$ full-size?" Full-size factors would be *more* numbers than $\Delta W$ itself — and no longer low-rank. The whole point is the skinny shared bottleneck.
+
+## Why untrained matrices don't break the model
+
+Here's the objection that trips everyone up: $A$ and $B$ are new matrices. They know *nothing* — not language, not your task. If we bolt them onto a carefully pretrained model, shouldn't they inject garbage and wreck it?
+
+The fix is a beautiful one-liner. In our letter convention, $A$ starts random and **$B$ starts as all zeros** (some libraries swap the letters). Because one factor is zero, the product is exactly zero:
+
+$$
+\Delta W = A\,B = A \cdot 0 = 0
+\quad\Longrightarrow\quad
+h = Wx + 0 = Wx
+$$
+
+At step zero, the adapter contributes *nothing*. The model behaves **exactly** like the untouched base. Training then moves the zero matrix off zero and reshapes the random matrix with it, so the adapter grows from no-op to useful correction.
+
+<Table variant="lined" zebra>
+
+| Moment | Adapter math | What the model receives |
+| ------ | ------------ | ----------------------- |
+| Before training | $B = 0$, so $ABx = 0$ | $h = Wx$ — exactly the frozen base |
+| During training | $B$ becomes nonzero, $A$ also adjusts | $h = Wx + ABx$ — base output plus a learned nudge |
+| After training | $AB$ is the learned low-rank update | Same base model, different activations flowing forward |
+
+</Table>
+
+So the untrained adapter never starts as "random garbage that corrupts the model." It starts as a **zero delta**. The only thing training is allowed to learn is the extra nudge the frozen model needs: *"given the features the frozen model already computed here, push the activation this way."*
+
+## How it's wired: a side path, not a new layer
+
+So where does the adapter physically sit? Not as a new layer stacked on top, and not as a separate model running in parallel. It sits *beside each weight matrix it adapts*. The same input $x$ flows into both the frozen $W$ and the adapter, and their outputs are **summed**:
+
+$$
+h = W x + A B x = (W + \Delta W)\,x
+$$
+
+<Figure caption="LoRA is a side path. The input feeds both the frozen W and the low-rank adapter (down to r, back up); the two outputs are added. The base weights never change — but the activation h passed to the next layer does.">
+<svg viewBox="0 0 560 210" role="img" aria-label="Input x feeds a frozen matrix W and, in parallel, a down-projection to rank r then an up-projection; the two outputs sum into h." style="width:100%;max-width:560px;height:auto;color:currentColor;font-family:var(--font-mono);">
+  <g fill="currentColor" font-size="13" text-anchor="middle">
+    <text x="30" y="110">x</text>
+  </g>
+  <g fill="none" stroke="currentColor" stroke-width="1.4">
+    <rect x="150" y="30" width="150" height="46" rx="6" opacity="0.55"/>
+    <rect x="150" y="120" width="70" height="46" rx="6"/>
+    <rect x="250" y="120" width="70" height="46" rx="6"/>
+  </g>
+  <g fill="currentColor" font-size="12" text-anchor="middle">
+    <text x="225" y="58">W · x   (frozen)</text>
+    <text x="185" y="148">B</text>
+    <text x="185" y="185" font-size="10" opacity="0.65">down → r</text>
+    <text x="285" y="148">A</text>
+    <text x="285" y="185" font-size="10" opacity="0.65">up → d_out</text>
+  </g>
+  <circle cx="410" cy="100" r="16" fill="none" stroke="var(--accent)" stroke-width="1.6"/>
+  <text x="410" y="105" fill="var(--accent)" font-size="16" text-anchor="middle">+</text>
+  <text x="486" y="105" fill="var(--accent)" font-size="14" text-anchor="middle">h</text>
+  <g stroke="currentColor" stroke-width="1.6" fill="none" opacity="0.7" marker-end="url(#lora-a2)">
+    <path d="M40 100 L60 100 L60 53 L146 53"/>
+    <path d="M40 100 L60 100 L60 143 L146 143"/>
+    <path d="M300 53 L410 53 L410 82"/>
+    <path d="M320 143 L410 143 L410 118"/>
+    <path d="M220 143 L246 143"/>
+  </g>
+  <line x1="426" y1="100" x2="474" y2="100" stroke="var(--accent)" stroke-width="1.8" marker-end="url(#lora-a3)"/>
+  <defs>
+    <marker id="lora-a2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/></marker>
+    <marker id="lora-a3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="var(--accent)"/></marker>
+  </defs>
+</svg>
+</Figure>
+
+The static diagram shows the wiring. The animation below shows what happens *inside* the lower path: $B$ compresses many input features into $r$ bottleneck slots, $A$ expands those few slots into a full-size correction, and the correction gets added to the frozen output. Toggle the adapter off to see the step-0 case, where $B = 0$ makes every bottleneck slot zero.
+
+<Interactive title="The side path, inside the bottleneck" caption="Each matrix sits on the path: x goes into B and comes out as the r-value bottleneck z, then z goes into A and comes out as the full-size correction ABx, which is added to the frozen Wx. LoRA's whole constraint is that every correction has to squeeze through those r nodes in the middle. Toggle the adapter off (B = 0) to see the step-0 case, where the side path is dead and h is just the frozen output." size="wide" expand client:load>
+  <SidePathFlow client:visible />
+</Interactive>
+
+This settles two common misreadings at once:
+
+- The base weights $W$ **never change** — they stay frozen, read-only.
+- But the **activation $h$ passed to the next layer does change** — it's the original $Wx$ plus the adapter's nudge. The correction ripples forward through the rest of the frozen network.
+
+One more detail: "adapting the last few layers" doesn't mean one adapter per layer. Each *targeted weight matrix* (in a transformer: attention's query/key/value/output, the MLP projections) gets its own $A$–$B$ pair. "The adapter" you save at the end is the whole collection of these small pairs — a few megabytes total.
+
+Zooming all the way out, here's where those pairs actually live inside the model:
+
+<Figure width={680} caption="The bigger picture. Inside every transformer block, LoRA leaves each real weight matrix (attention's Q/K/V/O and the MLP projections) frozen, and clips a small trainable A·B beside it. The block repeats N times, so the adapters ride along in every layer. Everything grey is frozen; only the small accent pieces train.">
+<svg viewBox="0 0 700 320" role="img" aria-label="A transformer block containing six weight matrices — Q, K, V, O, MLP up and MLP down — each drawn as a large frozen bar with a small trainable LoRA adapter beside it. The block repeats N times, between token input and output." style="width:100%;max-width:700px;height:auto;color:currentColor;font-family:var(--font-mono);">
+  <text x="20" y="150" fill="currentColor" font-size="13">tokens</text>
+  <line x1="78" y1="146" x2="124" y2="146" stroke="currentColor" stroke-width="1.6" opacity="0.7" marker-end="url(#bp-arrow)"/>
+
+  <rect x="130" y="22" width="440" height="256" rx="10" fill="none" stroke="currentColor" stroke-width="1.4" opacity="0.4"/>
+  <text x="350" y="15" fill="currentColor" font-size="11" text-anchor="middle" opacity="0.65">transformer block · ×N layers</text>
+
+  <text x="152" y="48" fill="currentColor" font-size="11" opacity="0.7">attention</text>
+  <text x="152" y="68" fill="currentColor" font-size="12">Q</text>
+  <rect x="196" y="56" width="300" height="16" rx="3" fill="var(--line-2)"/>
+  <rect x="500" y="56" width="30" height="16" rx="3" fill="var(--accent)"/>
+  <text x="152" y="96" fill="currentColor" font-size="12">K</text>
+  <rect x="196" y="84" width="300" height="16" rx="3" fill="var(--line-2)"/>
+  <rect x="500" y="84" width="30" height="16" rx="3" fill="var(--accent)"/>
+  <text x="152" y="124" fill="currentColor" font-size="12">V</text>
+  <rect x="196" y="112" width="300" height="16" rx="3" fill="var(--line-2)"/>
+  <rect x="500" y="112" width="30" height="16" rx="3" fill="var(--accent)"/>
+  <text x="152" y="152" fill="currentColor" font-size="12">O</text>
+  <rect x="196" y="140" width="300" height="16" rx="3" fill="var(--line-2)"/>
+  <rect x="500" y="140" width="30" height="16" rx="3" fill="var(--accent)"/>
+
+  <text x="152" y="176" fill="currentColor" font-size="11" opacity="0.7">MLP</text>
+  <text x="152" y="196" fill="currentColor" font-size="12">up</text>
+  <rect x="196" y="184" width="300" height="16" rx="3" fill="var(--line-2)"/>
+  <rect x="500" y="184" width="30" height="16" rx="3" fill="var(--accent)"/>
+  <text x="146" y="224" fill="currentColor" font-size="12">down</text>
+  <rect x="196" y="212" width="300" height="16" rx="3" fill="var(--line-2)"/>
+  <rect x="500" y="212" width="30" height="16" rx="3" fill="var(--accent)"/>
+
+  <line x1="570" y1="146" x2="624" y2="146" stroke="currentColor" stroke-width="1.6" opacity="0.7" marker-end="url(#bp-arrow)"/>
+  <text x="632" y="150" fill="currentColor" font-size="13">output</text>
+
+  <rect x="150" y="294" width="16" height="12" rx="2" fill="var(--line-2)"/>
+  <text x="172" y="304" fill="currentColor" font-size="11" opacity="0.75">frozen weight (W)</text>
+  <rect x="320" y="294" width="16" height="12" rx="2" fill="var(--accent)"/>
+  <text x="342" y="304" fill="currentColor" font-size="11" opacity="0.75">LoRA adapter (A·B) — trainable</text>
+
+  <defs>
+    <marker id="bp-arrow" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="currentColor"/></marker>
+  </defs>
+</svg>
+</Figure>
+
+## What rank controls
+
+You met $r$ as the bottleneck width. It's the one real knob, and it trades capacity against cost:
+
+- **small $r$** (say 8) → a simpler update, fewer parameters, less memory — but it may underfit a genuinely complex change.
+- **large $r$** (say 128) → a richer update, more parameters — often overkill for a narrow task.
+
+The reason small $r$ usually suffices is exactly what the reconstruction playground showed: the *update* a fine-tune needs lives in a few directions, so a few ranks rebuild almost all of it. Start at 16; raise it only if the model can't fit the task. (Its partner $\alpha$, `lora_alpha`, just scales the adapter's contribution — a rule of thumb is $\alpha \approx 2r$.)
+
+## What you actually set in code
+
+Most LoRA libraries hide the matrix shapes for you. You don't manually create $A \in \mathbb{R}^{d_{out}\times r}$ and $B \in \mathbb{R}^{r\times d_{in}}$; you choose a few knobs, point LoRA at some existing weight matrices, and the library clips the right adapter beside each one.
+
+In a typical Hugging Face PEFT setup, the config looks like this:
+
+```python
+from peft import LoraConfig
+
+lora_config = LoraConfig(
+    r=16,
+    lora_alpha=32,
+    target_modules=["q_proj", "v_proj", "o_proj", "up_proj", "down_proj"],
+    lora_dropout=0.05,
+    bias="none",
+    task_type="CAUSAL_LM",
+)
+```
+
+Each field maps back to the picture you've already built:
+
+- **`r`** is the bottleneck width. It decides how many directions the update can use.
+- **`lora_alpha`** is a scale on the adapter output. Many implementations apply the adapter as $Wx + \frac{\alpha}{r}ABx$, so `alpha = 2r` makes the LoRA path start with a scale of about 2 once it has learned something.
+- **`target_modules`** decides *where* adapters are attached. Attention projections (`q_proj`, `k_proj`, `v_proj`, `o_proj`) change how tokens read and write information; MLP projections (`up_proj`, `down_proj`, sometimes `gate_proj`) change the feed-forward transformations. More targets means more trainable parameters and often more capacity.
+- **`lora_dropout`** randomly drops part of the adapter path during training. It can help small datasets, and is often set to `0` or `0.05`.
+- **`bias="none"`** means only the LoRA matrices train. Some setups also train biases, but the clean LoRA story is: freeze the base, train the low-rank side paths.
+
+The important thing: `target_modules` does not mean "replace those modules." It means "for every matching frozen matrix, add a small $A$–$B$ side path." If you target five matrix names across 24 transformer blocks, you get 120 little adapters — still tiny compared with the base model.
+
+Two useful starting recipes:
+
+<Table variant="lined" zebra>
+
+| Situation | Good first try |
+| --------- | -------------- |
+| Clean formatting / extraction / style | `r=8` or `16`, attention only |
+| Harder instruction tuning | `r=16` or `32`, attention + MLP |
+| Very tiny dataset | lower `r`, add `lora_dropout=0.05` |
+| Underfitting after training | raise `r`, add more target modules, or train longer |
+| Memorizing / unstable eval | lower `r`, add dropout, improve data |
+
+</Table>
+
+That is the practical loop: start small, check whether the model can fit the training task and generalize to held-out examples, then increase rank or target more matrices only when the adapter is clearly too weak.
+
+## After training: merge, or keep a stack of adapters
+
+Because $\Delta W = AB$ is just a matrix, you have two choices when you're done:
+
+1. **Merge it in:** compute $W' = W + AB$ once, and you have an ordinary model with *zero* extra inference cost — indistinguishable from a fully fine-tuned one.
+2. **Keep it separate:** ship the tiny $A$–$B$ files as an *adapter* and snap them onto the frozen base at load time.
+
+Option 2 is quietly powerful. One base model can host *many* swappable adapters — one per task, per customer, per style — each only megabytes. Serving "500 fine-tunes" becomes serving one base model plus 500 small adapters, hot-swapped per request. That economics is only possible because the adapter is low-rank.
+
+<Interactive title="One base, many adapters" caption="The 1.2 GB base loads once and never changes. Each skill is a ~4 MB adapter snapped on top and swapped per request — so a serving stack can offer hundreds of fine-tunes without hundreds of full models." expand client:load>
+  <MultiLoRASwap client:visible />
+</Interactive>
+
+## The real numbers: a 0.6B model on a laptop
+
+Back to the opening. The model was `Qwen3-0.6B` — 596 million parameters. With LoRA at $r=16$ on its linear layers, the trainable adapter was **1.4 million parameters — 0.24% of the model**. Training touched only those; the 596M base stayed frozen, so the memory that would have gone to gradients and optimizer state for 596M parameters simply never got allocated. Peak memory: ~3 GB. Wall-clock: ~40 seconds for a few hundred steps.
+
+Push it further and you get **QLoRA**: quantize the frozen base to 4-bit (it's read-only, so precision matters less), and even the *frozen* copy shrinks ~4×. That's how a 7B model fine-tunes in ~8 GB — a single consumer GPU — instead of ~112 GB.
+
+## When not to reach for LoRA
+
+LoRA is a low-rank *adjustment* to existing knowledge. It shines at installing behaviors and skills the base can already almost do. It's the wrong tool when:
+
+- You need to inject **large-scale new knowledge** (a new language, a whole domain the base never saw). That's a high-rank change; you likely need continued pretraining or full fine-tuning.
+- Your rank is **too low for a genuinely complex task** — the adapter underfits. Raise $r$, or reconsider.
+
+The honest framing: LoRA bets your change is simple. When that bet holds — which is most day-to-day fine-tuning — you get 99% of full fine-tuning's benefit for ~0.2% of its cost. When it doesn't, no bottleneck will save you.
+
+---
+
+## Recap — the whole idea in one breath
+
+Fine-tuning adds an update $\Delta W$ to each weight. Full fine-tuning learns that update as a matrix *as big as the model* — expensive. LoRA bets the update is **low-rank** (it lives in a few directions), so it learns $\Delta W = A B$ — two skinny matrices sharing a small rank $r$ — instead. One is zero-initialized so the adapter starts as a no-op and grows a delta; it rides on top of the frozen model, changing only the activation passed forward, never the weights themselves. On real (large) matrices this is dozens to hundreds of times cheaper, which is how you fine-tune a billion-parameter model, on a laptop, by changing 0.2% of it.
+
+That's not a magic trick. It's a bet about the shape of change — and it's usually right.
