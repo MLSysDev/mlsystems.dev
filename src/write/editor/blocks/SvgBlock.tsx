@@ -4,6 +4,19 @@ import { sanitizeSvg } from '../../lib/sanitizeSvg';
 
 const looksLikeSvg = (s: string): boolean => /<svg[\s>]/i.test(s);
 
+// Same standard sizes as figures: Medium (aligned with the reading column) is
+// the default; Large is the only one that breaks out wider than the text.
+const SIZES: { key: string; label: string; width: number; preview: string }[] = [
+  { key: 'small', label: 'Small', width: 360, preview: '55%' },
+  { key: 'medium', label: 'Medium', width: 620, preview: '78%' },
+  { key: 'large', label: 'Large', width: 960, preview: '100%' },
+];
+
+function sizeFor(width: string | number) {
+  const n = Number(width);
+  return SIZES.find((s) => s.width === n) ?? SIZES[1];
+}
+
 type Check =
   | { state: 'empty' }
   | { state: 'ok'; html: string }
@@ -41,6 +54,7 @@ export const createSvgBlock = createReactBlockSpec(
     propSchema: {
       code: { default: '' },
       caption: { default: '' },
+      width: { default: 620 },
     },
     content: 'none',
   },
@@ -51,6 +65,7 @@ export const createSvgBlock = createReactBlockSpec(
       const [mode, setMode] = useState<'edit' | 'preview'>(hasSvg ? 'preview' : 'edit');
       const setProps = (patch: Partial<typeof block.props>) =>
         editor.updateBlock(block, { props: { ...block.props, ...patch } });
+      const active = sizeFor(block.props.width);
 
       return (
         <figure className="write-svg" contentEditable={false}>
@@ -110,7 +125,11 @@ export const createSvgBlock = createReactBlockSpec(
               />
             </div>
           ) : check.state === 'ok' ? (
-            <div className="write-svg-preview" dangerouslySetInnerHTML={{ __html: check.html }} />
+            <div
+              className="write-svg-preview"
+              style={{ width: active.preview, marginInline: 'auto' }}
+              dangerouslySetInnerHTML={{ __html: check.html }}
+            />
           ) : (
             <div className="write-svg-error">
               <strong>Can’t render this SVG.</strong>
@@ -130,6 +149,18 @@ export const createSvgBlock = createReactBlockSpec(
             value={block.props.caption}
             onChange={(e) => setProps({ caption: e.target.value })}
           />
+          <div className="write-size-toggle">
+            {SIZES.map((s) => (
+              <button
+                key={s.key}
+                type="button"
+                className={active.key === s.key ? 'write-chip is-active' : 'write-chip'}
+                onClick={() => setProps({ width: s.width })}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
         </figure>
       );
     },

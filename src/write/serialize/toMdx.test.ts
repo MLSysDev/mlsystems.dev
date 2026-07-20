@@ -473,6 +473,23 @@ describe('svg blocks', () => {
   it('drops an empty svg block', () => {
     expect(body([block('svg', { code: '' })])).toBe('');
   });
+
+  it('emits the figure width when set (size control)', () => {
+    expect(body([block('svg', { code: svg, width: 960 })])).toBe(
+      `<Figure width={960}>\n${svg}\n</Figure>`,
+    );
+  });
+
+  it('round-trips svg width + caption through the converter', () => {
+    const { mdx } = serializePost(meta, [block('svg', { code: svg, caption: 'Dot', width: 620 })], {
+      tableVariants: {},
+      today,
+    });
+    const { doc } = convertMdx(mdx, { slug: 'x' });
+    const s = doc.blocks.find((b) => b.type === 'svg');
+    expect(Number(s?.props.width)).toBe(620);
+    expect(s?.props.caption).toBe('Dot');
+  });
 });
 
 describe('tables', () => {

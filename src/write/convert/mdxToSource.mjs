@@ -101,7 +101,7 @@ function figureSegment(attrs, inner) {
     }
   }
   if (/^<svg[\s>]/.test(inner)) {
-    return { kind: 'figure', caption, svg: unwrapJsxStyle(inner) };
+    return { kind: 'figure', caption, svg: unwrapJsxStyle(inner), width };
   }
   const img =
     inner.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/) ?? inner.match(/^<img[^>]*\ssrc="([^"]+)"[^>]*>$/);
@@ -342,7 +342,8 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       emitMd(seg.text);
       const tbl = blocks.slice(before).find((b) => b.type === 'table');
       if (tbl) tableVariants[tbl.id] = seg.style;
-    } else if (seg.kind === 'figure') push('svg', { code: seg.svg, caption: seg.caption });
+    } else if (seg.kind === 'figure')
+      push('svg', { code: seg.svg, caption: seg.caption, width: seg.width || 620 });
     else if (seg.kind === 'note') push('note', {}, inline(seg.text));
     else if (seg.kind === 'image')
       push('figure', {

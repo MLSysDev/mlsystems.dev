@@ -286,9 +286,11 @@ function serializeSvg(block: SBlock): string {
   if (!code) return '';
   const caption = String(block.props.caption ?? '');
   const captionAttr = caption ? ` ${attr('caption', caption)}` : '';
+  const width = block.props.width;
+  const widthAttr = width !== '' && width != null ? ` width={${Number(width)}}` : '';
   // SVG stays at column 0 inside <Figure> — indenting it would let MDX read the
   // markup as an indented code block.
-  return `<Figure${captionAttr}>\n${code}\n</Figure>`;
+  return `<Figure${captionAttr}${widthAttr}>\n${code}\n</Figure>`;
 }
 
 function serializeGallery(block: SBlock, ctx: Ctx): string {

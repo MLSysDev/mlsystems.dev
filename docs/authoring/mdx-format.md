@@ -253,16 +253,18 @@ import b from './b.png';
 Paste a self-contained `<svg>` inside `<Figure>`; it renders crisp at any size and adapts to dark mode:
 
 ```mdx
-<Figure caption="A hand-drawn diagram.">
+<Figure caption="A hand-drawn diagram." width={620}>
   <svg viewBox="0 0 470 160" role="img" aria-label="what the diagram shows"
-       style="width:100%;max-width:520px;height:auto;color:currentColor"
+       style="width:100%;height:auto;color:currentColor"
        fill="none" stroke="currentColor" xmlns="http://www.w3.org/2000/svg">
     <!-- shapes using stroke/fill="currentColor" -->
   </svg>
 </Figure>
 ```
 
-Rules: use `stroke="currentColor"`/`fill="currentColor"` so it follows the theme; set the root `style` as shown; include `role="img"` + `aria-label`; keep the SVG self-contained (no external references).
+Rules: use `stroke="currentColor"`/`fill="currentColor"` so it follows the theme; give the root `style="width:100%;height:auto;color:currentColor"`; include `role="img"` + `aria-label`; keep the SVG self-contained (no external references).
+
+**Size:** control the diagram's size with `width` on the `<Figure>`, the same scale images use — `360` (small), `620` (medium, aligns with the text column — the default), or `960` (large, breaks out wider than the text). It centers and stays responsive at every size. Let the SVG's own width be `100%` (don't hard-cap it with `max-width`) so it fills whichever size you pick.
 
 ---
 

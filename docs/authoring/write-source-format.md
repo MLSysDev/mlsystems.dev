@@ -245,7 +245,13 @@ JSON can't carry image binaries. Two placeholder strategies:
 }
 ```
 
-Agents **can and should** author complete diagrams this way. Rules: use `stroke="currentColor"` / `fill="currentColor"` so the diagram adapts to light/dark theme; set `style="width:100%;max-width:520px;height:auto;color:currentColor"` on the root; keep `viewBox` around 470 wide; include `role="img"` + `aria-label`.
+Agents **can and should** author complete diagrams this way. Rules: use `stroke="currentColor"` / `fill="currentColor"` so the diagram adapts to light/dark theme; set `style="width:100%;height:auto;color:currentColor"` on the root (let it fill the figure — don't hard-cap with `max-width`); include `role="img"` + `aria-label`.
+
+Add an optional `width` prop to size it, same scale as figures: `360` (small), `620` (medium — the default, aligns with the text column), or `960` (large, breaks out wider). It centers and stays responsive at every size.
+
+```json
+{ "id": "svg-1", "type": "svg", "props": { "code": "<svg …>", "caption": "", "width": 620 } }
+```
 
 ### Mermaid diagram
 
