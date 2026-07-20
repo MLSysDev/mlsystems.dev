@@ -680,11 +680,10 @@ main {
 }
 .figure-caption {
   margin-top: 12px;
-  font-family: var(--font-display);
-  font-style: italic;
+  font-family: var(--font-read);
   font-size: 14px;
   color: var(--ink-2);
-  line-height: 1.45;
+  line-height: 1.55;
   padding-top: 12px;
   border-top: 1px solid var(--line);
 }
@@ -1932,9 +1931,9 @@ a.hashtag:hover {
   margin: 0 auto;
 }
 .article-body .inline-figure-caption {
-  font-family: var(--font-display);
-  font-style: italic;
+  font-family: var(--font-read);
   font-size: 14px;
+  line-height: 1.55;
   color: var(--ink-2);
   margin-top: 10px;
   text-align: center;

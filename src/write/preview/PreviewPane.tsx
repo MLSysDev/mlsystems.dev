@@ -236,13 +236,15 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
         </div>
       );
       const title = String(block.props.frameTitle ?? '').trim();
+      const caption = String(block.props.frameCaption ?? '').trim();
       const wide = block.props.frameSize === 'wide';
       const expand = Boolean(block.props.frameExpand);
-      if (!title && !wide && !expand) return <div key={block.id}>{placeholder}</div>;
+      if (!title && !caption && !wide && !expand) return <div key={block.id}>{placeholder}</div>;
       return (
         <Interactive
           key={block.id}
           title={title || undefined}
+          caption={caption || undefined}
           size={wide ? 'wide' : 'normal'}
           expand={expand}
         >

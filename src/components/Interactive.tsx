@@ -2,11 +2,13 @@ import { useRef, type ReactNode } from 'react';
 
 export default function Interactive({
   title,
+  caption,
   size = 'normal',
   expand = false,
   children,
 }: {
   title?: string;
+  caption?: string;
   size?: 'normal' | 'wide';
   expand?: boolean;
   children: ReactNode;
@@ -47,6 +49,7 @@ export default function Interactive({
       <div ref={inlineSlotRef}>
         <div ref={bodyRef}>{children}</div>
       </div>
+      {caption && <div className="inline-figure-caption">{caption}</div>}
       {expand && (
         <dialog ref={dialogRef} className="ix-dialog" onClose={onClose}>
           <div className="ix-dialog-head">
@@ -61,6 +64,7 @@ export default function Interactive({
             </button>
           </div>
           <div ref={dialogSlotRef} />
+          {caption && <div className="inline-figure-caption">{caption}</div>}
         </dialog>
       )}
     </div>

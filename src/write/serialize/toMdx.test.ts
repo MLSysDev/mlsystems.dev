@@ -384,6 +384,7 @@ describe('custom component blocks', () => {
           componentName: 'Viz',
           source,
           frameTitle: 'Throughput, live',
+          frameCaption: 'Drag the slider to trade latency for throughput.',
           frameSize: 'wide',
           frameExpand: true,
         }),
@@ -392,7 +393,7 @@ describe('custom component blocks', () => {
     );
     expect(mdx).toContain("import Interactive from '../../../components/Interactive';");
     expect(mdx).toContain(
-      '<Interactive title="Throughput, live" size="wide" expand client:load>\n  <Viz client:visible />\n</Interactive>',
+      '<Interactive title="Throughput, live" caption="Drag the slider to trade latency for throughput." size="wide" expand client:load>\n  <Viz client:visible />\n</Interactive>',
     );
   });
 

@@ -110,12 +110,17 @@ function componentSource(name) {
   return '';
 }
 
+function frameAttr(attrs, name) {
+  return (
+    attrs.match(new RegExp(`${name}="([^"]*)"`))?.[1] ??
+    JSON.parse(attrs.match(new RegExp(`${name}=\\{("(?:[^"\\\\]|\\\\.)*")\\}`))?.[1] ?? '""')
+  );
+}
+
 function frameProps(attrs) {
-  const title =
-    attrs.match(/title="([^"]*)"/)?.[1] ??
-    JSON.parse(attrs.match(/title=\{("(?:[^"\\]|\\.)*")\}/)?.[1] ?? '""');
   return {
-    frameTitle: title,
+    frameTitle: frameAttr(attrs, 'title'),
+    frameCaption: frameAttr(attrs, 'caption'),
     frameSize: /size="wide"/.test(attrs) ? 'wide' : 'normal',
     frameExpand: /(^|\s)expand(\s|$|=)/.test(attrs),
   };
@@ -145,7 +150,7 @@ while ((m = pattern.exec(rest))) {
     segments.push({
       kind: 'component',
       name: m[14],
-      frame: { frameTitle: '', frameSize: 'normal', frameExpand: false },
+      frame: { frameTitle: '', frameCaption: '', frameSize: 'normal', frameExpand: false },
     });
   cursor = m.index + m[0].length;
 }

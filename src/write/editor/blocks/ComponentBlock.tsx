@@ -8,6 +8,7 @@ export const createComponentBlock = createReactBlockSpec(
       componentName: { default: '' },
       source: { default: '' },
       frameTitle: { default: '' },
+      frameCaption: { default: '' },
       frameSize: { default: 'normal', values: ['normal', 'wide'] },
       frameExpand: { default: false },
     },
@@ -66,6 +67,12 @@ export const createComponentBlock = createReactBlockSpec(
               onChange={(e) => setProps({ frameTitle: e.target.value })}
             />
           </div>
+          <input
+            type="text"
+            placeholder="Caption below the component (optional) — explain what the reader is looking at"
+            value={block.props.frameCaption}
+            onChange={(e) => setProps({ frameCaption: e.target.value })}
+          />
         </div>
       );
     },

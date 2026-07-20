@@ -260,6 +260,7 @@ Agents **can and should** author complete diagrams this way. Rules: use `stroke=
 Optional display props (all default off — omit them for a component that renders inline at normal width):
 
 - `frameTitle` (string) — small mono label above the component.
+- `frameCaption` (string) — caption below the component, styled like figure captions. Put explanatory text here, NOT inside the component itself — keep the component's canvas for the interactive content.
 - `frameSize` (`"normal"` | `"wide"`) — `"wide"` renders at up to 960px, extending past the text column; clamps to the screen on mobile.
 - `frameExpand` (boolean) — adds an expand button that opens the component in a fullscreen overlay (Esc closes, state preserved).
 

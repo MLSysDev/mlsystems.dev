@@ -291,14 +291,16 @@ function serializeComponent(block: SBlock, ctx: Ctx): string {
   }
   const el = `<${name} client:visible />`;
   const title = String(block.props.frameTitle ?? '').trim();
+  const caption = String(block.props.frameCaption ?? '').trim();
   const wide = block.props.frameSize === 'wide';
   const expand = Boolean(block.props.frameExpand);
-  if (!title && !wide && !expand) return el;
+  if (!title && !caption && !wide && !expand) return el;
   if (!ctx.componentImports.includes(INTERACTIVE_IMPORT)) {
     ctx.componentImports.push(INTERACTIVE_IMPORT);
   }
   const attrs = [
     title ? attr('title', title) : null,
+    caption ? attr('caption', caption) : null,
     wide ? 'size="wide"' : null,
     expand ? 'expand' : null,
   ]
