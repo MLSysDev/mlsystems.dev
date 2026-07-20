@@ -264,6 +264,8 @@ Agents **can and should** author complete diagrams this way. Rules: use `stroke=
 
 `source` is the mermaid diagram text — this is the one and only way to create a diagram. Leave `svg` empty; the /write editor renders the diagram and fills it in, and the published page ships that static SVG (readers load no mermaid library). A post with an unrendered mermaid block must be opened in the editor once before publishing.
 
+For **bold**/_italic_ in a node label, use mermaid markdown strings — wrap the label in backticks and use `**bold**` (e.g. `M["\`**SEE**\nattention masks\`"]`). HTML tags like `<b>` are not interpreted (HTML labels are disabled for security) and render as literal text, so don't use them.
+
 The diagram source is preserved everywhere: it lives in this JSON, and the editor also keeps it (readable) in the published MDX as a comment beside the rendered figure, so reopening a post — from its `.write-source.json` sidecar **or** from `index.mdx` alone — always loads back as an editable mermaid block, never a flattened SVG.
 
 ### Custom React component (interactive embeds)
