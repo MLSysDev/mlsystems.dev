@@ -27,7 +27,8 @@ import { MetaForm, type Option } from './meta/MetaForm';
 import { PreviewPane } from './preview/PreviewPane';
 import { usePasteImages } from './editor/usePasteImages';
 import { serializePost, type PostMeta, type SBlock, type TableStyle } from './serialize/toMdx';
-import { suggest, validate } from './serialize/validate';
+import { slugify, suggest, validate } from './serialize/validate';
+import { convertMdx } from './convert/mdxToSource.mjs';
 import { buildZip } from './serialize/toZip';
 import { buildSource, parseSource, type ParsedSource } from './serialize/source';
 import { authorPath, buildAuthorJson } from './serialize/author';
@@ -37,7 +38,8 @@ import {
   createPullRequest,
   isConfigured as isGithubConfigured,
 } from './publish/github';
-import { allAssets, clearAssets } from './storage/assets';
+import { allAssets, clearAssets, restoreAsset } from './storage/assets';
+import { readPostZip } from './serialize/fromZip';
 import {
   clearDraft,
   clearStoredAssets,
@@ -94,6 +96,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [siteTheme, setSiteTheme] = useState<'light' | 'dark'>('light');
   const [openError, setOpenError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [convertible, setConvertible] = useState<string | null>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [openUrl, setOpenUrl] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -273,12 +276,39 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     }
   };
 
-  const uploadSourceFile = async (file: File) => {
+  const uploadPostZip = async (file: File) => {
     setUploadError(null);
+    setConvertible(null);
     try {
-      const parsed = parseSource(await file.text());
+      const { parsed, assets } = await readPostZip(file);
+      if (
+        !isEmptyDraft(meta, docBlocks()) &&
+        !window.confirm('Replace your current draft with the uploaded post?')
+      )
+        return;
+      await applySource(parsed);
+      for (const a of assets) restoreAsset(a.name, a.file);
+      setLoadedSlug(null);
+    } catch (err) {
+      setUploadError(
+        err instanceof Error && err.message ? err.message : 'That ZIP could not be opened.',
+      );
+    }
+  };
+
+  const uploadSourceFile = async (file: File) => {
+    if (/\.zip$/i.test(file.name)) return uploadPostZip(file);
+    setUploadError(null);
+    setConvertible(null);
+    try {
+      const text = await file.text();
+      if (/\.mdx?$/i.test(file.name)) return convertAndLoad(text);
+      const parsed = parseSource(text);
       if (!parsed) {
         setUploadError('Not a valid write-source .json file.');
+        if (/^---\n[\s\S]*?\n---\n/.test(text)) {
+          setConvertible(text);
+        }
         return;
       }
       if (
@@ -297,6 +327,29 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     }
   };
 
+  const convertAndLoad = async (text: string) => {
+    try {
+      const { doc } = convertMdx(text);
+      doc.meta.slug = slugify(doc.meta.title) || 'post-slug';
+      if (
+        !isEmptyDraft(meta, docBlocks()) &&
+        !window.confirm('Replace your current draft with the converted post?')
+      )
+        return;
+      await applySource(doc);
+      setLoadedSlug(null);
+      setUploadError(null);
+      setConvertible(null);
+    } catch {
+      setUploadError('That post could not be converted — some of it uses unsupported markup.');
+      setConvertible(null);
+    }
+  };
+
+  const convertUpload = async () => {
+    if (convertible) await convertAndLoad(convertible);
+  };
+
   const download = async () => {
     const blocks = docBlocks();
     const found = [...validate(meta, blocks), ...oversizedIssues()];
@@ -308,9 +361,6 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       const blob = await buildZip({
         serialized,
         slug: meta.slug,
-        writerName: meta.writerName,
-        repoUrl,
-        contactEmail,
         assets: allAssets(),
         sourceJson: buildSource(meta, blocks, tableVariants),
         newAuthor: meta.newAuthor ?? null,
@@ -417,7 +467,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         <input
           ref={uploadInputRef}
           type="file"
-          accept=".json,application/json"
+          accept=".json,.zip,.mdx,.md,application/json,application/zip"
           hidden
           onChange={(e) => {
             const file = e.target.files?.[0];
@@ -425,27 +475,37 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
             if (file) void uploadSourceFile(file);
           }}
         />
-        <button
-          type="button"
-          className="write-open-link"
-          onClick={() => uploadInputRef.current?.click()}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            width="13"
-            height="13"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
+        <span className="write-upload-group">
+          <button
+            type="button"
+            className="write-open-link"
+            onClick={() => uploadInputRef.current?.click()}
           >
-            <path d="M12 15V4M7 8l5-4 5 4" />
-            <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
-          </svg>
-          Upload JSON
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              width="13"
+              height="13"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 15V4M7 8l5-4 5 4" />
+              <path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3" />
+            </svg>
+            Upload post
+          </button>
+          <span
+            className="write-info"
+            tabIndex={0}
+            data-tip="Takes a post .json, a Markdown file, or a downloaded post ZIP."
+            aria-label="Takes a post .json, a Markdown file, or a downloaded post ZIP."
+          >
+            i
+          </span>
+        </span>
         <button
           type="button"
           className="write-open-link"
@@ -457,7 +517,20 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           Edit a published post ↗
         </button>
       </div>
-      {uploadError && <p className="write-upload-error">{uploadError}</p>}
+      {uploadError && (
+        <p className="write-upload-error">
+          {uploadError}
+          {convertible && (
+            <>
+              {' '}
+              Looks like a published post, though.
+              <button type="button" className="write-chip" onClick={() => void convertUpload()}>
+                Convert &amp; load
+              </button>
+            </>
+          )}
+        </p>
+      )}
 
       <OpenExistingDialog
         open={openDialog}
@@ -506,7 +579,9 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
             <div
               className="write-floating-bar"
               style={{ top: `${barPos.top}px`, left: `${barPos.left}px` }}
-              onMouseDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => {
+                if (!(e.target as HTMLElement).closest('input')) e.preventDefault();
+              }}
             >
               <span>Table</span>
               {BORDER_VARIANTS.map((v) => (
@@ -527,6 +602,14 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
               >
                 Zebra rows
               </button>
+              <span className="write-table-divider" aria-hidden="true" />
+              <input
+                type="text"
+                className="write-table-caption"
+                placeholder="Caption (optional)"
+                value={style.caption ?? ''}
+                onChange={(e) => setStyle({ caption: e.target.value })}
+              />
             </div>
           );
         })()}
@@ -600,8 +683,9 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
             </button>
           </div>
           <p>
-            That file is your whole post — text, images, everything we need to publish it. Here’s
-            how to send it to us:
+            That file is your whole post — text, images, everything.{' '}
+            <strong>Keep it to draft and continue later</strong> (upload it with the Upload post
+            button), or send it to us now:
           </p>
           <div className="write-done-ways">
             <a
@@ -613,9 +697,6 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
               )}`}
             >
               Email it to us
-            </a>
-            <a className="write-done-alt" href={repoUrl} target="_blank" rel="noreferrer">
-              Or open a pull request on GitHub →
             </a>
           </div>
           <p className="write-note-inline">
@@ -652,6 +733,9 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           Your post is submitted as a pull request on GitHub for us to review.
         </p>
       )}
+      <p className="write-actions-note" style={previewOn ? { display: 'none' } : undefined}>
+        Not done yet? Download your post and upload it here later to continue.
+      </p>
 
       <PublishDialog
         open={publishOpen}

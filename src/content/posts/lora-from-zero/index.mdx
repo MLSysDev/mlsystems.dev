@@ -247,7 +247,7 @@ $$
 
 The static diagram shows the wiring. The animation below shows what happens *inside* the lower path: $B$ compresses many input features into $r$ bottleneck slots, $A$ expands those few slots into a full-size correction, and the correction gets added to the frozen output. Toggle the adapter off to see the step-0 case, where $B = 0$ makes every bottleneck slot zero.
 
-<Interactive title="The side path, inside the bottleneck" caption="Each matrix sits on the path: x goes into B and comes out as the r-value bottleneck z, then z goes into A and comes out as the full-size correction ABx, which is added to the frozen Wx. LoRA's whole constraint is that every correction has to squeeze through those r nodes in the middle. Toggle the adapter off (B = 0) to see the step-0 case, where the side path is dead and h is just the frozen output." size="wide" expand client:load>
+<Interactive title="The side path, inside the bottleneck" caption="B squeezes x down to the r-dimensional bottleneck z; A expands z back into the correction ABx, which is added to the frozen Wx. Every correction must pass through those r nodes. Toggle the adapter off (B = 0) for the step-0 case, where h = Wx" size="wide" expand client:load>
   <SidePathFlow client:visible />
 </Interactive>
 

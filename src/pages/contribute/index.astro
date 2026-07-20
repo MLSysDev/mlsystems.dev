@@ -6,28 +6,23 @@ import { SITE } from '@/lib/site';
 const STEPS = [
   {
     n: '01',
-    title: 'Share an idea',
-    body: 'Open a thread in our Blog ideas discussion on GitHub. A few sentences is enough — we will take it from there.',
+    title: 'Share your idea',
+    body: 'Open a thread in our Blog ideas discussion on GitHub. A few sentences on what you want to write and the angle you have in mind.',
   },
   {
     n: '02',
-    title: 'Shape it',
-    body: "We'll help you narrow the idea, find the useful angle, and decide what form it should take.",
+    title: 'Draft',
+    body: 'Write it visually — headings, images, tables, video, and math, all point-and-click. When you are done, hit Submit post.',
   },
   {
     n: '03',
-    title: 'Draft',
-    body: 'Write it visually — headings, images, tables, video, and math, all point-and-click. When you are done, hit Submit post and we review it.',
-  },
-  {
-    n: '04',
     title: 'Review',
     body: "We'll review for clarity, correctness, and readability. Nothing fancy, just make the work easier to learn from.",
   },
   {
-    n: '05',
+    n: '04',
     title: 'Publish',
-    body: 'Once it is ready, we publish it and credit you as a contributor. Comments happen in GitHub Discussions.',
+    body: 'Once it is ready, we publish it and credit you as a contributor.',
   },
 ];
 ---
@@ -67,7 +62,7 @@ const STEPS = [
               rel="noreferrer"
               class="btn"
             >
-              Pitch on GitHub Discussions
+              Pitch on Discussions
             </a>
             <a href={`mailto:${SITE.pitchEmail}`} class="btn"> Email an idea </a>
           </div>
@@ -76,17 +71,10 @@ const STEPS = [
 
       <div>
         <div class="side-panel" style="border-color: var(--accent);">
-          <h3 style="font-size: 20px; margin-bottom: 12px;">Write in your browser</h3>
+          <h3 style="font-size: 20px; margin-bottom: 12px;">Write your post</h3>
           <p style="font-size: 14px; color: var(--ink-2); line-height: 1.6; margin: 0 0 12px;">
             Write your post in the <a href="/write" style="color: var(--accent);">editor</a>,
-            preview it as it will appear, and submit when you are ready. We review it before it goes
-            live.
-          </p>
-          <p style="font-size: 13px; color: var(--ink-3); line-height: 1.6; margin: 0;">
-            Prefer raw MDX? You can still write it by hand and open a
-            <a href={SITE.repoUrl} target="_blank" rel="noreferrer" style="color: var(--accent);"
-              >pull request</a
-            > yourself.
+            preview it as it will appear, and submit when you are ready.
           </p>
         </div>
 

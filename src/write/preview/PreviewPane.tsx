@@ -7,25 +7,50 @@ import { getAssetUrl } from '../storage/assets';
 import { sanitizeSvg } from '../lib/sanitizeSvg';
 import {
   BG_COLORS,
+  INLINE_MATH_RE,
   TEXT_COLORS,
   type InlineRun,
   type PostMeta,
   type SBlock,
   type TableStyle,
 } from '../serialize/toMdx';
+import CodeHighlight from './CodeHighlight';
 
 // Renders the draft with the same components and CSS classes the published
 // article uses (MDXComponents + .article-body styles from global.css), so the
 // preview is the real reading experience — not an approximation.
 
+function textWithMath(text: string): ReactNode {
+  const parts: ReactNode[] = [];
+  let pos = 0;
+  let m;
+  INLINE_MATH_RE.lastIndex = 0;
+  while ((m = INLINE_MATH_RE.exec(text))) {
+    if (m.index > pos) parts.push(text.slice(pos, m.index));
+    parts.push(
+      <span
+        key={m.index}
+        dangerouslySetInnerHTML={{
+          __html: katex.renderToString(m[1], { throwOnError: false }),
+        }}
+      />,
+    );
+    pos = m.index + m[0].length;
+  }
+  if (parts.length === 0) return text;
+  if (pos < text.length) parts.push(text.slice(pos));
+  return <>{parts}</>;
+}
+
 function styledRun(run: { text: string; styles: Record<string, boolean | string> }, key: number) {
   const { text, styles } = run;
-  let node: ReactNode = text;
+  let node: ReactNode;
   // Mirror toMdx.wrapStyles: inline code publishes as plain backticks, so
   // bold/italic/strike are dropped with it — the preview must not show them.
   if (styles.code) {
-    node = <code>{node}</code>;
+    node = <code>{text}</code>;
   } else {
+    node = textWithMath(text);
     if (styles.bold) node = <strong>{node}</strong>;
     if (styles.italic) node = <em>{node}</em>;
     if (styles.strike) node = <s>{node}</s>;
@@ -98,8 +123,9 @@ function renderTable(block: SBlock, variants: Variants) {
   const style = variants[block.id];
   const border = style?.border ?? 'rule';
   const zebra = style?.zebra ?? false;
-  return (
-    <div key={block.id} className={`table-wrap table--${border}${zebra ? ' table--zebra' : ''}`}>
+  const caption = style?.caption?.trim() ?? '';
+  const table = (
+    <div className={`table-wrap table--${border}${zebra ? ' table--zebra' : ''}`}>
       <table>
         <thead>
           <tr>
@@ -118,6 +144,15 @@ function renderTable(block: SBlock, variants: Variants) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+  if (!caption) {
+    return <div key={block.id}>{table}</div>;
+  }
+  return (
+    <div key={block.id} className={`table-variant table--${border}${zebra ? ' table--zebra' : ''}`}>
+      {table}
+      <div className="inline-figure-caption">{caption}</div>
     </div>
   );
 }
@@ -159,9 +194,11 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
       );
     case 'codeBlock':
       return (
-        <pre key={block.id} className="write-preview-code">
-          <code>{plainText(block.content)}</code>
-        </pre>
+        <CodeHighlight
+          key={block.id}
+          code={plainText(block.content)}
+          lang={String(block.props.language ?? '')}
+        />
       );
     case 'separator':
       return <hr key={block.id} className="article-hr" />;

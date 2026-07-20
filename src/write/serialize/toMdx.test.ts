@@ -63,8 +63,14 @@ describe('escapeText', () => {
     expect(escapeText('# not a heading')).toBe('\\# not a heading');
   });
 
-  it('leaves dollar signs alone so inline math passes through', () => {
-    expect(escapeText('the scale is $1/\\sqrt{d_k}$')).toContain('$');
+  it('passes inline math spans through verbatim', () => {
+    expect(escapeText('the scale is $1/\\sqrt{d_k}$')).toBe('the scale is $1/\\sqrt{d_k}$');
+    expect(escapeText('an *update* $\\Delta W$ to $W$')).toBe('an \\*update\\* $\\Delta W$ to $W$');
+  });
+
+  it('does not treat spaced dollar amounts as math', () => {
+    expect(escapeText('$5 and $10')).toBe('$5 and $10');
+    expect(escapeText('costs $5, saves _time_')).toBe('costs $5, saves \\_time\\_');
   });
 });
 
@@ -484,6 +490,20 @@ describe('tables', () => {
     expect(out).toBe(
       '<Table variant="lined" zebra>\n\n| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |\n\n</Table>',
     );
+  });
+
+  it('wraps in Table when only a caption is set', () => {
+    const tb = block('table', {}, tableContent);
+    const out = body([tb], {}, { [tb.id]: { border: 'rule', zebra: false, caption: 'Memory.' } });
+    expect(out).toBe(
+      '<Table caption="Memory.">\n\n| Model | Params |\n| --- | --- |\n| 7B | 7 \\| 8 |\n\n</Table>',
+    );
+  });
+
+  it('combines variant, zebra, and caption', () => {
+    const tb = block('table', {}, tableContent);
+    const out = body([tb], {}, { [tb.id]: { border: 'lined', zebra: true, caption: 'Sizes' } });
+    expect(out).toContain('<Table variant="lined" zebra caption="Sizes">');
   });
 
   it('does not wrap when style is the plain default (rule, no zebra)', () => {

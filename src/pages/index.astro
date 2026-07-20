@@ -9,7 +9,7 @@ import { formatDate, sortPostsByDate } from '@/lib/data';
 import { TOPICS, countPostsByTopic, topicName } from '@/lib/topics';
 import { resolvePostAuthors } from '@/lib/posts';
 import { pickCoreTools } from '@/lib/tools';
-import { SITE, SOCIALS } from '@/lib/site';
+import { SOCIALS } from '@/lib/site';
 import { SOCIAL_ICONS } from '@/lib/socialIcons';
 
 const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
@@ -346,9 +346,6 @@ const featuredTools = pickCoreTools(allTools);
             >Write an article <span class="btn-arrow">→</span></a
           >
           <a href="/contribute" class="btn">Pitch an article</a>
-          <a href={SITE.github} target="_blank" rel="noreferrer" class="cta-github-link">
-            Browse the repo on GitHub →
-          </a>
           <a href="/why" class="cta-github-link">Why this exists →</a>
         </div>
       </div>

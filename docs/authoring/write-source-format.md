@@ -159,10 +159,12 @@ Cells are `tableCell` objects (not bare arrays):
 The first row renders as the header. Style a table via top-level `tableVariants`, keyed by block id:
 
 ```json
-"tableVariants": { "table-1": { "border": "rule", "zebra": true } }
+"tableVariants": { "table-1": { "border": "rule", "zebra": true, "caption": "Optional caption." } }
 ```
 
-`border`: `"rule"` | `"lined"` | `"plain"`; `zebra` stripes alternate rows.
+`border`: `"rule"` | `"lined"` | `"plain"`; `zebra` stripes alternate rows; `caption` (optional) renders centered under the table.
+
+The MDX→JSON converter maps `<Table variant="lined" zebra caption="...">` wrappers to a table block plus its `tableVariants` entry.
 
 ### Math (display LaTeX)
 
@@ -170,7 +172,11 @@ The first row renders as the header. Style a table via top-level `tableVariants`
 { "id": "math-1", "type": "math", "props": { "latex": "y = f(Wx + b)" }, "children": [] }
 ```
 
-**Options:** `latex` is the only prop — a display-mode KaTeX expression, always rendered centered on its own line. There is no alt/caption field; the LaTeX source itself is the accessible text. Double-escape backslashes in JSON: `"\\text{params}"`. For inline math inside a sentence, there is no inline-math style — write it as `code` styled text or keep the expression in a math block.
+**Options:** `latex` is the only prop — a display-mode KaTeX expression, always rendered centered on its own line. There is no alt/caption field; the LaTeX source itself is the accessible text. Double-escape backslashes in JSON: `"\\text{params}"`.
+
+**Inline math:** write `$...$` directly inside any text run — `{ "type": "text", "text": "an update $\\Delta W$", "styles": {} }`. It publishes verbatim (remark-math renders it) and the preview renders it with KaTeX. No space allowed just inside the delimiters (`$ x $` stays literal text, so dollar amounts are safe).
+
+The MDX→JSON converter maps `$$` display blocks to math blocks and passes inline `$...$` spans through untouched.
 
 ### Separator / divider
 

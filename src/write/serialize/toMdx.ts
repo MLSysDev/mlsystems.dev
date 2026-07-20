@@ -50,7 +50,7 @@ export type PostMeta = {
   newAuthor?: NewAuthor | null;
 };
 
-export type TableStyle = { border: 'rule' | 'lined' | 'plain'; zebra: boolean };
+export type TableStyle = { border: 'rule' | 'lined' | 'plain'; zebra: boolean; caption?: string };
 
 export type SerializeOptions = {
   tableVariants: Record<string, TableStyle>;
@@ -73,11 +73,28 @@ type Ctx = {
   tableVariants: Record<string, TableStyle>;
 };
 
-export function escapeText(s: string): string {
+// Matches remark-math's inline rule: no space just inside either delimiter.
+export const INLINE_MATH_RE = /\$(\S(?:[^$\n]*\S)?)\$/g;
+
+function escapeProse(s: string): string {
   return s
     .replace(/[\\<{*_`[~]/g, (c) => `\\${c}`)
     .replace(/^(\s{0,3})(\d+)([.)])/, '$1$2\\$3')
     .replace(/^(\s{0,3})([>#+-])/, '$1\\$2');
+}
+
+// Inline math spans pass through verbatim — escaping \ or _ inside them would
+// hand remark-math broken LaTeX.
+export function escapeText(s: string): string {
+  let out = '';
+  let pos = 0;
+  INLINE_MATH_RE.lastIndex = 0;
+  let m;
+  while ((m = INLINE_MATH_RE.exec(s))) {
+    out += escapeProse(s.slice(pos, m.index)) + m[0];
+    pos = m.index + m[0].length;
+  }
+  return out + escapeProse(s.slice(pos));
 }
 
 export const TEXT_COLORS: Record<string, string> = {
@@ -238,8 +255,13 @@ function serializeTable(block: SBlock, ctx: Ctx): string {
   const style = ctx.tableVariants[block.id];
   const border = style?.border ?? 'rule';
   const zebra = style?.zebra ?? false;
-  if (border !== 'rule' || zebra) {
-    const attrs = [border !== 'rule' ? `variant="${border}"` : null, zebra ? 'zebra' : null]
+  const caption = style?.caption?.trim() ?? '';
+  if (border !== 'rule' || zebra || caption) {
+    const attrs = [
+      border !== 'rule' ? `variant="${border}"` : null,
+      zebra ? 'zebra' : null,
+      caption ? attr('caption', caption) : null,
+    ]
       .filter(Boolean)
       .join(' ');
     return `<Table ${attrs}>\n\n${table}\n\n</Table>`;

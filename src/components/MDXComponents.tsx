@@ -59,16 +59,19 @@ export const mdxComponents = {
   Table: ({
     variant,
     zebra,
+    caption,
     children,
   }: {
     variant?: string;
     zebra?: boolean;
+    caption?: string;
     children: ReactNode;
   }) => (
     <div
       className={`table-variant table--${variant ?? TABLE_DEFAULT_VARIANT}${zebra ? ' table--zebra' : ''}`}
     >
       {children}
+      {caption && <div className="inline-figure-caption">{caption}</div>}
     </div>
   ),
   Video: ({ id, caption, title }: { id: string; caption?: string; title?: string }) => (
