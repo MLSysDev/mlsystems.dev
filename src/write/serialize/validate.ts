@@ -54,6 +54,13 @@ export function validate(meta: PostMeta, blocks: SBlock[]): string[] {
     if (b.type === 'svg' && !/<svg[\s>]/i.test(String(b.props.code ?? ''))) {
       issues.push('An SVG block has no SVG markup yet.');
     }
+    if (b.type === 'mermaid') {
+      if (!String(b.props.source ?? '').trim()) {
+        issues.push('A mermaid block has no diagram source yet.');
+      } else if (!/<svg[\s>]/i.test(String(b.props.svg ?? ''))) {
+        issues.push('A mermaid block hasn’t rendered — open it in the editor so it can draw.');
+      }
+    }
   });
   if (!hasContent) issues.push('Write at least one paragraph.');
 

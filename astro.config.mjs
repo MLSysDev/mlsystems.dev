@@ -217,6 +217,7 @@ export default defineConfig({
         '@blocknote/react',
         '@blocknote/mantine',
         '@blocknote/code-block',
+        'mermaid',
       ],
     },
     build: {

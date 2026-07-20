@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from 'react';
+import { useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import katex from 'katex';
 import { mdxComponents as C } from '@/components/MDXComponents';
 import Interactive from '@/components/Interactive';
@@ -206,6 +206,19 @@ function renderOne(block: SBlock, variants: Variants): ReactNode {
         </C.Figure>
       );
     }
+    case 'mermaid': {
+      const rendered = sanitizeSvg(String(block.props.svg ?? '')).trim();
+      if (!rendered) return null;
+      return (
+        <C.Figure
+          key={block.id}
+          caption={String(block.props.caption ?? '') || undefined}
+          width={960}
+        >
+          <div className="mermaid-fig" dangerouslySetInnerHTML={{ __html: rendered }} />
+        </C.Figure>
+      );
+    }
     case 'gallery': {
       const names = JSON.parse(String(block.props.fileNames || '[]')) as string[];
       if (names.length === 0) return null;
@@ -306,13 +319,20 @@ type Props = {
 };
 
 export function PreviewPane({ meta, blocks, tableVariants, byline }: Props) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const root = rootRef.current;
+    if (root?.querySelector('.mermaid-fig svg')) {
+      import('@/lib/diagramZoom').then(({ initDiagramZoom }) => initDiagramZoom(root));
+    }
+  }, [blocks]);
   const date = new Date().toLocaleDateString('en-US', {
     month: 'short',
     day: '2-digit',
     year: 'numeric',
   });
   return (
-    <div className="write-preview">
+    <div className="write-preview" ref={rootRef}>
       <div className="write-preview-head">
         <h1 className="write-preview-title">{meta.title || 'Untitled'}</h1>
         {meta.summary && <p className="write-preview-lede">{meta.summary}</p>}

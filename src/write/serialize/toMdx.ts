@@ -279,6 +279,28 @@ function serializeGallery(block: SBlock, ctx: Ctx): string {
   return `<Gallery${minAttr}>\n${images}\n</Gallery>`;
 }
 
+// MDX parses `{` inside a raw <style> tag as a JSX expression; wrapping the CSS
+// in a template-literal expression keeps it valid MDX and identical at runtime.
+function jsxSafeStyle(svg: string): string {
+  return svg.replace(/<style([^>]*)>([\s\S]*?)<\/style>/g, (_m, attrs, css) => {
+    const safe = css.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${');
+    return `<style${attrs}>{\`${safe}\`}</style>`;
+  });
+}
+
+function serializeMermaid(block: SBlock): string {
+  let svg = sanitizeSvg(String(block.props.svg ?? '')).trim();
+  if (!svg) return '';
+  svg = svg.replace(/\s+xmlns:xlink="[^"]*"/g, '').replace(/xlink:href=/g, 'href=');
+  svg = /^<svg[^>]*\sclass="/.test(svg)
+    ? svg.replace(/^(<svg[^>]*\sclass=")/, '$1mermaid-diagram ')
+    : svg.replace(/^<svg/, '<svg class="mermaid-diagram"');
+  svg = jsxSafeStyle(svg);
+  const caption = String(block.props.caption ?? '');
+  const captionAttr = caption ? ` ${attr('caption', caption)}` : '';
+  return `<Figure${captionAttr} width={960}>\n${svg}\n</Figure>`;
+}
+
 const INTERACTIVE_IMPORT = "import Interactive from '../../../components/Interactive';";
 
 function serializeComponent(block: SBlock, ctx: Ctx): string {
@@ -380,6 +402,8 @@ function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
       return serializeGallery(block, ctx);
     case 'svg':
       return serializeSvg(block);
+    case 'mermaid':
+      return serializeMermaid(block);
     case 'customComponent':
       return serializeComponent(block, ctx);
     case 'table':

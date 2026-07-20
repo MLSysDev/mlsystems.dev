@@ -241,6 +241,25 @@ JSON can't carry image binaries. Two placeholder strategies:
 
 Agents **can and should** author complete diagrams this way. Rules: use `stroke="currentColor"` / `fill="currentColor"` so the diagram adapts to light/dark theme; set `style="width:100%;max-width:520px;height:auto;color:currentColor"` on the root; keep `viewBox` around 470 wide; include `role="img"` + `aria-label`.
 
+### Mermaid diagram
+
+```json
+{
+  "id": "mermaid-1",
+  "type": "mermaid",
+  "props": {
+    "source": "flowchart LR\n  A[Input] --> B[Model] --> C[Output]",
+    "svg": "",
+    "caption": "Optional caption below the diagram."
+  },
+  "children": []
+}
+```
+
+`source` is the mermaid diagram text. Leave `svg` empty — the /write editor renders the diagram and fills it in; the published page then ships that static SVG (readers load no mermaid library). A post with an unrendered mermaid block must be opened in the editor once before publishing.
+
+The MDX→JSON converter maps ` ```mermaid ` fenced blocks to mermaid blocks (unrendered). A _published_ mermaid figure converts back as a static `svg` block — the editable mermaid source only survives via the post's `.write-source.json` sidecar, which is the canonical re-edit path.
+
 ### Custom React component (interactive embeds)
 
 ```json

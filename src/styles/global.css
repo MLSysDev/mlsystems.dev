@@ -3787,3 +3787,117 @@ mark.reader-hl:hover {
   gap: 12px;
   margin-bottom: 14px;
 }
+
+.article-body svg.mermaid-diagram,
+.mermaid-fig svg {
+  max-width: 100%;
+  height: auto;
+}
+:root[data-theme='dark'] .article-body svg.mermaid-diagram,
+:root[data-theme='dark'] .mermaid-fig svg {
+  filter: invert(0.92) hue-rotate(180deg);
+}
+
+.article-body svg.mermaid-diagram,
+.mermaid-fig svg {
+  max-height: 640px;
+  width: auto;
+  display: block;
+  margin-inline: auto;
+}
+.diagram-zoom-host {
+  position: relative;
+}
+.diagram-expand {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  color: var(--ink-2);
+  border-radius: 5px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.75;
+}
+.diagram-expand:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 1;
+}
+svg.is-zoomable-diagram {
+  cursor: zoom-in;
+}
+.diagram-zoom {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink-body);
+  padding: 0;
+  width: calc(100vw - 40px);
+  height: calc(100vh - 48px);
+  overflow: hidden;
+}
+.diagram-zoom::backdrop {
+  background: rgba(24, 23, 26, 0.55);
+  backdrop-filter: blur(2px);
+}
+.diagram-zoom-bar {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  display: flex;
+  gap: 6px;
+}
+.diagram-zoom-bar button {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-width: 34px;
+  border: 1px solid var(--line-2);
+  background: var(--paper);
+  color: var(--ink-2);
+  border-radius: 5px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.diagram-zoom-bar button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.diagram-zoom-canvas {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+}
+.diagram-zoom-canvas:active {
+  cursor: grabbing;
+}
+.diagram-zoom-stage {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  transform-origin: 0 0;
+}
+.diagram-zoom-stage svg {
+  max-width: 92%;
+  max-height: 92%;
+  height: auto;
+}
+:root[data-theme='dark'] .diagram-zoom-stage svg {
+  filter: invert(0.92) hue-rotate(180deg);
+}
+
+.diagram-zoom-readout {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  min-width: 44px;
+  text-align: center;
+  align-self: center;
+  color: var(--ink-3);
+}

@@ -1408,3 +1408,12 @@
   padding: 10px 14px;
   background: color-mix(in srgb, #b0342c 6%, transparent);
 }
+
+.write-mermaid-preview svg {
+  max-height: 640px;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  display: block;
+  margin-inline: auto;
+}

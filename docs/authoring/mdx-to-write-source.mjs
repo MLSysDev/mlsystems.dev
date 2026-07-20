@@ -126,9 +126,37 @@ function frameProps(attrs) {
   };
 }
 
+function unwrapJsxStyle(svg) {
+  return svg.replace(
+    /<style([^>]*)>\{`([\s\S]*?)`\}<\/style>/g,
+    (_m, attrs, css) => `<style${attrs}>${css.replace(/\\([\\`$])/g, '$1')}</style>`,
+  );
+}
+
+function figureSegment(attrs, inner) {
+  const caption = frameAttr(attrs, 'caption').replace(/\s+/g, ' ').trim();
+  const width = Number(attrs.match(/width=\{(\d+)\}/)?.[1] ?? '') || '';
+  if (/^<svg[\s>]/.test(inner)) {
+    return { kind: 'figure', caption, svg: unwrapJsxStyle(inner) };
+  }
+  const img =
+    inner.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/) ?? inner.match(/^<img[^>]*\ssrc="([^"]+)"[^>]*>$/);
+  if (img) {
+    const md = inner.startsWith('![');
+    return {
+      kind: 'image',
+      alt: md ? img[1] : (inner.match(/\salt="([^"]*)"/)?.[1] ?? ''),
+      src: md ? img[2] : img[1],
+      caption,
+      width: width || 360,
+    };
+  }
+  return { kind: 'md', text: inner };
+}
+
 let rest = body;
 const pattern =
-  /(<Figure caption=(?:"([\s\S]*?)"|\{("(?:[^"\\]|\\.)*")\})>\s*([\s\S]*?)\s*<\/Figure>)|(<Note>\s*([\s\S]*?)\s*<\/Note>)|(```(\w*)\n([\s\S]*?)```)|(<Interactive\b([^>]*)>\s*<([A-Za-z]\w*)\s+client:visible\s*\/>\s*<\/Interactive>)|(<([A-Z]\w*)\s+client:visible\s*\/>)/g;
+  /(<Figure([^>]*)>\s*([\s\S]*?)\s*<\/Figure>)|(<Note>\s*([\s\S]*?)\s*<\/Note>)|(```(\w*)\n([\s\S]*?)```)|(<Interactive\b([^>]*)>\s*<([A-Za-z]\w*)\s+client:visible\s*\/>\s*<\/Interactive>)|(<([A-Z]\w*)\s+client:visible\s*\/>)/g;
 
 let cursor = 0;
 const segments = [];
@@ -136,20 +164,17 @@ let m;
 while ((m = pattern.exec(rest))) {
   if (m.index > cursor) segments.push({ kind: 'md', text: rest.slice(cursor, m.index) });
   if (m[1]) {
-    const caption = m[3] ? JSON.parse(m[3]) : (m[2] ?? '');
-    segments.push({
-      kind: 'figure',
-      caption: caption.replace(/\s+/g, ' ').trim(),
-      svg: m[4].trim(),
-    });
-  } else if (m[5]) segments.push({ kind: 'note', text: m[6].replace(/\s+/g, ' ').trim() });
-  else if (m[7])
-    segments.push({ kind: 'code', lang: m[8] || 'text', code: m[9].replace(/\n$/, '') });
-  else if (m[10]) segments.push({ kind: 'component', name: m[12], frame: frameProps(m[11]) });
-  else if (m[13])
+    segments.push(figureSegment(m[2] ?? '', m[3].trim()));
+  } else if (m[4]) segments.push({ kind: 'note', text: m[5].replace(/\s+/g, ' ').trim() });
+  else if (m[6]) {
+    const code = m[8].replace(/\n$/, '');
+    if ((m[7] || '') === 'mermaid') segments.push({ kind: 'mermaid', source: code });
+    else segments.push({ kind: 'code', lang: m[7] || 'text', code });
+  } else if (m[9]) segments.push({ kind: 'component', name: m[11], frame: frameProps(m[10]) });
+  else if (m[12])
     segments.push({
       kind: 'component',
-      name: m[14],
+      name: m[13],
       frame: { frameTitle: '', frameCaption: '', frameSize: 'normal', frameExpand: false },
     });
   cursor = m.index + m[0].length;
@@ -263,9 +288,20 @@ for (const seg of segments) {
   if (seg.kind === 'md') emitMd(seg.text);
   else if (seg.kind === 'figure') push('svg', { code: seg.svg, caption: seg.caption });
   else if (seg.kind === 'note') push('note', {}, inline(seg.text));
+  else if (seg.kind === 'image')
+    push('figure', {
+      fileName: '',
+      src: seg.src,
+      alt: seg.alt,
+      caption: seg.caption,
+      width: seg.width,
+    });
   else if (seg.kind === 'code')
     push('codeBlock', { language: seg.lang }, [{ type: 'text', text: seg.code, styles: {} }]);
-  else if (seg.kind === 'component')
+  else if (seg.kind === 'mermaid') {
+    console.warn('note: mermaid block emitted without render — open the post in /write once');
+    push('mermaid', { source: seg.source, svg: '', caption: '' });
+  } else if (seg.kind === 'component')
     push('customComponent', {
       componentName: seg.name,
       source: componentSource(seg.name),
@@ -320,6 +356,7 @@ const allowed = new Set([
   'gallery',
   'video',
   'svg',
+  'mermaid',
   'customComponent',
 ]);
 for (const b of blocks) if (!allowed.has(b.type)) throw new Error('bad type ' + b.type);

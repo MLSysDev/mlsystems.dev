@@ -8,6 +8,7 @@ import { createFigureBlock } from './blocks/FigureBlock';
 import { createGalleryBlock } from './blocks/GalleryBlock';
 import { createComponentBlock } from './blocks/ComponentBlock';
 import { createSvgBlock } from './blocks/SvgBlock';
+import { createMermaidBlock } from './blocks/MermaidBlock';
 
 export const schema = BlockNoteSchema.create().extend({
   blockSpecs: {
@@ -20,6 +21,7 @@ export const schema = BlockNoteSchema.create().extend({
     gallery: createGalleryBlock(),
     customComponent: createComponentBlock(),
     svg: createSvgBlock(),
+    mermaid: createMermaidBlock(),
   },
 });
 

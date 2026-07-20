@@ -408,6 +408,31 @@ describe('custom component blocks', () => {
   });
 });
 
+describe('mermaid blocks', () => {
+  it('publishes the rendered svg inside a Figure with JSX-safe styles', () => {
+    const svg =
+      '<svg id="mmd-1" viewBox="0 0 100 50"><style>#mmd-1 .node{fill:#eee;}</style><g><path d="M0 0h10"/></g></svg>';
+    const { mdx } = serializePost(
+      meta,
+      [block('mermaid', { source: 'flowchart LR\n A-->B', svg, caption: 'Flow' })],
+      { tableVariants: {}, today },
+    );
+    expect(mdx).toContain('<Figure caption="Flow" width={960}>');
+    expect(mdx).toContain('<svg class="mermaid-diagram" id="mmd-1"');
+    expect(mdx).toContain('<style>{`#mmd-1 .node{fill:#eee;}`}</style>');
+  });
+
+  it('emits nothing when the diagram was never rendered', () => {
+    const { mdx } = serializePost(
+      meta,
+      [block('mermaid', { source: 'flowchart LR\n A-->B', svg: '', caption: '' })],
+      { tableVariants: {}, today },
+    );
+    expect(mdx).not.toContain('Figure');
+    expect(mdx).not.toContain('svg');
+  });
+});
+
 describe('svg blocks', () => {
   const svg = '<svg viewBox="0 0 10 10"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>';
 

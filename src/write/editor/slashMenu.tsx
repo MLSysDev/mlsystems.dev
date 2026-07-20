@@ -99,6 +99,13 @@ const ICONS = {
       <path d="M9 8h6M7 10v4" />
     </>,
   ),
+  mermaid: svg(
+    <>
+      <rect x="3" y="4" width="7" height="5" rx="1" />
+      <rect x="14" y="15" width="7" height="5" rx="1" />
+      <path d="M10 6.5h4v11h-4" fill="none" />
+    </>,
+  ),
 };
 
 export function getSlashItems(editor: WriteEditor) {
@@ -138,6 +145,14 @@ export function getSlashItems(editor: WriteEditor) {
       group: 'Media',
       icon: ICONS.svg,
       onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'svg' }),
+    },
+    {
+      title: 'Mermaid diagram',
+      subtext: 'Write mermaid, publish a static SVG',
+      aliases: ['mermaid', 'flowchart', 'sequence', 'graph', 'diagram'],
+      group: 'Media',
+      icon: ICONS.mermaid,
+      onItemClick: () => insertOrUpdateBlockForSlashMenu(editor, { type: 'mermaid' }),
     },
     {
       title: 'Table',

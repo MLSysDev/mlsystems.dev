@@ -123,15 +123,13 @@ export const createSvgBlock = createReactBlockSpec(
             </div>
           )}
 
-          {hasSvg && (
-            <input
-              type="text"
-              className="write-caption-input"
-              placeholder="Caption (optional)"
-              value={block.props.caption}
-              onChange={(e) => setProps({ caption: e.target.value })}
-            />
-          )}
+          <input
+            type="text"
+            className="write-caption-input"
+            placeholder="Caption (optional)"
+            value={block.props.caption}
+            onChange={(e) => setProps({ caption: e.target.value })}
+          />
         </figure>
       );
     },

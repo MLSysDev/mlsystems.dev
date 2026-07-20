@@ -51,7 +51,14 @@ export default function Interactive({
       </div>
       {caption && <div className="inline-figure-caption">{caption}</div>}
       {expand && (
-        <dialog ref={dialogRef} className="ix-dialog" onClose={onClose}>
+        <dialog
+          ref={dialogRef}
+          className="ix-dialog"
+          onClose={onClose}
+          onClick={(e) => {
+            if (e.target === dialogRef.current) dialogRef.current?.close();
+          }}
+        >
           <div className="ix-dialog-head">
             <span className="ix-title">{title ?? 'Interactive'}</span>
             <button
