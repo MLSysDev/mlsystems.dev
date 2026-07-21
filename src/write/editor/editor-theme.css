@@ -1384,13 +1384,13 @@
 
 .bn-editor .bn-block-content[data-content-type='quote'] > blockquote,
 .bn-editor blockquote {
-  border-left: 2px solid var(--accent);
+  border-left: 3px solid var(--accent);
   margin: 0;
-  padding: 4px 0 4px 20px;
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 22px;
-  line-height: 1.4;
+  padding: 2px 0 2px 22px;
+  font-family: var(--font-read);
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1.55;
   color: var(--ink-2);
 }
 
