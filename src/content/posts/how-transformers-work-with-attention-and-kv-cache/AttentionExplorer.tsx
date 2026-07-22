@@ -1,89 +1,38 @@
-import { useState, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { useState, type CSSProperties, type ReactNode } from 'react';
 
-// A toy 3-dimensional attention. The MECHANISM is exactly the real one —
-// dot-product scores, softmax, value blend — just small enough to see every number.
-// Four context tokens, each with a fixed Key (its "label") and Value (its "content").
-// You control the Query. Watch attention flow to whichever Key the Query points at.
+// Real, measured attention from GPT-2 (117M) on "The quick brown fox" — one representative
+// head (layer 2, head 9), extracted with transformers (output_attentions=True).
+// Rows = the attending token, columns = the token attended to. Attention is causal: a token
+// attends only to itself and earlier tokens, so the upper triangle is zero. Not hand-tuned.
 
-type Vec = [number, number, number];
+const TOKENS = ['The', 'quick', 'brown', 'fox'];
 
-const TOKENS = ['The', 'quick', 'brown', 'fox'] as const;
-
-// Key = "what I contain / my label" (near-orthogonal so a query can select one)
-const KEYS: Vec[] = [
-  [1.0, 0.1, 0.1], // The
-  [0.1, 1.0, 0.1], // quick
-  [0.1, 0.1, 1.0], // brown
-  [0.7, 0.7, 0.2], // fox — shares direction with "quick", so it lights up too
+// GPT-2 layer 2, head 9 — attention matrix (row = attending token)
+const M = [
+  [1.0, 0, 0, 0],
+  [0.67, 0.33, 0, 0],
+  [0.43, 0.43, 0.14, 0],
+  [0.13, 0.28, 0.51, 0.07],
 ];
-
-// Value = "my actual content to hand over"
-const VALUES: Vec[] = [
-  [1.0, 0.0, 0.0], // The
-  [0.0, 1.0, 0.0], // quick
-  [0.0, 0.0, 1.0], // brown
-  [0.5, 0.5, 0.5], // fox
-];
-
-const dot = (a: Vec, b: Vec) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-
-function softmax(xs: number[]): number[] {
-  const m = Math.max(...xs);
-  const exps = xs.map((x) => Math.exp(x - m));
-  const sum = exps.reduce((a, b) => a + b, 0);
-  return exps.map((e) => e / sum);
-}
 
 const mono: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-2)' };
-const fmtVec = (v: Vec) => `[${v.map((n) => n.toFixed(2)).join(', ')}]`;
 
-function Slider({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: number;
-  onChange: (v: number) => void;
-}) {
-  return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 8, flex: '1 1 130px' }}>
-      <span style={{ ...mono, width: 34, flexShrink: 0 }}>
-        {label} <strong style={{ color: 'var(--ink)' }}>{value.toFixed(1)}</strong>
-      </span>
-      <input
-        type="range"
-        min={-0.5}
-        max={2}
-        step={0.1}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        style={{ width: '100%', accentColor: 'var(--accent)' }}
-        aria-label={label}
-      />
-    </label>
-  );
-}
+const btn = (active: boolean): CSSProperties => ({
+  ...mono,
+  padding: '4px 12px',
+  borderRadius: 5,
+  cursor: 'pointer',
+  border: `1px solid ${active ? 'var(--accent)' : 'var(--line-2)'}`,
+  background: active ? 'var(--accent-soft)' : 'transparent',
+  color: active ? 'var(--accent)' : 'var(--ink-2)',
+  fontWeight: active ? 600 : 400,
+});
 
 export default function AttentionExplorer(): ReactNode {
-  const [q, setQ] = useState<Vec>([0.2, 0.9, 0.1]);
+  const [at, setAt] = useState(3); // "fox"
 
-  const { scores, weights, output } = useMemo(() => {
-    const scores = KEYS.map((k) => dot(q, k));
-    const weights = softmax(scores);
-    const output: Vec = [0, 0, 0];
-    VALUES.forEach((v, i) => {
-      output[0] += weights[i] * v[0];
-      output[1] += weights[i] * v[1];
-      output[2] += weights[i] * v[2];
-    });
-    return { scores, weights, output };
-  }, [q]);
-
-  const topIdx = weights.indexOf(Math.max(...weights));
-  const near = (a: number, b: number) => Math.abs(a - b) < 0.05;
-  const mimics = (i: number) =>
-    near(q[0], KEYS[i][0]) && near(q[1], KEYS[i][1]) && near(q[2], KEYS[i][2]);
+  const row = M[at];
+  const topIdx = row.indexOf(Math.max(...row));
 
   return (
     <div
@@ -102,104 +51,69 @@ export default function AttentionExplorer(): ReactNode {
           textTransform: 'uppercase',
           letterSpacing: '0.08em',
           color: 'var(--accent)',
-          marginBottom: 12,
+          marginBottom: 14,
         }}
       >
-        Attention is a search
+        Self-attention · GPT-2 (117M)
       </div>
 
-      {/* Query controls */}
-      <div style={{ ...mono, color: 'var(--ink-3)', marginBottom: 6 }}>
-        Query vector (what this token is looking for): <strong style={{ color: 'var(--ink)' }}>{fmtVec(q)}</strong>
-      </div>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 20px', marginBottom: 10 }}>
-        <Slider label="q₁" value={q[0]} onChange={(v) => setQ([v, q[1], q[2]])} />
-        <Slider label="q₂" value={q[1]} onChange={(v) => setQ([q[0], v, q[2]])} />
-        <Slider label="q₃" value={q[2]} onChange={(v) => setQ([q[0], q[1], v])} />
+      {/* Which token is attending */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, flexWrap: 'wrap' }}>
+        <span style={{ ...mono, color: 'var(--ink-3)' }}>attending token:</span>
+        {TOKENS.map((t, i) => (
+          <button key={t} type="button" style={btn(i === at)} onClick={() => setAt(i)}>
+            {t}
+          </button>
+        ))}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-        <span style={{ ...mono, color: 'var(--ink-3)' }}>make query mimic a key:</span>
-        {TOKENS.map((t, i) => {
-          const active = mimics(i);
+      {/* Weights */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ ...mono, display: 'flex', gap: 8, color: 'var(--ink-3)', fontSize: 11 }}>
+          <span style={{ width: 60, flexShrink: 0 }}>token</span>
+          <span style={{ flex: 1 }}>
+            how much <strong style={{ color: 'var(--ink)' }}>{TOKENS[at]}</strong> attends to it
+          </span>
+        </div>
+        {TOKENS.map((t, j) => {
+          const future = j > at;
+          const w = row[j];
           return (
-            <button
-              key={t}
-              type="button"
-              onClick={() => setQ([...KEYS[i]] as Vec)}
-              style={{
-                ...mono,
-                padding: '4px 10px',
-                borderRadius: 5,
-                cursor: 'pointer',
-                border: `1px solid ${active ? 'var(--accent)' : 'var(--line-2)'}`,
-                background: active ? 'var(--accent-soft)' : 'transparent',
-                color: active ? 'var(--accent)' : 'var(--ink-2)',
-                fontWeight: active ? 600 : 400,
-              }}
-            >
-              {t}
-            </button>
+            <div key={t} style={{ display: 'flex', gap: 8, alignItems: 'center', opacity: future ? 0.35 : 1 }}>
+              <span
+                style={{
+                  ...mono,
+                  width: 60,
+                  flexShrink: 0,
+                  color: !future && j === topIdx ? 'var(--accent)' : 'var(--ink)',
+                }}
+              >
+                {t}
+              </span>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ flex: 1, height: 18, background: 'var(--paper)', borderRadius: 4, overflow: 'hidden', border: '1px solid var(--line)' }}>
+                  <div
+                    style={{
+                      width: `${(w * 100).toFixed(1)}%`,
+                      height: '100%',
+                      background: 'var(--accent)',
+                      opacity: j === topIdx ? 1 : 0.55,
+                      transition: 'width 0.12s',
+                    }}
+                  />
+                </div>
+                <span style={{ ...mono, width: 44, textAlign: 'right' }}>
+                  {future ? '—' : `${(w * 100).toFixed(0)}%`}
+                </span>
+              </div>
+            </div>
           );
         })}
       </div>
 
-      {/* Per-token rows */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <div style={{ ...mono, display: 'flex', gap: 8, color: 'var(--ink-3)', fontSize: 11 }}>
-          <span style={{ width: 52 }}>token</span>
-          <span style={{ width: 116 }}>Key (label)</span>
-          <span style={{ width: 56, textAlign: 'right' }}>Q·K</span>
-          <span style={{ flex: 1 }}>attention weight (softmax)</span>
-        </div>
-        {TOKENS.map((t, i) => (
-          <div key={t} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <span style={{ ...mono, width: 52, color: i === topIdx ? 'var(--accent)' : 'var(--ink)' }}>
-              {t}
-            </span>
-            <span style={{ ...mono, width: 116, color: 'var(--ink-3)' }}>{fmtVec(KEYS[i])}</span>
-            <span style={{ ...mono, width: 56, textAlign: 'right' }}>{scores[i].toFixed(2)}</span>
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <div style={{ flex: 1, height: 16, background: 'var(--paper)', borderRadius: 4, overflow: 'hidden', border: '1px solid var(--line)' }}>
-                <div
-                  style={{
-                    width: `${(weights[i] * 100).toFixed(1)}%`,
-                    height: '100%',
-                    background: 'var(--accent)',
-                    opacity: i === topIdx ? 1 : 0.55,
-                    transition: 'width 0.12s',
-                  }}
-                />
-              </div>
-              <span style={{ ...mono, width: 44, textAlign: 'right' }}>{(weights[i] * 100).toFixed(0)}%</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Output */}
-      <div
-        style={{
-          ...mono,
-          marginTop: 14,
-          padding: '10px 14px',
-          borderRadius: 6,
-          background: 'var(--paper)',
-          border: '1px solid var(--line)',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        output = Σ wᵢ·Vᵢ ={' '}
-        <strong style={{ color: 'var(--accent)' }}>{fmtVec(output)}</strong>{' '}
-        <span style={{ color: 'var(--ink-3)' }}>← the new, context-aware vector</span>
-      </div>
-
-      <div style={{ ...mono, marginTop: 10, color: 'var(--ink-3)', fontSize: 11.5 }}>
-        Try it: click <strong>quick</strong> — the query now matches quick&apos;s Key, so most attention
-        flows there (and a little to <strong>fox</strong>, whose Key shares that direction). The output
-        vector becomes mostly quick&apos;s Value. That is all attention does: score by Key match, blend the
-        Values. Real attention divides scores by √dₖ before softmax; omitted here for legibility.
+      <div style={{ ...mono, marginTop: 14, color: 'var(--ink-3)', fontSize: 11 }}>
+        Causal masking: a token attends to itself and earlier tokens only, never to ones that come
+        later, so those are 0 (shown as —).
       </div>
     </div>
   );
