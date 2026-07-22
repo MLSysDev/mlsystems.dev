@@ -250,11 +250,6 @@ export default function KVCacheGrower(): ReactNode {
         <strong style={{ color: 'var(--accent)' }}>{calc.perRequestGB.toFixed(1)} GB</strong> per request
       </div>
 
-      <div style={{ ...mono, marginTop: 10, color: 'var(--ink-3)', fontSize: 11.5 }}>
-        Try it: pick <strong>Llama 3 70B</strong>, 32K context — one request is ~10 GB. Now drag users up:
-        the KV cache races past the weights and fills the node. Switch to <strong>FP8</strong> and it halves.
-        That single bar is why prefix caching, paged-KV, GQA, and quantized-KV all exist.
-      </div>
     </div>
   );
 }
