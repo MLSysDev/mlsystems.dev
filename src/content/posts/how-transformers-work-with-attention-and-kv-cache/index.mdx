@@ -221,7 +221,7 @@ So “fox” decides: pay **52%** attention to “quick”, **35%** to itself, *
 
 That’s it — that’s attention. A weighted average of everyone’s Values, where the weights come from how well your Query matches their Keys. Do this for every token, in every block, and information flows across the sentence until each token’s vector encodes not just itself but its whole relevant context.
 
-Don’t take my word for the numbers — play with them. <span style="background-color: rgb(34, 134, 58)"><span style="color: rgb(246, 248, 250)">See it in GPT-2 example below, token by token. Below is one attention head of GPT-2 (117M) running on our sentence. Pick a token and watch what it attends to as it comes in</span></span><span style="background-color: rgb(17, 58, 27)"><span style="color: rgb(246, 248, 250)">:</span></span>
+Don’t take my word for the numbers — play with them. See it in GPT-2 example below, token by token. Below is one attention head of GPT-2 (117M) running on our sentence. Pick a token and watch what it attends to as it comes in:
 
 <Interactive title="Attention Explorer" caption={"One attention head of GPT-2 (117M) on “The quick brown fox\"."} expand client:load>
   <AttentionExplorer client:visible />
