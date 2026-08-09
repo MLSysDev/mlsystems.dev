@@ -52,7 +52,7 @@ export const SITE = {
 export const APPEARANCE = {
   theme: 'light',
   accent: 'oxide',
-  typeset: 'editorial',
+  typeset: 'modern',
   background: 'plain',
   density: 'comfortable',
 } as const;
