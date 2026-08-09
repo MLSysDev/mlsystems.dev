@@ -299,7 +299,7 @@ body {
   --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='modern'] {
-  --font-display: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-display: 'Geist Sans', 'Hanken Grotesk', system-ui, sans-serif;
   --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='terminal'] {
@@ -530,7 +530,7 @@ main {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
   gap: 64px;
-  align-items: center;
+  align-items: start;
 }
 .hero-tag {
   margin-bottom: 28px;
@@ -538,11 +538,12 @@ main {
 }
 .hero-h1 {
   font-family: var(--font-display);
-  font-size: clamp(54px, 7vw, 96px);
-  line-height: 0.95;
+  font-size: clamp(48px, 6vw, 80px);
+  line-height: 0.98;
   letter-spacing: -0.015em;
   font-weight: 400;
   margin: 0 0 28px;
+  text-wrap: balance;
 }
 .hero-h1 em {
   font-style: italic;
