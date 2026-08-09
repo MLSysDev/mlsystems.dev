@@ -1,7 +1,46 @@
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { tagSlug } from './data';
 
 const OWNER = 'MLSysDev';
 const NAME = 'mlsystems.dev';
+
+// GitHub serves user-uploaded images behind short-lived signed URLs
+// (private-user-images.githubusercontent.com, ~5 min JWT), so an embedded <img>
+// is dead by the time a reader loads the static page. At build (while the URL is
+// live) we download each one into public/forum-media/ and rewrite the src to a
+// stable local path. Id-keyed filename → already-downloaded media is skipped.
+const MEDIA_DIR = 'public/forum-media';
+
+function mediaFileName(url: string): string {
+  const base = (url.split('?')[0].split('/').pop() || '').replace(/[^a-zA-Z0-9._-]/g, '');
+  return /\.[a-z0-9]{2,5}$/i.test(base) ? base : `${base || 'img'}.png`;
+}
+
+async function rehostMedia(html: string): Promise<string> {
+  const urls = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)]
+    .map((m) => m[1])
+    .filter((u) => /\.githubusercontent\.com\//.test(u));
+  if (urls.length === 0) return html;
+  mkdirSync(MEDIA_DIR, { recursive: true });
+  let out = html;
+  for (const url of [...new Set(urls)]) {
+    try {
+      const name = mediaFileName(url);
+      const path = join(MEDIA_DIR, name);
+      if (!existsSync(path)) {
+        const r = await fetch(url);
+        if (!r.ok) continue;
+        writeFileSync(path, Buffer.from(await r.arrayBuffer()));
+      }
+      out = out.split(url).join(`/forum-media/${name}`);
+    } catch {
+      // leave the original src on any failure — worst case is one broken image,
+      // never a broken build.
+    }
+  }
+  return out;
+}
 
 const EXCLUDED_CATEGORY_SLUGS = new Set(['comments']);
 
@@ -233,6 +272,15 @@ export async function getForum(): Promise<Forum> {
           : null,
       };
     });
+
+  const rehostComment = async (c: ForumComment): Promise<void> => {
+    c.bodyHTML = await rehostMedia(c.bodyHTML);
+    for (const r of c.replies ?? []) await rehostComment(r);
+  };
+  for (const t of threads) {
+    t.bodyHTML = await rehostMedia(t.bodyHTML);
+    for (const c of t.comments) await rehostComment(c);
+  }
 
   const bySlug = new Map<string, ForumCategory>();
   for (const t of threads) bySlug.set(t.category.slug, t.category);

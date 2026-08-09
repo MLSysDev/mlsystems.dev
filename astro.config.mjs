@@ -1,7 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import { unified } from '@astrojs/markdown-remark';
-import { readdirSync, readFileSync } from 'fs';
+import { readdirSync, readFileSync, existsSync, cpSync } from 'fs';
 import { createHash } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -152,6 +152,19 @@ export default defineConfig({
   integrations: [
     react(),
     mdx(),
+    // Forum media is downloaded into public/forum-media during the page build
+    // (see lib/forum.ts) — after Astro has already copied public/ to dist/. This
+    // copies it into the final output so re-hosted images are actually served.
+    {
+      name: 'forum-media-copy',
+      hooks: {
+        'astro:build:done': ({ dir }) => {
+          const src = 'public/forum-media';
+          if (existsSync(src))
+            cpSync(src, fileURLToPath(new URL('forum-media', dir)), { recursive: true });
+        },
+      },
+    },
     sitemap({
       changefreq: 'weekly',
       priority: 0.5,
