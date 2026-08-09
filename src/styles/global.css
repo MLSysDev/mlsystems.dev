@@ -299,7 +299,7 @@ body {
   --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='modern'] {
-  --font-display: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-display: 'Geist Sans', 'Hanken Grotesk', system-ui, sans-serif;
   --font-sans: 'Hanken Grotesk', system-ui, sans-serif;
 }
 [data-typeset='terminal'] {
