@@ -225,6 +225,24 @@ const pollOptions = poll
 </BaseLayout>
 
 <script>
+  // Click-to-load YouTube previews in forum content (no YT script until play).
+  document.querySelectorAll<HTMLButtonElement>('.forum-yt').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-yt');
+      if (!id) return;
+      const iframe = document.createElement('iframe');
+      iframe.className = 'forum-yt-frame';
+      iframe.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1`;
+      iframe.title = 'YouTube video player';
+      iframe.setAttribute(
+        'allow',
+        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture',
+      );
+      iframe.allowFullscreen = true;
+      btn.replaceWith(iframe);
+    });
+  });
+
   const poll = document.querySelector<HTMLElement>('[data-poll]');
   if (poll?.dataset.number) {
     fetch(`/api/poll/${poll.dataset.number}`, { cache: 'no-store' })

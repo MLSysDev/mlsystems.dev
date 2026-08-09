@@ -3397,6 +3397,54 @@ a.forum-cat:hover {
   height: auto;
   border-radius: 6px;
 }
+.forum-content .forum-yt {
+  position: relative;
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  margin: 16px 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #000;
+}
+.forum-content .forum-yt img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0;
+  opacity: 0.92;
+  transition: opacity 0.15s ease;
+}
+.forum-content .forum-yt:hover img {
+  opacity: 1;
+}
+.forum-content .forum-yt-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.forum-content .forum-yt-icon svg {
+  width: 68px;
+  height: 48px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+}
+.forum-content .forum-yt-frame {
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 16 / 9;
+  margin: 16px 0;
+  border: 0;
+  border-radius: 10px;
+  display: block;
+}
 .forum-content pre {
   background: #24292e;
   color: #e1e4e8;

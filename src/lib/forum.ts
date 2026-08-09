@@ -17,6 +17,22 @@ function mediaFileName(url: string): string {
   return /\.[a-z0-9]{2,5}$/i.test(base) ? base : `${base || 'img'}.png`;
 }
 
+// GitHub autolinks a bare YouTube URL to a plain <a>; turn it into a click-to-load
+// preview (facade — no YouTube script until the reader hits play).
+const YT_ICON =
+  '<svg viewBox="0 0 68 48" aria-hidden="true"><path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.64 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#f00"/><path d="M45 24 27 14v20" fill="#fff"/></svg>';
+
+function embedYouTube(html: string): string {
+  return html.replace(
+    /<a\b[^>]*href="https?:\/\/(?:www\.|m\.)?(?:youtube\.com\/watch\?[^"]*|youtu\.be\/[^"]*)"[^>]*>.*?<\/a>/gi,
+    (anchor) => {
+      const id = anchor.match(/(?:[?&]v=|youtu\.be\/)([A-Za-z0-9_-]{11})/)?.[1];
+      if (!id) return anchor;
+      return `<button type="button" class="forum-yt" data-yt="${id}" aria-label="Play video"><img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy" decoding="async" /><span class="forum-yt-icon">${YT_ICON}</span></button>`;
+    },
+  );
+}
+
 async function rehostMedia(html: string): Promise<string> {
   const urls = [...html.matchAll(/<img\b[^>]*\bsrc="([^"]+)"/g)]
     .map((m) => m[1])
@@ -273,12 +289,13 @@ export async function getForum(): Promise<Forum> {
       };
     });
 
+  const processHTML = (html: string): Promise<string> => rehostMedia(embedYouTube(html));
   const rehostComment = async (c: ForumComment): Promise<void> => {
-    c.bodyHTML = await rehostMedia(c.bodyHTML);
+    c.bodyHTML = await processHTML(c.bodyHTML);
     for (const r of c.replies ?? []) await rehostComment(r);
   };
   for (const t of threads) {
-    t.bodyHTML = await rehostMedia(t.bodyHTML);
+    t.bodyHTML = await processHTML(t.bodyHTML);
     for (const c of t.comments) await rehostComment(c);
   }
 
