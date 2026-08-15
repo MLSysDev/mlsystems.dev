@@ -250,9 +250,11 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     setRestore(null);
   };
 
-  const applySource = async (loaded: LoadedSource) => {
-    clearAssets();
-    await clearStoredAssets().catch(() => undefined);
+  const applySource = async (loaded: LoadedSource, keepAssets = false) => {
+    if (!keepAssets) {
+      clearAssets();
+      await clearStoredAssets().catch(() => undefined);
+    }
     setRestore(null);
     setSentFile(null);
     setIssues([]);
@@ -272,8 +274,10 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     setOpenError(null);
     setBusy(true);
     try {
+      clearAssets();
+      await clearStoredAssets().catch(() => undefined);
       const loaded = await fetchExisting(repoUrl, input);
-      await applySource(loaded);
+      await applySource(loaded, true);
       setLoadedSlug(loaded.meta.slug || null);
       setOpenUrl('');
       setOpenDialog(false);
@@ -298,8 +302,10 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       setAutoLoading(true);
       setOpenError(null);
       try {
+        clearAssets();
+        await clearStoredAssets().catch(() => undefined);
         const loaded = await fetchExisting(repoUrl, slug);
-        await applySource(loaded);
+        await applySource(loaded, true);
         setLoadedSlug(loaded.meta.slug || null);
       } catch (err) {
         setOpenError(err instanceof Error ? err.message : 'That post could not be opened.');
