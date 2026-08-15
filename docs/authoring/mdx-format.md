@@ -279,7 +279,7 @@ flowchart TD
 ```
 ````
 
-**Note:** a mermaid fence does not render to a diagram on its own — on the published page it shows as a code block. To turn it into a rendered diagram, open the post in the [`/write`](https://mlsystems.dev/write) editor: it loads the fence as an editable Mermaid block, draws it, and bakes the finished SVG into the post on publishing. So writing the fence here is a convenient way to draft and carry a diagram's source (it survives an edit round-trip and can be copied); the editor does the actual rendering.
+**Note:** a mermaid fence does not render to a diagram on its own — on the published page it shows as a code block. (Opening the post in the editor and publishing is what turns it into a picture; an undrawn diagram now falls back to this fence rather than being dropped.) To turn it into a rendered diagram, open the post in the [`/write`](https://mlsystems.dev/write) editor: it loads the fence as an editable Mermaid block, draws it, and bakes the finished SVG into the post on publishing. So writing the fence here is a convenient way to draft and carry a diagram's source (it survives an edit round-trip and can be copied); the editor does the actual rendering.
 
 **Label formatting:** for **bold** or _italic_ inside a node label, use mermaid markdown strings — wrap the label in backticks and use `**bold**` / `*italic*`, with real line breaks for multi-line labels. HTML tags like `<b>` are **not** interpreted (they render as literal text), so don't use them.
 

@@ -268,11 +268,11 @@ Add an optional `width` prop to size it, same scale as figures: `360` (small), `
 }
 ```
 
-`source` is the mermaid diagram text — this is the one and only way to create a diagram. Leave `svg` empty; the /write editor renders the diagram and fills it in, and the published page ships that static SVG (readers load no mermaid library). A post with an unrendered mermaid block must be opened in the editor once before publishing.
+`source` is the mermaid diagram text — this is the one and only way to create a diagram. Leave `svg` empty; the /write editor renders the diagram and fills it in, and the published page ships that static SVG (readers load no mermaid library). Open the post in the editor once so the diagram is drawn: publishing an undrawn block does not lose it — it falls back to a fenced `mermaid` block, which reads back as a diagram next time — but a fence shows as code on the page rather than as a picture.
 
 For **bold**/_italic_ in a node label, use mermaid markdown strings — wrap the label in backticks and use `**bold**` (e.g. `M["\`**SEE**\nattention masks\`"]`). HTML tags like `<b>` are not interpreted (HTML labels are disabled for security) and render as literal text, so don't use them.
 
-The diagram source is preserved everywhere: it lives in this JSON, and the editor also keeps it (readable) in the published MDX as a comment beside the rendered figure, so reopening a post — from its `.write-source.json` sidecar **or** from `index.mdx` alone — always loads back as an editable mermaid block, never a flattened SVG.
+The diagram source is preserved everywhere: it lives in this JSON, and the editor also keeps it (readable) in the published MDX as a comment beside the rendered figure, so reopening a post — from its `.write-source.json` sidecar **or** from `index.mdx` alone — always loads back as an editable mermaid block, never a flattened SVG. The live-render form (`<pre className="mermaid" data-source={…}>`, which mlsystems.dev does not render at runtime) is also read back as a diagram block rather than as text, so a post carrying one can be opened here safely.
 
 ### Custom React component (interactive embeds)
 
