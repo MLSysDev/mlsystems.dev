@@ -150,9 +150,23 @@ function unwrapJsxStyle(svg) {
   );
 }
 
-function figureSegment(attrs, inner, imports = new Map()) {
+function figureSegment(attrs, inner, imports = new Map(), consts = new Map()) {
   const caption = frameAttr(attrs, 'caption').replace(/\s+/g, ' ').trim();
   const width = Number(attrs.match(/width=\{(\d+)\}/)?.[1] ?? '') || '';
+
+  // The live-render form: source held in an export const and referenced by
+  // data-source. Unmatched it becomes literal text whose < the serializer then
+  // escapes, so an unhandled diagram is destroyed rather than ignored.
+  const live = inner.match(/^<pre\s+className="mermaid"([^>]*)>([\s\S]*?)<\/pre>$/);
+  if (live) {
+    const ref = (live[1].match(/data-source=\{(\w+)\}/) ?? [])[1];
+    const inlineRef = (live[2].trim().match(/^\{(\w+)\}$/) ?? [])[1];
+    const source =
+      (ref && consts.get(ref)) ||
+      (inlineRef && consts.get(inlineRef)) ||
+      live[2].replace(/^\{`|`\}$/g, '').trim();
+    if (source) return { kind: 'mermaid', caption, source, svg: '' };
+  }
   // A leading {/* mermaid ... */} comment carries the editable diagram source.
   const mmd = inner.match(/^\{\/\*\s*mermaid\s*\n([\s\S]*?)\n\*\/\}\s*/);
   if (mmd) {
@@ -224,7 +238,7 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
     });
 
   const fm = src.match(/^---\n([\s\S]*?)\n---\n/);
-  const body = fm ? src.slice(fm[0].length) : src;
+  let body = fm ? src.slice(fm[0].length) : src;
   const fmText = fm ? fm[1] : '';
   const fmVal = (key) => {
     const m = fmText.match(new RegExp(`^${key}: (.*)$`, 'm'));
@@ -278,6 +292,15 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
   for (const im of body.matchAll(/^import\s+(\w+)\s+from\s+['"]\.\/([^'"]+)['"];?\s*$/gm))
     imports.set(im[1], im[2]);
 
+  // Diagram sources live in template literals so the markup can reference them
+  // twice. Collect them, then take them out of the body — left in, they would
+  // be read as prose and published as escaped text.
+  const consts = new Map();
+  body = body.replace(/^export\s+const\s+(\w+)\s*=\s*`([\s\S]*?)`;?\s*$/gm, (_all, name, value) => {
+    consts.set(name, value.replace(/\\`/g, '`').trim());
+    return '';
+  });
+
   let cursor = 0;
   const segments = [];
   let m;
@@ -298,7 +321,7 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
           : { kind: 'md', text: m[1] },
       );
     } else if (m[3]) {
-      segments.push(figureSegment(m[4] ?? '', m[5].trim(), imports));
+      segments.push(figureSegment(m[4] ?? '', m[5].trim(), imports, consts));
     } else if (m[6]) segments.push({ kind: 'note', text: m[7].replace(/\s+/g, ' ').trim() });
     else if (m[8]) {
       const code = m[10].replace(/\n$/, '');
@@ -565,6 +588,8 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
     for (const b of list) {
       if (Array.isArray(b.content)) {
         for (const run of b.content) {
+          // A generic like `RowMapper<T>` inside a code span is not a component.
+          if (run?.styles?.code) continue;
           for (const m of String(run?.text ?? '').matchAll(/<([A-Z]\w*)[\s/>]/g)) stray.add(m[1]);
         }
       }

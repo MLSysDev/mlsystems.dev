@@ -343,7 +343,14 @@ function jsxSafeStyle(svg: string): string {
 
 function serializeMermaid(block: SBlock): string {
   let svg = sanitizeSvg(String(block.props.svg ?? '')).trim();
-  if (!svg) return '';
+  // Published pages render no mermaid at runtime, so a diagram has to ship as a
+  // drawn SVG. A block that was never opened in the editor has no SVG yet, and
+  // returning '' here deleted it outright — fall back to the fenced source so
+  // the diagram is at worst shown as code, never lost.
+  if (!svg) {
+    const src = String(block.props.source ?? '').trim();
+    return src ? `\`\`\`mermaid\n${src}\n\`\`\`` : '';
+  }
   svg = svg.replace(/\s+xmlns:xlink="[^"]*"/g, '').replace(/xlink:href=/g, 'href=');
   svg = /^<svg[^>]*\sclass="/.test(svg)
     ? svg.replace(/^(<svg[^>]*\sclass=")/, '$1mermaid-diagram ')
