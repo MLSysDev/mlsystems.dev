@@ -251,11 +251,19 @@ export async function fetchExisting(repoUrl: string, input: string): Promise<Loa
         }
       }
 
-      // Bodies agree, so only frontmatter can have been touched by hand.
-      parsed.meta.draft = /^draft:[ \t]*true[ \t]*$/m.test(text);
-      if (!parsed.meta.date) {
-        const m = text.match(/^date:\s*['"]?(\d{4}-\d{2}-\d{2})/m);
-        if (m) parsed.meta.date = m[1];
+      // Bodies agree, so only frontmatter can have been touched by hand — and a
+      // frontmatter-only edit leaves the bodies identical, so it cannot be
+      // detected by the comparison above. Read it back through the converter
+      // rather than re-deriving the field names here, which would drift.
+      try {
+        const { doc } = convertMdx(text, { slug, componentSource: () => '' });
+        parsed.meta = mergeMeta(parsed.meta, doc.meta as PostMeta);
+      } catch {
+        parsed.meta.draft = /^draft:[ \t]*true[ \t]*$/m.test(text);
+        if (!parsed.meta.date) {
+          const m = text.match(/^date:\s*['"]?(\d{4}-\d{2}-\d{2})/m);
+          if (m) parsed.meta.date = m[1];
+        }
       }
     }
   } catch {
