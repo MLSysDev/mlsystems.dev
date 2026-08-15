@@ -30,9 +30,9 @@ import { serializePost, type PostMeta, type SBlock, type TableStyle } from './se
 import { slugify, suggest, validate } from './serialize/validate';
 import { convertMdx } from './convert/mdxToSource.mjs';
 import { buildZip } from './serialize/toZip';
-import { buildSource, parseSource, type ParsedSource } from './serialize/source';
+import { buildSource, parseSource } from './serialize/source';
 import { authorPath, buildAuthorJson } from './serialize/author';
-import { fetchExisting } from './serialize/fetchExisting';
+import { fetchExisting, type LoadedSource } from './serialize/fetchExisting';
 import {
   assemblePostFiles,
   createPullRequest,
@@ -77,6 +77,7 @@ function emptyMeta(): PostMeta {
     slug: '',
     coverFileName: '',
     ogCard: false,
+    draft: false,
     proposedTopic: '',
     newAuthor: null,
   };
@@ -98,6 +99,9 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [openError, setOpenError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [convertible, setConvertible] = useState<string | null>(null);
+  const [loadNotice, setLoadNotice] = useState<string | null>(null);
+  const [wantsPublish, setWantsPublish] = useState(false);
+  const actionsRef = useRef<HTMLDivElement>(null);
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [openUrl, setOpenUrl] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
@@ -246,7 +250,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     setRestore(null);
   };
 
-  const applySource = async (loaded: ParsedSource) => {
+  const applySource = async (loaded: LoadedSource) => {
     clearAssets();
     await clearStoredAssets().catch(() => undefined);
     setRestore(null);
@@ -259,6 +263,7 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       authors: Array.isArray(loaded.meta.authors) ? loaded.meta.authors : [],
     });
     setTableVariants(loaded.tableVariants ?? {});
+    setLoadNotice(loaded.notice ?? null);
   };
 
   const openExisting = async () => {
@@ -306,6 +311,27 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       }
     })();
   }, []);
+
+  // Arriving from a draft's Publish button: /write?edit=<slug>&publish=1 opens
+  // the post, unticks the draft box and scrolls to the actions, so publishing is
+  // one click from where the reader started.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('publish') !== '1') return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete('publish');
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    setWantsPublish(true);
+  }, []);
+
+  // Runs once the deep-linked post has finished loading — applySource would
+  // otherwise overwrite the untick with the draft flag read from frontmatter.
+  useEffect(() => {
+    if (!wantsPublish || autoLoading || !loadedSlug) return;
+    setWantsPublish(false);
+    setMeta((m) => ({ ...m, draft: false }));
+    actionsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [wantsPublish, autoLoading, loadedSlug]);
 
   const uploadPostZip = async (file: File) => {
     setUploadError(null);
@@ -497,6 +523,14 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
       {autoLoading && (
         <div className="write-autoloading" role="status">
           Loading the post into the editor…
+        </div>
+      )}
+      {loadNotice && (
+        <div className="write-load-notice" role="status">
+          <span>{loadNotice}</span>
+          <button type="button" onClick={() => setLoadNotice(null)} aria-label="Dismiss">
+            ✕
+          </button>
         </div>
       )}
       <div className="write-topbar">
@@ -741,10 +775,25 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         </div>
       )}
 
-      <div className="write-actions" style={previewOn ? { display: 'none' } : undefined}>
+      <div
+        className="write-actions"
+        ref={actionsRef}
+        style={previewOn ? { display: 'none' } : undefined}
+      >
         {storageOff && (
           <span className="write-note-inline">Autosave is off — your browser blocked storage.</span>
         )}
+        <label
+          className="write-draft-toggle"
+          title="Builds and stays at its real URL, but is left out of every listing, the sitemap and search."
+        >
+          <input
+            type="checkbox"
+            checked={!!meta.draft}
+            onChange={(e) => setMeta({ ...meta, draft: e.target.checked })}
+          />
+          Keep as draft
+        </label>
         <button type="button" className="write-ghost-btn" disabled={busy} onClick={download}>
           {busy ? 'Packaging…' : 'Download post'}
         </button>

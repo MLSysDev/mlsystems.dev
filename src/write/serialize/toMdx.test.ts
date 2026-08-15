@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   escapeText,
+  INLINE_MATH_RE,
   serializeInline,
   serializePost,
   type InlineRun,
@@ -69,9 +70,16 @@ describe('escapeText', () => {
     expect(escapeText('an *update* $\\Delta W$ to $W$')).toBe('an \\*update\\* $\\Delta W$ to $W$');
   });
 
-  it('does not treat spaced dollar amounts as math', () => {
-    expect(escapeText('$5 and $10')).toBe('$5 and $10');
-    expect(escapeText('costs $5, saves _time_')).toBe('costs $5, saves \\_time\\_');
+  it('escapes dollar amounts so they cannot pair into a math span', () => {
+    expect(escapeText('$5 and $10')).toBe('\\$5 and \\$10');
+    expect(escapeText('costs $5, saves _time_')).toBe('costs \\$5, saves \\_time\\_');
+  });
+
+  it('leaves escaped dollar amounts alone rather than reading them as math', () => {
+    expect(escapeText('a \\$4.00 click is worth \\$8.00')).toBe(
+      'a \\\\\\$4.00 click is worth \\\\\\$8.00',
+    );
+    expect(INLINE_MATH_RE.test('\\$4.00 and \\$8.00')).toBe(false);
   });
 });
 

@@ -53,8 +53,31 @@ try {
   }
 }
 
+// Draft posts build and answer at their real URL, but must stay out of the
+// sitemap. Collections don't exist yet at config time, so read the frontmatter
+// off disk — the same rule content.config.ts applies, one layer earlier.
+/** @type {Set<string>} */
+const draftPaths = new Set();
+try {
+  const postsDir = join(__dirname, 'src/content/posts');
+  for (const slug of readdirSync(postsDir)) {
+    if (slug.startsWith('.')) continue;
+    try {
+      const content = readFileSync(join(postsDir, slug, 'index.mdx'), 'utf8');
+      const fm = content.match(/^---\n([\s\S]*?)\n---/);
+      if (fm && /^draft:[ \t]*true[ \t]*$/m.test(fm[1])) draftPaths.add(`/blog/${slug}`);
+    } catch {
+      // not a post directory, or no index.mdx — nothing to exclude
+    }
+  }
+} catch (err) {
+  if (err instanceof Error && 'code' in err && err.code !== 'ENOENT') {
+    console.warn('[sitemap] draft scan failed:', err.message);
+  }
+}
+
 /** @type {string[]} */
-const SKIP_PATTERNS = ['/write', '/search'];
+const SKIP_PATTERNS = ['/write', '/search', '/drafts'];
 
 // Paginated listing pages (/blog/2, /topics/x/2, /tags/x/2, /authors/x/articles/2)
 // are secondary — keep them below their first page and below real articles.
@@ -172,6 +195,7 @@ export default defineConfig({
         try {
           const url = new URL(page);
           const p = url.pathname.replace(/\/$/, '') || '/';
+          if (draftPaths.has(p)) return false;
           return !SKIP_PATTERNS.some((skip) => p === skip || p.startsWith(skip));
         } catch {
           return true;

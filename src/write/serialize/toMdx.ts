@@ -40,6 +40,11 @@ export type PostMeta = {
   // Opt in to a generated share card (title over the cover) instead of the raw
   // cover. Only meaningful when a cover is set.
   ogCard?: boolean;
+  // Holds the post back from every listing, the sitemap and search. It still
+  // builds and still answers at its real URL — see `draft` in
+  // src/content.config.ts. Round-trips through frontmatter, so a post written by
+  // hand and one written here mean the same thing.
+  draft?: boolean;
   // Set only when editing an existing post; preserves its original publish date.
   date?: string;
   // A topic the writer proposes that isn't in the list yet — a maintainer (or, later,
@@ -73,14 +78,20 @@ type Ctx = {
   tableVariants: Record<string, TableStyle>;
 };
 
-// Matches remark-math's inline rule: no space just inside either delimiter.
-export const INLINE_MATH_RE = /\$(\S(?:[^$\n]*\S)?)\$/g;
+// Matches remark-math's inline rule: no space just inside either delimiter, and
+// neither delimiter escaped — a `\$` is a currency sign, not the start of math.
+export const INLINE_MATH_RE = /(?<!\\)\$(\S(?:[^$\n]*\S)?)(?<!\\)\$/g;
 
 function escapeProse(s: string): string {
-  return s
-    .replace(/[\\<{*_`[~]/g, (c) => `\\${c}`)
-    .replace(/^(\s{0,3})(\d+)([.)])/, '$1$2\\$3')
-    .replace(/^(\s{0,3})([>#+-])/, '$1\\$2');
+  return (
+    s
+      // `$` is escaped for the same reason as `*` and `_`: left bare, a pair of
+      // dollar amounts in one paragraph reads as an inline math span. Real math
+      // never reaches here — escapeText passes those spans through untouched.
+      .replace(/[\\<{*_`[~$]/g, (c) => `\\${c}`)
+      .replace(/^(\s{0,3})(\d+)([.)])/, '$1$2\\$3')
+      .replace(/^(\s{0,3})([>#+-])/, '$1\\$2')
+  );
 }
 
 // Inline math spans pass through verbatim — escaping \ or _ inside them would
@@ -138,11 +149,15 @@ function safeColor(
 }
 
 function wrapStyles(text: string, styles: Record<string, boolean | string>): string {
+  // Markdown only closes an emphasis run when a non-space sits just inside the
+  // marker, so whitespace at the edges of a styled run has to stay outside it.
+  const [, lead, core, trail] = /^(\s*)([\s\S]*?)(\s*)$/.exec(text) as RegExpExecArray;
+  if (!core) return escapeText(text).replace(/\n/g, '<br />');
   let out: string;
   if (styles.code) {
-    out = text.includes('`') ? `\`\` ${text} \`\`` : `\`${text}\``;
+    out = core.includes('`') ? `\`\` ${core} \`\`` : `\`${core}\``;
   } else {
-    out = escapeText(text);
+    out = escapeText(core);
     if (styles.bold) out = `**${out}**`;
     if (styles.italic) out = `_${out}_`;
     if (styles.strike) out = `~~${out}~~`;
@@ -156,7 +171,13 @@ function wrapStyles(text: string, styles: Record<string, boolean | string>): str
     const bg = safeColor(styles.backgroundColor, BG_COLORS, 'mark');
     if (bg) out = `<span style="background-color: ${bg}">${out}</span>`;
   }
-  return out;
+  // Shift+Enter lands as a literal newline inside the run. A bare newline is a
+  // markdown soft break and, inside a quote, ends the blockquote at the next
+  // blank line — so publish it as an explicit <br />, which mdxToSource reads
+  // back as a newline. Code spans keep raw newlines: a <br /> inside backticks
+  // would render as text.
+  const result = lead + out + trail;
+  return styles.code ? result : result.replace(/\n/g, '<br />');
 }
 
 export function serializeInline(content: unknown): string {
@@ -299,7 +320,15 @@ function serializeGallery(block: SBlock, ctx: Ctx): string {
   const alts = JSON.parse(String(block.props.alts || '[]')) as string[];
   const min = block.props.min;
   const minAttr = min !== '' && min != null ? ` min={${Number(min)}}` : '';
-  const images = fileNames.map((f, i) => `  ${imageLine(f, alts[i] ?? '', ctx)}`).join('\n');
+  // A gallery entry is either a stored asset's filename or an absolute URL.
+  // Only the former has a file to import.
+  const images = fileNames
+    .map((f, i) =>
+      /^https?:/.test(f)
+        ? `  <img ${attr('src', f)} ${attr('alt', alts[i] ?? '')} />`
+        : `  ${imageLine(f, alts[i] ?? '', ctx)}`,
+    )
+    .join('\n');
   return `<Gallery${minAttr}>\n${images}\n</Gallery>`;
 }
 
@@ -377,8 +406,13 @@ function detailsBlock(block: SBlock, ctx: Ctx): string {
 
 function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
   switch (block.type) {
-    case 'paragraph':
-      return aligned(block, serializeInline(block.content));
+    case 'paragraph': {
+      const text = serializeInline(block.content);
+      // MDX reads a line opening with a tag as a JSX block, which is not wrapped
+      // in <p> and runs into the block after it. Wrapping keeps it a paragraph;
+      // mdxToSource unwraps it on the way back in.
+      return aligned(block, text.startsWith('<') ? `<p>${text}</p>` : text);
+    }
     case 'heading': {
       if (block.props.isToggleable) return detailsBlock(block, ctx);
       const level = Math.min(Number(block.props.level ?? 1), 3);
@@ -501,6 +535,9 @@ function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptio
   if (meta.proposedTopic?.trim()) lines.push(`proposedTopic: ${yaml(meta.proposedTopic.trim())}`);
   if (meta.coverFileName) lines.push(`cover: ${yaml(`./${meta.coverFileName}`)}`);
   if (meta.coverFileName && meta.ogCard) lines.push('ogCard: true');
+  // Only written when set: the schema defaults it to false, so `draft: false` on
+  // every published post would be noise.
+  if (meta.draft) lines.push('draft: true');
   return `---\n${lines.join('\n')}\n---`;
 }
 

@@ -1500,3 +1500,52 @@
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
+
+.write-draft-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: auto;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.write-draft-toggle input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.write-load-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--line-2);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-body);
+}
+
+.write-load-notice button {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.write-load-notice button:hover {
+  color: var(--ink);
+}
