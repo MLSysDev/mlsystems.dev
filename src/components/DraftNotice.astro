@@ -1,0 +1,65 @@
+---
+interface Props {
+  slug: string;
+}
+
+const { slug } = Astro.props;
+---
+
+<aside class="draft-notice">
+  <span class="draft-notice-tag">Draft</span>
+  <p>Not publicly listed yet. <a href="/drafts">All drafts</a></p>
+  <a class="draft-notice-publish" href={`/write?edit=${encodeURIComponent(slug)}&publish=1`}>
+    Publish →
+  </a>
+</aside>
+
+<style>
+  .draft-notice {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    flex-wrap: wrap;
+    margin-bottom: var(--sp-5);
+    padding: var(--sp-3) var(--sp-4);
+    border: 1px dashed var(--line-2);
+    border-radius: var(--radius-sm);
+    background: var(--paper-2);
+  }
+
+  .draft-notice-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px var(--sp-2);
+    border-radius: 999px;
+    border: 1px solid var(--line-2);
+    color: var(--ink-3);
+  }
+
+  .draft-notice p {
+    margin: 0;
+    flex: 1;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+
+  .draft-notice-publish {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    padding: var(--sp-2) var(--sp-4);
+    border: 1px solid var(--line-2);
+    border-radius: var(--radius-sm);
+    background: var(--elevated);
+    color: var(--ink);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .draft-notice-publish:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+</style>

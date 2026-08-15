@@ -4,18 +4,58 @@
 
 const D = { backgroundColor: 'default', textColor: 'default', textAlignment: 'left' };
 
+// Every delimiter carries `(?<!\\)`: markdown lets a backslash make any of them
+// literal, and without the guard `\$4.00 … \$8.00` reads as inline math because
+// the escaping backslash is itself the non-space character the closing $ needs.
 const INLINE_PATTERNS = [
   // Inline math stays verbatim — no smart quotes, no bold/italic parsing inside.
-  { re: /\$(\S(?:[^$\n]*\S)?)\$/g, kind: 'math' },
-  { re: /\*\*`([^`]+)`\*\*/g, kind: 'code' },
-  { re: /`([^`]+)`/g, kind: 'code' },
-  { re: /(?<!!)\[([^\]]+)\]\(([^)\s]+)\)/g, kind: 'link' },
-  { re: /\*\*([^*]+(?:\*(?!\*)[^*]*)*)\*\*/g, kind: 'style', key: 'bold' },
-  { re: /__([^_]+)__/g, kind: 'style', key: 'bold' },
-  { re: /~~([^~]+)~~/g, kind: 'style', key: 'strike' },
-  { re: /\*([^*\n]+)\*/g, kind: 'style', key: 'italic' },
-  { re: /(?<![\w`])_([^_\n]+)_(?![\w`])/g, kind: 'style', key: 'italic' },
+  { re: /(?<!\\)\$(\S(?:[^$\n]*\S)?)(?<!\\)\$/g, kind: 'math' },
+  { re: /(?<!\\)\*\*`([^`]+)`\*\*/g, kind: 'code' },
+  { re: /(?<!\\)`([^`]+)`/g, kind: 'code' },
+  { re: /(?<![!\\])\[([^\]]+)\]\(([^)\s]+)\)/g, kind: 'link' },
+  { re: /(?<!\\)\*\*([^*]+(?:\*(?!\*)[^*]*)*)\*\*/g, kind: 'style', key: 'bold' },
+  { re: /(?<!\\)__([^_]+)__/g, kind: 'style', key: 'bold' },
+  { re: /(?<!\\)~~([^~]+)~~/g, kind: 'style', key: 'strike' },
+  // Inline HTML the serializer emits or a writer hand-types. Unmatched, it
+  // becomes literal text whose `<` the serializer then escapes — so an
+  // unhandled tag is destroyed on republish, not ignored.
+  { re: /(?<!\\)<u>([\s\S]*?)<\/u>/g, kind: 'style', key: 'underline' },
+  { re: /(?<!\\)<(?:strong|b)>([\s\S]*?)<\/(?:strong|b)>/g, kind: 'style', key: 'bold' },
+  { re: /(?<!\\)<(?:em|i)>([\s\S]*?)<\/(?:em|i)>/g, kind: 'style', key: 'italic' },
+  { re: /(?<!\\)<(?:s|del)>([\s\S]*?)<\/(?:s|del)>/g, kind: 'style', key: 'strike' },
+  { re: /(?<!\\)<code>([\s\S]*?)<\/code>/g, kind: 'code' },
+  // Background outermost, matching the serializer. The combined form is first so
+  // it wins the tie against the background-only pattern at the same position.
+  {
+    re: /(?<!\\)<span style="background-color: ([^"]+)"><span style="color: ([^"]+)">((?:(?!<\/span>)[\s\S])*)<\/span><\/span>/g,
+    kind: 'colorbg',
+  },
+  {
+    re: /(?<!\\)<span style="background-color: ([^"]+)">((?:(?!<\/span>)[\s\S])*)<\/span>/g,
+    kind: 'bg',
+  },
+  {
+    re: /(?<!\\)<span style="color: ([^"]+)">((?:(?!<\/span>)[\s\S])*)<\/span>/g,
+    kind: 'color',
+  },
+  { re: /(?<!\\)\*([^*\n]+)\*/g, kind: 'style', key: 'italic' },
+  { re: /(?<![\w`\\])_([^_\n]+)_(?![\w`])/g, kind: 'style', key: 'italic' },
 ];
+
+// BlockNote stores colours by name, so pull the name back out of
+// `var(--tc-red, #e03e3e)`. An unrecognised colour has no home and is dropped.
+const paletteName = (value, prefix) =>
+  value.match(new RegExp(`var\\(--${prefix}-([a-z]+)`))?.[1] ?? null;
+
+// Reverse of the serializer's escapeProse. Runs on plain-text runs only, after
+// markup has matched, so an escaped delimiter is never read as markup on the way
+// in nor shown with its backslash on the way out.
+function unescapeProse(s) {
+  return s
+    .replace(/^(\s{0,3})\\([>#+-])/, '$1$2')
+    .replace(/^(\s{0,3})(\d+)\\([.)])/, '$1$2$3')
+    .replace(/\\([\\<{*_`[~$])/g, '$1');
+}
 
 function smartQuotes(s) {
   return s
@@ -27,6 +67,8 @@ function smartQuotes(s) {
 }
 
 function inline(text, inherited = {}) {
+  // Shift+Enter is published as <br />; BlockNote stores it as a literal newline.
+  text = text.replace(/<br\s*\/?>/g, '\n');
   const runs = [];
   let pos = 0;
   while (pos < text.length) {
@@ -37,13 +79,17 @@ function inline(text, inherited = {}) {
       if (m && (!best || m.index < best.m.index)) best = { p, m };
     }
     if (!best) {
-      runs.push({ type: 'text', text: smartQuotes(text.slice(pos)), styles: { ...inherited } });
+      runs.push({
+        type: 'text',
+        text: smartQuotes(unescapeProse(text.slice(pos))),
+        styles: { ...inherited },
+      });
       break;
     }
     if (best.m.index > pos)
       runs.push({
         type: 'text',
-        text: smartQuotes(text.slice(pos, best.m.index)),
+        text: smartQuotes(unescapeProse(text.slice(pos, best.m.index))),
         styles: { ...inherited },
       });
     const { p, m } = best;
@@ -57,6 +103,22 @@ function inline(text, inherited = {}) {
         href: m[2],
         content: inline(m[1], inherited).filter((r) => r.type === 'text'),
       });
+    } else if (p.kind === 'colorbg') {
+      const bg = paletteName(m[1], 'mark');
+      const fg = paletteName(m[2], 'tc');
+      runs.push(
+        ...inline(m[3], {
+          ...inherited,
+          ...(bg ? { backgroundColor: bg } : {}),
+          ...(fg ? { textColor: fg } : {}),
+        }),
+      );
+    } else if (p.kind === 'bg') {
+      const bg = paletteName(m[1], 'mark');
+      runs.push(...inline(m[2], { ...inherited, ...(bg ? { backgroundColor: bg } : {}) }));
+    } else if (p.kind === 'color') {
+      const fg = paletteName(m[1], 'tc');
+      runs.push(...inline(m[2], { ...inherited, ...(fg ? { textColor: fg } : {}) }));
     } else {
       runs.push(...inline(m[1], { ...inherited, [p.key]: true }));
     }
@@ -88,7 +150,7 @@ function unwrapJsxStyle(svg) {
   );
 }
 
-function figureSegment(attrs, inner) {
+function figureSegment(attrs, inner, imports = new Map()) {
   const caption = frameAttr(attrs, 'caption').replace(/\s+/g, ' ').trim();
   const width = Number(attrs.match(/width=\{(\d+)\}/)?.[1] ?? '') || '';
   // A leading {/* mermaid ... */} comment carries the editable diagram source.
@@ -111,6 +173,18 @@ function figureSegment(attrs, inner) {
       kind: 'image',
       alt: md ? img[1] : (inner.match(/\salt="([^"]*)"/)?.[1] ?? ''),
       src: md ? img[2] : img[1],
+      caption,
+      width: width || 360,
+    };
+  }
+  // A local image is written `<Image src={ident} />`, where ident is an import
+  // binding — the import lines are the only route back to a filename.
+  const local = inner.match(/^<Image\s+src=\{(\w+)\}([^>]*)\/>$/);
+  if (local && imports.has(local[1])) {
+    return {
+      kind: 'image',
+      alt: local[2].match(/alt="([^"]*)"/)?.[1] ?? '',
+      src: `./${imports.get(local[1])}`,
       caption,
       width: width || 360,
     };
@@ -156,8 +230,28 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
     const m = fmText.match(new RegExp(`^${key}: (.*)$`, 'm'));
     return m ? m[1].replace(/^(["'])(.*)\1$/, '$2') : '';
   };
+  // The editor quotes its output, but a hand-written entry is as likely to use
+  // YAML's bare form, which JSON.parse rejects.
+  const parseFlowList = (raw) =>
+    raw
+      .trim()
+      .replace(/^\[|\]$/g, '')
+      .split(',')
+      .map((s) =>
+        s
+          .trim()
+          .replace(/^(['"])([\s\S]*)\1$/, '$2')
+          .trim(),
+      )
+      .filter(Boolean);
+
   const tagsMatch = fmText.match(/^tags: (\[.*\])$/m);
-  const tags = tagsMatch ? JSON.parse(tagsMatch[1].replace(/'/g, '"')) : [];
+  const tags = tagsMatch ? parseFlowList(tagsMatch[1]) : [];
+
+  // Frontmatter is the only record of draft state, so reading it here is what
+  // lets the checkbox reflect a hand-written entry and stops a re-publish from
+  // silently publishing it.
+  const draft = /^draft:[ \t]*true[ \t]*$/m.test(fmText);
 
   let n = 0;
   const id = (p) => `${p}-${++n}`;
@@ -176,7 +270,13 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
   });
 
   const pattern =
-    /(<Figure([^>]*)>\s*([\s\S]*?)\s*<\/Figure>)|(<Note>\s*([\s\S]*?)\s*<\/Note>)|(```(\w*)\n([\s\S]*?)```)|(<Interactive\b([^>]*)>\s*<([A-Za-z]\w*)\s+client:visible\s*\/>\s*<\/Interactive>)|(<([A-Z]\w*)\s+client:visible\s*\/>)|(<Table\b([^>]*)>\s*([\s\S]*?)\s*<\/Table>)/g;
+    /(<Figure([^>]*?)\/>)|(<Figure([^>]*)>\s*([\s\S]*?)\s*<\/Figure>)|(<Note>\s*([\s\S]*?)\s*<\/Note>)|(```(\w*)\n([\s\S]*?)```)|(<Interactive\b([^>]*)>\s*<([A-Za-z]\w*)\s+client:visible\s*\/>\s*<\/Interactive>)|(<([A-Z]\w*)\s+client:visible\s*\/>)|(<Table\b([^>]*)>\s*([\s\S]*?)\s*<\/Table>)|(<details>\s*<summary>([\s\S]*?)<\/summary>\s*([\s\S]*?)\s*<\/details>)|(<Gallery([^>]*)>\s*([\s\S]*?)\s*<\/Gallery>)|(<Video\b([^>]*?)\/>)/g;
+
+  // ident -> filename, from the entry's own import lines. `<Image src={ident} />`
+  // names its file only through the binding.
+  const imports = new Map();
+  for (const im of body.matchAll(/^import\s+(\w+)\s+from\s+['"]\.\/([^'"]+)['"];?\s*$/gm))
+    imports.set(im[1], im[2]);
 
   let cursor = 0;
   const segments = [];
@@ -184,30 +284,70 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
   while ((m = pattern.exec(body))) {
     if (m.index > cursor) segments.push({ kind: 'md', text: body.slice(cursor, m.index) });
     if (m[1]) {
-      segments.push(figureSegment(m[2] ?? '', m[3].trim()));
-    } else if (m[4]) segments.push({ kind: 'note', text: m[5].replace(/\s+/g, ' ').trim() });
-    else if (m[6]) {
-      const code = m[8].replace(/\n$/, '');
-      if ((m[7] || '') === 'mermaid') segments.push({ kind: 'mermaid', source: code });
-      else segments.push({ kind: 'code', lang: m[7] || 'text', code });
-    } else if (m[9]) segments.push({ kind: 'component', name: m[11], frame: frameProps(m[10]) });
-    else if (m[12])
+      // Figure.astro takes a src prop instead of children, and someone will.
+      const src = frameAttr(m[2], 'src');
+      segments.push(
+        src
+          ? {
+              kind: 'image',
+              src,
+              alt: frameAttr(m[2], 'alt'),
+              caption: frameAttr(m[2], 'caption'),
+              width: Number(m[2].match(/width=\{(\d+)\}/)?.[1] ?? '') || 360,
+            }
+          : { kind: 'md', text: m[1] },
+      );
+    } else if (m[3]) {
+      segments.push(figureSegment(m[4] ?? '', m[5].trim(), imports));
+    } else if (m[6]) segments.push({ kind: 'note', text: m[7].replace(/\s+/g, ' ').trim() });
+    else if (m[8]) {
+      const code = m[10].replace(/\n$/, '');
+      if ((m[9] || '') === 'mermaid') segments.push({ kind: 'mermaid', source: code });
+      else segments.push({ kind: 'code', lang: m[9] || 'text', code });
+    } else if (m[11]) segments.push({ kind: 'component', name: m[13], frame: frameProps(m[12]) });
+    else if (m[14])
       segments.push({
         kind: 'component',
-        name: m[13],
+        name: m[15],
         frame: { frameTitle: '', frameCaption: '', frameSize: 'normal', frameExpand: false },
       });
-    else if (m[14]) {
-      const caption = frameAttr(m[15], 'caption');
+    else if (m[16]) {
+      const caption = frameAttr(m[17], 'caption');
       segments.push({
         kind: 'table',
-        text: m[16],
+        text: m[18],
         style: {
-          border: m[15].match(/variant="(\w+)"/)?.[1] ?? 'rule',
-          zebra: /(^|\s)zebra(\s|$|=)/.test(m[15]),
+          border: m[17].match(/variant="(\w+)"/)?.[1] ?? 'rule',
+          zebra: /(^|\s)zebra(\s|$|=)/.test(m[17]),
           ...(caption ? { caption } : {}),
         },
       });
+    } else if (m[19]) {
+      segments.push({ kind: 'details', summary: m[20].trim(), body: m[21] });
+    } else if (m[22]) {
+      // A gallery entry is either a stored asset's filename, written
+      // `<Image src={ident} />`, or an absolute URL, written as a plain <img>.
+      const files = [...m[24].matchAll(/<(Image|img)\s+([^>]*?)\/>/g)].map((g) => {
+        const ident = g[2].match(/src=\{(\w+)\}/)?.[1];
+        return {
+          file: ident ? imports.get(ident) : g[2].match(/src="([^"]+)"/)?.[1],
+          alt: g[2].match(/alt="([^"]*)"/)?.[1] ?? '',
+        };
+      });
+      if (files.length > 0 && files.every((f) => f.file)) {
+        segments.push({
+          kind: 'gallery',
+          fileNames: files.map((f) => f.file),
+          alts: files.map((f) => f.alt),
+          min: Number(m[23].match(/min=\{(\d+)\}/)?.[1] ?? '') || '',
+        });
+      } else {
+        segments.push({ kind: 'md', text: m[22] });
+      }
+    } else if (m[25]) {
+      const id = m[26].match(/id="([^"]*)"/)?.[1] ?? '';
+      if (id) segments.push({ kind: 'video', videoId: id, caption: frameAttr(m[26], 'caption') });
+      else segments.push({ kind: 'md', text: m[25] });
     }
     cursor = m.index + m[0].length;
   }
@@ -329,7 +469,11 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
         para.push(lines[i]);
         i++;
       }
-      push('paragraph', { ...D }, inline(para.join(' ')));
+      // The serializer wraps a paragraph in <p> when it opens with a tag, so
+      // MDX keeps it a paragraph. Unwrap before reading the inline marks.
+      const joined = para.join(' ').trim();
+      const unwrapped = /^<p>[\s\S]*<\/p>$/.test(joined) ? joined.slice(3, -4) : joined;
+      push('paragraph', { ...D }, inline(unwrapped));
     }
   }
 
@@ -366,6 +510,19 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
         source: getComponentSource(seg.name),
         ...seg.frame,
       });
+    else if (seg.kind === 'gallery')
+      push('gallery', {
+        fileNames: JSON.stringify(seg.fileNames),
+        alts: JSON.stringify(seg.alts),
+        min: seg.min,
+      });
+    else if (seg.kind === 'video') push('video', { videoId: seg.videoId, caption: seg.caption });
+    else if (seg.kind === 'details') {
+      const before = blocks.length;
+      emitMd(seg.body);
+      const children = blocks.splice(before);
+      push('toggleListItem', { ...D }, inline(seg.summary), children);
+    }
   }
 
   const doc = {
@@ -376,7 +533,7 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       summary: fmVal('summary'),
       authors: (() => {
         const inlineList = fmText.match(/^authors: (\[.*\])$/m);
-        if (inlineList) return JSON.parse(inlineList[1].replace(/'/g, '"'));
+        if (inlineList) return parseFlowList(inlineList[1]);
         const list = [...fmText.matchAll(/^ {2}- (.+)$/gm)]
           .map((x) => x[1])
           .filter((a) => !/^\d{4}-/.test(a));
@@ -387,8 +544,11 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       topicName: fmVal('topic'),
       tags,
       slug,
-      coverFileName: '',
-      ogCard: false,
+      // Frontmatter the editor can set but the converter used to ignore, so a
+      // hand-edit to either was dropped when the entry was reopened.
+      coverFileName: (fmVal('cover').match(/^\.\/(.+)$/) ?? [])[1] ?? '',
+      ogCard: /^ogCard:[ \t]*true[ \t]*$/m.test(fmText),
+      draft,
       proposedTopic: '',
       newAuthor: null,
       date: fmVal('date'),
@@ -396,6 +556,27 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
     blocks,
     tableVariants,
   };
+
+  // A component with no editor block survives conversion as literal text, and
+  // the serializer then escapes its `<` — so re-publishing turns it into visible
+  // markup. The editor cannot represent it, but it can refuse to do so quietly.
+  const stray = new Set();
+  const scan = (list) => {
+    for (const b of list) {
+      if (Array.isArray(b.content)) {
+        for (const run of b.content) {
+          for (const m of String(run?.text ?? '').matchAll(/<([A-Z]\w*)[\s/>]/g)) stray.add(m[1]);
+        }
+      }
+      if (b.children?.length) scan(b.children);
+    }
+  };
+  scan(blocks);
+  for (const name of stray) {
+    warnings.push(
+      `<${name}> has no editor block — it will be turned into plain text if you publish from here. Edit this entry's index.mdx by hand instead.`,
+    );
+  }
 
   const ids = blocks.map((b) => b.id);
   if (new Set(ids).size !== ids.length) throw new Error('duplicate ids');
