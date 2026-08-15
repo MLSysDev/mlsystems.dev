@@ -344,19 +344,27 @@ const breadcrumbJsonLd = {
         tag.textContent = lang;
         bar.appendChild(tag);
       }
+      const COPY_ICON =
+        '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" d="M5.5 5.5h7v9h-7z"/><path fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" d="M10.5 3.5h-7v9"/></svg>';
+      const DONE_ICON =
+        '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" d="M3.5 8.5l3 3 6-6"/></svg>';
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'code-copy';
-      btn.textContent = 'Copy';
+      btn.innerHTML = COPY_ICON;
+      btn.title = 'Copy';
+      btn.setAttribute('aria-label', 'Copy code to clipboard');
       btn.addEventListener('click', () => {
         const code = pre.querySelector('code')?.innerText ?? pre.innerText;
         navigator.clipboard?.writeText(code).then(() => {
-          btn.textContent = 'Copied';
+          btn.innerHTML = DONE_ICON;
+          btn.title = 'Copied';
           btn.classList.add('is-copied');
           setTimeout(() => {
-            btn.textContent = 'Copy';
+            btn.innerHTML = COPY_ICON;
+            btn.title = 'Copy';
             btn.classList.remove('is-copied');
-          }, 1200);
+          }, 1400);
         });
       });
       bar.appendChild(btn);

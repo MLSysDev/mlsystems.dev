@@ -1797,37 +1797,55 @@ a.hashtag:hover {
   right: 12px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  /* The label is context, not chrome — a permanent tag on every block is noise
+     while reading, so it reveals with the button rather than before it. */
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
+.code-block:hover .code-toolbar,
+.code-block:focus-within .code-toolbar {
+  opacity: 1;
+}
+/* Measured against the #24292e block background: the previous #8b949e came in
+   at 4.77:1, which clears AA but reads as disabled next to the code. */
 .code-lang {
   font-family: var(--font-mono);
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #8b949e;
+  color: #adbac7;
+  user-select: none;
 }
 .code-copy {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  border: 1px solid #3a3f46;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #444c56;
   background: #2d333b;
   color: #adbac7;
   border-radius: 6px;
-  padding: 4px 9px;
-  font-family: var(--font-mono);
-  font-size: 11px;
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s ease;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
 }
-.code-block:hover .code-copy,
-.code-copy:focus-visible {
-  opacity: 1;
+.code-copy:hover {
+  color: #cdd9e5;
+  border-color: #768390;
 }
 .code-copy.is-copied {
-  color: #57ab5a;
-  border-color: #57ab5a;
+  color: #6bc46d;
+  border-color: #6bc46d;
+}
+/* No hover on touch, so the bar has to stay put or it can never be used. */
+@media (hover: none) {
+  .code-toolbar {
+    opacity: 1;
+  }
 }
 
 .article-body .inline-figure img.is-zoomable,
