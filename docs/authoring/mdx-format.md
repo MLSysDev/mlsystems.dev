@@ -63,6 +63,7 @@ Standard Markdown, plus a few inline extras:
 <u>underline</u>, and inline math $1/\sqrt{d_k}$.
 ```
 
+- **Emphasis has one canonical spelling.** Use `**bold**` and `_italic_` — not `__bold__` or `*italic*`. All four are valid Markdown and render identically, but the editor stores emphasis as a flag with no memory of which character was typed, and writes `**` and `_` back out. A post using the other spellings comes back rewritten the first time it is opened in `/write`, putting diff noise on lines nobody edited.
 - **Inline math:** `$...$` with **no space just inside** the delimiters (`$ x $` stays literal, so `$5 and $10` is safe). Publishes verbatim, rendered by KaTeX.
 - **Colored text** (use sparingly; never as the only signal): a span with a named palette color or a hex value —
   ```md
