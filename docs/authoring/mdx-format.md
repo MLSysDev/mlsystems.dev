@@ -201,10 +201,9 @@ Prose, lists, tables, math and code all work in here.
 ```python
 def hidden(): ...
 ```
-````
 
 </details>
-```
+````
 
 **The blank lines are required.** MDX only reads the inside of a `<details>` as
 Markdown when the content is separated from the tags by blank lines. Without
