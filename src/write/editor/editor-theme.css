@@ -19,7 +19,7 @@
   display: block;
   color: var(--ink);
   font-family: var(--font-sans, 'Hanken Grotesk', sans-serif);
-  font-weight: 700;
+  font-weight: 600;
   font-size: clamp(32px, 6vw, 56px);
   line-height: 1.1;
   letter-spacing: -0.02em;
@@ -1012,7 +1012,7 @@
 .bn-editor
   .bn-block-content[data-content-type='heading']:is(:not([data-level]), [data-level='1'])
   :is(h1, h2, h3) {
-  font-size: clamp(24px, 3.4vw, 30px);
+  font-size: 26px;
   letter-spacing: -0.02em;
   line-height: 1.2;
 }
@@ -1025,6 +1025,19 @@
   font-size: 18px;
   letter-spacing: -0.01em;
   line-height: 1.35;
+}
+
+/* BlockNote sets line-height on its own block and inline wrappers, which
+   outranks the value on .bn-editor. */
+.bn-editor .bn-block-content[data-content-type='paragraph'] .bn-inline-content,
+.bn-editor
+  .bn-block-content:is(
+    [data-content-type='bulletListItem'],
+    [data-content-type='numberedListItem'],
+    [data-content-type='checkListItem']
+  )
+  .bn-inline-content {
+  line-height: 1.65;
 }
 
 /* Mirror the published article's vertical rhythm so writers don't fake it with
