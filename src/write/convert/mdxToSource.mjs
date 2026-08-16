@@ -452,6 +452,20 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
         i++;
         continue;
       }
+      if (line.startsWith('```')) {
+        const lang = line.slice(3).trim();
+        const code = [];
+        i++;
+        while (i < lines.length && !lines[i].startsWith('```')) {
+          code.push(lines[i]);
+          i++;
+        }
+        i++;
+        push('codeBlock', { language: lang || 'text' }, [
+          { type: 'text', text: code.join('\n'), styles: {} },
+        ]);
+        continue;
+      }
       if (/^(---+|\*\*\*+)$/.test(line.trim())) {
         push('separator', {});
         i++;
@@ -483,12 +497,17 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
         continue;
       }
       const para = [];
+      const paraStart = i;
       while (
         i < lines.length &&
         lines[i].trim() &&
         !/^(#{2,6} |> |\||```|[-*] |\d+\. |!\[|<hr\b|\$\$)/.test(lines[i]) &&
         !/^(---+|\*\*\*+)$/.test(lines[i].trim())
       ) {
+        para.push(lines[i]);
+        i++;
+      }
+      if (i === paraStart) {
         para.push(lines[i]);
         i++;
       }

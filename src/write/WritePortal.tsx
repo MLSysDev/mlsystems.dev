@@ -14,7 +14,7 @@ import { BlockNoteView } from '@blocknote/mantine';
 import '@blocknote/mantine/style.css';
 import 'katex/dist/katex.min.css';
 import { schema } from './editor/schema';
-import { getSlashItems } from './editor/slashMenu';
+import { getSlashItems, isCursorNested, nestable } from './editor/slashMenu';
 import {
   BORDER_VARIANTS,
   DEFAULT_TABLE_STYLE,
@@ -723,7 +723,12 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
           />
           <SuggestionMenuController
             triggerCharacter="/"
-            getItems={async (query) => filterSuggestionItems(slashItems, query)}
+            getItems={async (query) =>
+              filterSuggestionItems(
+                isCursorNested(editor) ? slashItems.filter(nestable) : slashItems,
+                query,
+              )
+            }
           />
         </BlockNoteView>
         {!restore && (

@@ -1395,6 +1395,7 @@
 }
 
 .bn-editor .bn-block-content[data-content-type='codeBlock'] {
+  position: relative;
   background: #24292e;
   color: #e1e4e8;
   border: 1px solid #3a3f46;
@@ -1421,6 +1422,34 @@
 }
 .bn-editor .bn-block-content[data-content-type='codeBlock'] > div > select > option {
   color: #1a1a1a;
+}
+/* Enter inside a code block is a newline; the only way out is pressing it three
+   times. ProseMirror marks no attribute on the block holding the cursor, so the
+   hint is revealed on hover like the language chip. */
+.bn-editor .bn-block-content[data-content-type='codeBlock']::after {
+  content: 'Enter ×3 to leave';
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #e1e4e8;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 140ms ease-out;
+  pointer-events: none;
+}
+.bn-editor .bn-block-content[data-content-type='codeBlock']:hover::after {
+  opacity: 0.85;
+}
+
+/* Nested blocks are otherwise indistinguishable from blocks after the toggle. */
+.bn-editor .bn-block-content[data-content-type='toggleListItem'] ~ .bn-block-group {
+  border-left: 2px solid var(--line-2);
+  margin-left: 6px;
+  padding-left: 14px;
 }
 .bn-editor .bn-block-content[data-content-type='codeBlock']:hover > div > select,
 .bn-editor .bn-block-content[data-content-type='codeBlock'] > div > select:focus {

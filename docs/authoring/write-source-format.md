@@ -91,7 +91,7 @@ Shared default props: `{ "backgroundColor": "default", "textColor": "default", "
 | `bulletListItem`   | —                                                 | **exact spelling** — one block per bullet; consecutive items group                                              |
 | `numberedListItem` | —                                                 | one block per item                                                                                              |
 | `checkListItem`    | `"checked": false`                                | task list                                                                                                       |
-| `toggleListItem`   | —                                                 | collapsible; hidden blocks go in `children`                                                                     |
+| `toggleListItem`   | —                                                 | collapsible; hidden blocks go in `children` — text, lists, quotes, code, math and tables only (see MDX guide)   |
 | `quote`            | only `backgroundColor`/`textColor` (no alignment) | pull-quote                                                                                                      |
 | `note`             | `"props": {}`                                     | highlighted callout/aside for key takeaways                                                                     |
 

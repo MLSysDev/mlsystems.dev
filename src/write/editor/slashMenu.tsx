@@ -16,6 +16,35 @@ const HIDDEN = [
   'toggle heading',
 ];
 
+/**
+ * A toggle serialises to <details>, whose body the converter reads back as
+ * plain markdown — so a block that publishes as a JSX tag has no reader on the
+ * way in and returns as a paragraph. Nesting is for code, prose, lists and
+ * tables; media and components belong at the top level.
+ */
+const NOT_NESTABLE = [
+  'image',
+  'gallery',
+  'video',
+  'svg / diagram',
+  'mermaid diagram',
+  'note',
+  'custom component',
+];
+
+export function nestable(item: { title: string }): boolean {
+  return !NOT_NESTABLE.includes(item.title.toLowerCase());
+}
+
+export function isCursorNested(editor: WriteEditor): boolean {
+  const id = editor.getTextCursorPosition?.()?.block?.id;
+  if (!id) return false;
+  type Node = { id: string; children?: Node[] };
+  const search = (blocks: Node[], depth: number): boolean =>
+    blocks.some((b) => (depth > 0 && b.id === id) || search(b.children ?? [], depth + 1));
+  return search(editor.document as unknown as Node[], 0);
+}
+
 const GROUP_ORDER = ['Headings', 'Subheadings', 'Basic blocks', 'Media', 'Advanced'];
 
 function groupRank(group: string | undefined): number {

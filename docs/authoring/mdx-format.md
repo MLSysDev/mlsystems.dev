@@ -190,6 +190,64 @@ A lone `---` (blank line above and below) renders as a centered `· · ·` break
 
 ---
 
+## Collapsible section (click to expand)
+
+````mdx
+<details>
+<summary>Click to expand</summary>
+
+Prose, lists, tables, math and code all work in here.
+
+```python
+def hidden(): ...
+```
+````
+
+</details>
+```
+
+**The blank lines are required.** MDX only reads the inside of a `<details>` as
+Markdown when the content is separated from the tags by blank lines. Without
+them you get literal text instead of a code block.
+
+### What can go inside
+
+Nesting is for **code, prose, lists and tables** — a hidden walkthrough, a long
+listing, an aside the reader can skip.
+
+| Works nested                     | Does not                |
+| -------------------------------- | ----------------------- |
+| Paragraphs, `##`–`####` headings | `<Figure>` (images)     |
+| Bullet, numbered and check lists | `<Gallery>`             |
+| Quotes                           | `<Video>`               |
+| Fenced code blocks               | `<Note>`                |
+| `$$ math $$`                     | Inline-SVG diagrams     |
+| Pipe tables                      | Mermaid diagrams        |
+| `---` and `<hr />` breaks        | Custom React components |
+
+The right-hand column publishes fine, but it **cannot be read back**. The
+converter parses a `<details>` body as plain Markdown, so anything that
+publishes as a JSX tag has no reader on the way in and returns as a paragraph —
+the block is destroyed the next time the entry is opened in `/write`. A nested
+mermaid diagram degrades to an ordinary code block rather than a diagram.
+
+The same limit applies to blocks indented under a list item. Keep media and
+components at the top level, where the converter has a pattern for each.
+
+The editor hides these from the slash menu while the cursor is nested, so this
+only bites when writing MDX by hand.
+
+### Doing it in the editor instead
+
+`/toggle` → type the summary → click **▸** to expand → click _"Empty toggle.
+Click to add a block."_ → `/code`.
+
+Inside a code block Enter is a newline, so multi-line works as expected. To get
+**out** of the block and add another one inside the same toggle, press Enter
+three times.
+
+---
+
 ## Figure (image)
 
 Local images are imported at the top of the file, then referenced with `<Image>` inside `<Figure>`:
