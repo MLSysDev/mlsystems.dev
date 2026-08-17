@@ -165,7 +165,7 @@ function figureSegment(attrs, inner, imports = new Map(), consts = new Map()) {
       (ref && consts.get(ref)) ||
       (inlineRef && consts.get(inlineRef)) ||
       live[2].replace(/^\{`|`\}$/g, '').trim();
-    if (source) return { kind: 'mermaid', caption, source, svg: '' };
+    if (source) return { kind: 'mermaid', caption, source, svg: '', width };
   }
   // A leading {/* mermaid ... */} comment carries the editable diagram source.
   const mmd = inner.match(/^\{\/\*\s*mermaid\s*\n([\s\S]*?)\n\*\/\}\s*/);
@@ -173,7 +173,7 @@ function figureSegment(attrs, inner, imports = new Map(), consts = new Map()) {
     const source = mmd[1].trim();
     const svg = unwrapJsxStyle(inner.slice(mmd[0].length).trim());
     if (source && /^<svg[\s>]/.test(svg)) {
-      return { kind: 'mermaid', caption, source, svg };
+      return { kind: 'mermaid', caption, source, svg, width };
     }
   }
   if (/^<svg[\s>]/.test(inner)) {
@@ -188,7 +188,7 @@ function figureSegment(attrs, inner, imports = new Map(), consts = new Map()) {
       alt: md ? img[1] : (inner.match(/\salt="([^"]*)"/)?.[1] ?? ''),
       src: md ? img[2] : img[1],
       caption,
-      width: width || 360,
+      width,
     };
   }
   // A local image is written `<Image src={ident} />`, where ident is an import
@@ -200,7 +200,7 @@ function figureSegment(attrs, inner, imports = new Map(), consts = new Map()) {
       alt: local[2].match(/alt="([^"]*)"/)?.[1] ?? '',
       src: `./${imports.get(local[1])}`,
       caption,
-      width: width || 360,
+      width,
     };
   }
   return { kind: 'md', text: inner };
@@ -266,8 +266,27 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       )
       .filter(Boolean);
 
+  // A block sequence is what a hand-written entry uses. Read per key: a reader
+  // that scans the whole frontmatter for `- item` lines collects other keys'
+  // items too, which turned a tag into an author.
+  const parseBlockList = (key) => {
+    const m = fmText.match(new RegExp(`^${key}:[ \\t]*\\n((?:[ \\t]+\\S[^\\n]*(?:\\n|$))+)`, 'm'));
+    if (!m) return [];
+    return m[1]
+      .split(/^[ \t]*-[ \t]+/m)
+      .slice(1)
+      .map((v) =>
+        v
+          .split('\n')[0]
+          .trim()
+          .replace(/^(['"])([\s\S]*)\1$/, '$2')
+          .trim(),
+      )
+      .filter(Boolean);
+  };
+
   const tagsMatch = fmText.match(/^tags: (\[.*\])$/m);
-  const tags = tagsMatch ? parseFlowList(tagsMatch[1]) : [];
+  const tags = tagsMatch ? parseFlowList(tagsMatch[1]) : parseBlockList('tags');
 
   // Frontmatter is the only record of draft state, so reading it here is what
   // lets the checkbox reflect a hand-written entry and stops a re-publish from
@@ -314,8 +333,12 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
   while ((m = pattern.exec(body))) {
     if (m.index > cursor) segments.push({ kind: 'md', text: body.slice(cursor, m.index) });
     if (m[1]) {
-      // Figure.astro takes a src prop instead of children, and someone will.
-      const src = frameAttr(m[2], 'src');
+      // src={ident} names a co-located import; unresolved, the whole tag falls
+      // through to prose and is published as escaped text.
+      const selfIdent = m[2].match(/src=\{(\w+)\}/)?.[1];
+      const src =
+        frameAttr(m[2], 'src') ||
+        (selfIdent && imports.has(selfIdent) ? `./${imports.get(selfIdent)}` : '');
       segments.push(
         src
           ? {
@@ -323,7 +346,7 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
               src,
               alt: frameAttr(m[2], 'alt'),
               caption: frameAttr(m[2], 'caption'),
-              width: Number(m[2].match(/width=\{(\d+)\}/)?.[1] ?? '') || 360,
+              width: Number(m[2].match(/width=\{(\d+)\}/)?.[1] ?? '') || '',
             }
           : { kind: 'md', text: m[1] },
       );
@@ -404,7 +427,7 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       }
       const img = line.match(/^!\[([^\]]*)\]\(([^)\s]+)\)$/);
       if (img) {
-        push('figure', { fileName: '', src: img[2], alt: img[1], caption: '', width: 360 });
+        push('figure', { fileName: '', src: img[2], alt: img[1], caption: '', width: '' });
         i++;
         continue;
       }
@@ -536,7 +559,7 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       const tbl = blocks.slice(before).find((b) => b.type === 'table');
       if (tbl) tableVariants[tbl.id] = seg.style;
     } else if (seg.kind === 'figure')
-      push('svg', { code: seg.svg, caption: seg.caption, width: seg.width || 620 });
+      push('svg', { code: seg.svg, caption: seg.caption, width: seg.width });
     else if (seg.kind === 'note') push('note', {}, inline(seg.text));
     else if (seg.kind === 'image')
       push('figure', {
@@ -552,7 +575,12 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       if (!seg.svg) {
         warnings.push('Mermaid diagram: it will draw once the block is opened in the editor.');
       }
-      push('mermaid', { source: seg.source, svg: seg.svg ?? '', caption: seg.caption ?? '' });
+      push('mermaid', {
+        source: seg.source,
+        svg: seg.svg ?? '',
+        caption: seg.caption ?? '',
+        width: seg.width ?? '',
+      });
     } else if (seg.kind === 'component')
       push('customComponent', {
         componentName: seg.name,
@@ -583,9 +611,7 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       authors: (() => {
         const inlineList = fmText.match(/^authors: (\[.*\])$/m);
         if (inlineList) return parseFlowList(inlineList[1]);
-        const list = [...fmText.matchAll(/^ {2}- (.+)$/gm)]
-          .map((x) => x[1])
-          .filter((a) => !/^\d{4}-/.test(a));
+        const list = parseBlockList('authors').filter((a) => !/^\d{4}-/.test(a));
         return list.length ? list : ['guest'];
       })(),
       writerName: 'Author Name',

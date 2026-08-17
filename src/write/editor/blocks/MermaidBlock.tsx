@@ -23,6 +23,7 @@ export const createMermaidBlock = createReactBlockSpec(
       source: { default: '' },
       svg: { default: '' },
       caption: { default: '' },
+      width: { default: 960 },
     },
     content: 'none',
   },

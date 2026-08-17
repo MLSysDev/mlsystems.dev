@@ -429,7 +429,7 @@ describe('mermaid blocks', () => {
       '<svg id="mmd-1" viewBox="0 0 100 50"><style>#mmd-1 .node{fill:#eee;}</style><g><path d="M0 0h10"/></g></svg>';
     const { mdx } = serializePost(
       meta,
-      [block('mermaid', { source: 'flowchart LR\n A-->B', svg, caption: 'Flow' })],
+      [block('mermaid', { source: 'flowchart LR\n A-->B', svg, caption: 'Flow', width: 960 })],
       { tableVariants: {}, today },
     );
     expect(mdx).toContain('<Figure caption="Flow" width={960}>');
@@ -462,6 +462,15 @@ describe('mermaid blocks', () => {
     );
     expect(mdx).not.toContain('Figure');
     expect(mdx).not.toContain('svg');
+  });
+
+  it('omits width when the entry never set one, and keeps an explicit width', () => {
+    const svg = '<svg viewBox="0 0 10 10"><g/></svg>';
+    const mk = (width: string | number) =>
+      body([block('mermaid', { source: 'flowchart LR\n A-->B', svg, caption: 'Flow', width })]);
+    expect(mk('')).toContain('<Figure caption="Flow">');
+    expect(mk('')).not.toContain('width=');
+    expect(mk(720)).toContain('<Figure caption="Flow" width={720}>');
   });
 });
 

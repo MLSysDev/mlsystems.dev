@@ -373,7 +373,9 @@ function serializeMermaid(block: SBlock): string {
   const note = source && !source.includes('*/') ? `{/* mermaid\n${source}\n*/}\n` : '';
   const caption = String(block.props.caption ?? '');
   const captionAttr = caption ? ` ${attr('caption', caption)}` : '';
-  return `<Figure${captionAttr} width={960}>\n${note}${svg}\n</Figure>`;
+  const width = block.props.width;
+  const widthAttr = width !== '' && width != null ? ` width={${Number(width)}}` : '';
+  return `<Figure${captionAttr}${widthAttr}>\n${note}${svg}\n</Figure>`;
 }
 
 const INTERACTIVE_IMPORT = "import Interactive from '../../../components/Interactive';";
