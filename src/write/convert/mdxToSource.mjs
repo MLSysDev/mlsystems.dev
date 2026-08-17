@@ -242,7 +242,14 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
   const fmText = fm ? fm[1] : '';
   const fmVal = (key) => {
     const m = fmText.match(new RegExp(`^${key}: (.*)$`, 'm'));
-    return m ? m[1].replace(/^(["'])(.*)\1$/, '$2') : '';
+    if (!m) return '';
+    const raw = m[1];
+    const quoted = raw.match(/^(["'])([\s\S]*)\1$/);
+    if (!quoted) return raw;
+    // YAML doubles a quote inside a single-quoted scalar. Reading it back
+    // without undoubling fed the escaped form into the next serialize, so a
+    // title with an apostrophe grew a pair of quotes on every round-trip.
+    return quoted[1] === "'" ? quoted[2].replace(/''/g, "'") : quoted[2];
   };
   // The editor quotes its output, but a hand-written entry is as likely to use
   // YAML's bare form, which JSON.parse rejects.

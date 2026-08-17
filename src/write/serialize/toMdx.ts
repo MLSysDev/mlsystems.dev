@@ -352,9 +352,14 @@ function serializeMermaid(block: SBlock): string {
     return src ? `\`\`\`mermaid\n${src}\n\`\`\`` : '';
   }
   svg = svg.replace(/\s+xmlns:xlink="[^"]*"/g, '').replace(/xlink:href=/g, 'href=');
-  svg = /^<svg[^>]*\sclass="/.test(svg)
-    ? svg.replace(/^(<svg[^>]*\sclass=")/, '$1mermaid-diagram ')
-    : svg.replace(/^<svg/, '<svg class="mermaid-diagram"');
+  // Idempotent on purpose: an SVG re-serialised from an already-published post
+  // arrives carrying the class, and appending unconditionally grew it by one
+  // copy per round-trip.
+  svg = /^<svg[^>]*\sclass="[^"]*\bmermaid-diagram\b/.test(svg)
+    ? svg
+    : /^<svg[^>]*\sclass="/.test(svg)
+      ? svg.replace(/^(<svg[^>]*\sclass=")/, '$1mermaid-diagram ')
+      : svg.replace(/^<svg/, '<svg class="mermaid-diagram"');
   svg = jsxSafeStyle(svg);
   // Keep the diagram's source in the MDX as a readable JSX comment (renders
   // nothing): a person can edit the raw mermaid by hand, and reopening the post
