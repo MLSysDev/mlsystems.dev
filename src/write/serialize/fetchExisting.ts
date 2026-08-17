@@ -84,6 +84,11 @@ function mergeMeta(sidecar: PostMeta, fromMdx: PostMeta): PostMeta {
     draft: fromMdx.draft,
     date: fromMdx.date || sidecar.date,
     coverFileName: fromMdx.coverFileName || sidecar.coverFileName,
+    ogCard: fromMdx.ogCard ?? sidecar.ogCard,
+    featured: fromMdx.featured ?? sidecar.featured,
+    proposedTopic: fromMdx.proposedTopic || sidecar.proposedTopic,
+    topicId: fromMdx.topicId || sidecar.topicId,
+    topicName: fromMdx.topicName || sidecar.topicName,
   };
 }
 

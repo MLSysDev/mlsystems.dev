@@ -40,6 +40,11 @@ export type PostMeta = {
   // Opt in to a generated share card (title over the cover) instead of the raw
   // cover. Only meaningful when a cover is set.
   ogCard?: boolean;
+  /**
+   * No editor control, so it exists here only to survive the round-trip: a post
+   * marked featured by hand lost the flag the first time it was republished.
+   */
+  featured?: boolean;
   // Holds the post back from every listing, the sitemap and search. It still
   // builds and still answers at its real URL — see `draft` in
   // src/content.config.ts. Round-trips through frontmatter, so a post written by
@@ -526,6 +531,16 @@ function yaml(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
 
+/**
+ * A frontmatter key exists here only if it also exists in PostMeta and in
+ * mdxToSource's meta reader. A field added to src/content.config.ts but missed
+ * in any one of the three is written by hand, survives publication, and is then
+ * dropped without warning the first time the entry is reopened in /write. The
+ * published page renders correctly throughout, so nothing reveals the loss.
+ *
+ * Adding a field means: the schema, PostMeta, the reader, this writer, and
+ * mergeMeta in fetchExisting. Then round-trip an entry twice and diff.
+ */
 function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptions): string {
   const wpm = opts.wordsPerMinute ?? 220;
   const readMin = Math.max(1, Math.round(countWords(blocks) / wpm));
@@ -547,6 +562,7 @@ function buildFrontmatter(meta: PostMeta, blocks: SBlock[], opts: SerializeOptio
   if (meta.proposedTopic?.trim()) lines.push(`proposedTopic: ${yaml(meta.proposedTopic.trim())}`);
   if (meta.coverFileName) lines.push(`cover: ${yaml(`./${meta.coverFileName}`)}`);
   if (meta.coverFileName && meta.ogCard) lines.push('ogCard: true');
+  if (meta.featured) lines.push('featured: true');
   // Only written when set: the schema defaults it to false, so `draft: false` on
   // every published post would be noise.
   if (meta.draft) lines.push('draft: true');
