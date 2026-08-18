@@ -43,6 +43,7 @@ Thumbs.db
 
 # local AI design/planning docs — never committed
 docs/superpowers/
+docs/dev-docs/
 .gstack/
 
 # Forum media re-hosted from GitHub at build time
