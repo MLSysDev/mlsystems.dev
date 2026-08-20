@@ -80,3 +80,27 @@ export async function createPullRequest(opts: {
   }
   return { url: data.url, number: data.number };
 }
+
+// Same server-side flow as createPullRequest, but the Function deletes the
+// post's whole folder instead of writing one.
+export async function createDeletePullRequest(opts: {
+  slug: string;
+  title: string;
+}): Promise<PublishResult> {
+  let data: { url?: string; number?: number; error?: string } = {};
+  try {
+    const res = await fetch('/api/delete-pr', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ slug: opts.slug, title: opts.title }),
+    });
+    data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || `Request failed (${res.status}).`);
+  } catch (err) {
+    throw err instanceof Error ? err : new Error('Could not reach the publishing service.');
+  }
+  if (!data.url || typeof data.number !== 'number') {
+    throw new Error(data.error || 'The pull request could not be created.');
+  }
+  return { url: data.url, number: data.number };
+}

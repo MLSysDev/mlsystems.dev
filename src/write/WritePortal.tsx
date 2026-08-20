@@ -23,6 +23,7 @@ import {
 } from './editor/docUtils';
 import { OpenExistingDialog } from './dialogs/OpenExistingDialog';
 import { PublishDialog, type PublishStage } from './dialogs/PublishDialog';
+import { DeleteDialog, type DeleteStage } from './dialogs/DeleteDialog';
 import { MetaForm, type Option } from './meta/MetaForm';
 import { PreviewPane } from './preview/PreviewPane';
 import { usePasteImages } from './editor/usePasteImages';
@@ -35,6 +36,7 @@ import { authorPath, buildAuthorJson } from './serialize/author';
 import { fetchExisting, type LoadedSource } from './serialize/fetchExisting';
 import {
   assemblePostFiles,
+  createDeletePullRequest,
   createPullRequest,
   isConfigured as isGithubConfigured,
 } from './publish/github';
@@ -113,6 +115,11 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
   const [prUrl, setPrUrl] = useState<string | null>(null);
   const [previewOn, setPreviewOn] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteStage, setDeleteStage] = useState<DeleteStage>('idle');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deletePrUrl, setDeletePrUrl] = useState<string | null>(null);
 
   // Single place for the BlockNote → serializer block-shape cast.
   const docBlocks = useCallback(() => editor.document as unknown as SBlock[], [editor]);
@@ -488,6 +495,37 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
     }
   };
 
+  const openDeleteDialog = () => {
+    setDeleteError(null);
+    setDeletePrUrl(null);
+    setDeleteStage('idle');
+    setDeleteOpen(true);
+  };
+
+  const submitDelete = async () => {
+    if (!loadedSlug) return;
+    setDeleteStage('working');
+    setDeleteError(null);
+    try {
+      const pr = await createDeletePullRequest({
+        slug: loadedSlug,
+        title: meta.title || loadedSlug,
+      });
+      setDeletePrUrl(pr.url);
+      setDeleteStage('done');
+      editor.replaceBlocks(editor.document, [{ type: 'paragraph' }] as never);
+      setMeta(emptyMeta());
+      setTableVariants({});
+      setLoadedSlug(null);
+      setDeleteConfirmed(false);
+      clearDraft();
+      await clearStoredAssets().catch(() => undefined);
+    } catch (err) {
+      setDeleteStage('error');
+      setDeleteError(err instanceof Error ? err.message : 'Could not create the pull request.');
+    }
+  };
+
   const slashItems = useMemo(() => getSlashItems(editor), [editor]);
 
   // Drop H4–H6 from the block-type dropdown — the serializer only emits h2–h4
@@ -833,6 +871,30 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         Not done yet? Wanna Draft? Download your post and upload it here later to continue.
       </p>
 
+      {loadedSlug && (
+        <div className="write-danger-zone" style={previewOn ? { display: 'none' } : undefined}>
+          <label className="write-danger-confirm">
+            <input
+              type="checkbox"
+              checked={deleteConfirmed}
+              onChange={(e) => setDeleteConfirmed(e.target.checked)}
+            />
+            <span>Delete this post</span>
+          </label>
+          {deleteConfirmed && (
+            <div className="write-danger-expand">
+              <p className="write-danger-zone-copy">
+                Delete &ldquo;{meta.title || loadedSlug}&rdquo; — this creates a delete request, and
+                it&rsquo;ll be deleted once approved.
+              </p>
+              <button type="button" className="write-danger-btn" onClick={openDeleteDialog}>
+                Delete post
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <PublishDialog
         open={publishOpen}
         stage={publishStage}
@@ -841,6 +903,15 @@ export default function WritePortal({ authors, topics, repoUrl, contactEmail }: 
         suggestions={suggestions}
         onSubmit={() => void submitToGithub()}
         onClose={() => setPublishOpen(false)}
+      />
+      <DeleteDialog
+        open={deleteOpen}
+        stage={deleteStage}
+        error={deleteError}
+        prUrl={deletePrUrl}
+        title={meta.title || loadedSlug || 'this post'}
+        onSubmit={() => void submitDelete()}
+        onClose={() => setDeleteOpen(false)}
       />
     </div>
   );

@@ -799,6 +799,62 @@
   color: var(--ink-3);
 }
 
+/* Collapsed to a single checkbox by default — this page is public, so the
+   destructive action stays out of sight until someone deliberately opts in. */
+.write-danger-zone {
+  margin-top: 40px;
+  padding: 14px 20px;
+  border-left: 3px solid var(--write-danger, #e03e3e);
+  background: color-mix(in srgb, var(--write-danger, #e03e3e) 6%, transparent);
+  border-radius: 0 6px 6px 0;
+}
+
+.write-danger-confirm {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--write-danger, #e03e3e);
+}
+
+.write-danger-confirm input {
+  flex-shrink: 0;
+  accent-color: var(--write-danger, #e03e3e);
+  cursor: pointer;
+}
+
+.write-danger-expand {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--write-danger, #e03e3e) 25%, transparent);
+}
+
+.write-danger-zone-copy {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.write-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  color: var(--write-danger, #e03e3e);
+  border: 1px solid var(--write-danger, #e03e3e);
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 10px 20px;
+  cursor: pointer;
+}
+.write-danger-btn:hover {
+  background: var(--write-danger, #e03e3e);
+  color: var(--paper);
+}
+
 .write-download {
   display: inline-flex;
   align-items: center;
