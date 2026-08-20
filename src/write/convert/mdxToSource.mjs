@@ -639,6 +639,9 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
   const stray = new Set();
   const scan = (list) => {
     for (const b of list) {
+      // A fenced code block's content is raw source, not JSX — generics like
+      // `List<OrderLine>` are code, not stray components, and always render as text.
+      if (b.type === 'codeBlock') continue;
       if (Array.isArray(b.content)) {
         for (const run of b.content) {
           // A generic like `RowMapper<T>` inside a code span is not a component.
