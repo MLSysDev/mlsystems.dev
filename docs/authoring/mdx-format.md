@@ -13,6 +13,27 @@ The folder name is the URL slug (`/blog/your-slug`). Keep it lowercase, hyphenat
 
 ---
 
+## Checking it before you publish
+
+`npm run convert-post -- src/content/posts/your-slug` runs the file through the exact
+conversion `/write` uses, without opening a browser:
+
+- Writes `.write-source.json` next to it, so the post is ready to open in `/write` and
+  refine, or submit straight from there later.
+- Rewrites `index.mdx` to the editor's canonical form if the round-trip changes anything —
+  most commonly the emphasis-spelling normalization described under **Text and inline
+  formatting** below. `git diff` afterward shows exactly what changed.
+- Prints a warning for anything it can't represent — a stray JSX tag with no matching
+  block, a `<details>` body that used something from the "does not" column below — before
+  that content quietly turns into plain text on submit, not after.
+- Safe to run more than once: it overwrites in place, never leaves behind a second copy.
+- Refuses to write anything if converting its own output a second time doesn't match the
+  first — a sign the round-trip itself is broken, not just reformatted.
+- Leaves an already-rendered mermaid diagram's baked SVG untouched, byte for byte — it has
+  no browser to redraw one with, so it only ever copies what's already there.
+
+---
+
 ## Frontmatter
 
 The file opens with a YAML block:

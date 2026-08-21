@@ -48,4 +48,12 @@ export default [
       'no-undef': 'off',
     },
   },
+  {
+    // CLI scripts talk to a terminal, not a browser console — console.log
+    // there is the actual output, not a leftover debug statement.
+    files: ['scripts/**/*.mjs'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
 ];
