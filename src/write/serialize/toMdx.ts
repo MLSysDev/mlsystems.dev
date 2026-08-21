@@ -476,6 +476,11 @@ function serializeBlock(block: SBlock, ctx: Ctx, listNumber: number): string {
     }
     case 'note': {
       const inner = serializeInline(block.content);
+      if (block.children?.length) {
+        const body = serializeBlocks(block.children, ctx);
+        const head = inner ? `${inner}\n\n` : '';
+        return `<Note>\n\n${head}${body}\n\n</Note>`;
+      }
       return inner ? `<Note>${inner}</Note>` : '';
     }
     case 'figure':

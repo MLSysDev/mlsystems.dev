@@ -196,6 +196,26 @@ The first row is the header. Markdown formatting works inside cells.
 <Note>A short highlighted aside the reader shouldn't miss.</Note>
 ```
 
+A note can hold more than one paragraph. The first paragraph is the highlighted line;
+a blank line after it starts a body that can hold anything a `<details>` body can (see
+**Collapsible section** below for what does and doesn't round-trip):
+
+```mdx
+<Note>
+
+The one-line version everyone should read.
+
+A second paragraph with the caveat, a code block, or a short list — whatever the
+first line didn't have room for.
+
+</Note>
+```
+
+In the editor, this is Tab, not a menu — press Enter after the note's own line, then
+Tab to indent the new block underneath it. There's no visual cue that this works, and
+the indented block does **not** render inside the note's highlighted box; it appears
+as a normal block right after it. Know that going in, or it looks like nothing happened.
+
 ---
 
 ## Section breaks

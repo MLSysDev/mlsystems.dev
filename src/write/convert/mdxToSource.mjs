@@ -352,8 +352,21 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       );
     } else if (m[3]) {
       segments.push(figureSegment(m[4] ?? '', m[5].trim(), imports, consts));
-    } else if (m[6]) segments.push({ kind: 'note', text: m[7].replace(/\s+/g, ' ').trim() });
-    else if (m[8]) {
+    } else if (m[6]) {
+      // A multi-paragraph <Note> keeps its structure: the first paragraph is
+      // the note's inline text and the rest become child blocks — the same
+      // shape detailsBlock round-trips. A single-paragraph note stays inline.
+      const noteBody = m[7].trim();
+      const noteSplit = noteBody.search(/\n\s*\n/);
+      if (noteSplit === -1)
+        segments.push({ kind: 'note', text: noteBody.replace(/\s+/g, ' ').trim() });
+      else
+        segments.push({
+          kind: 'note',
+          text: noteBody.slice(0, noteSplit).replace(/\s+/g, ' ').trim(),
+          body: noteBody.slice(noteSplit).trim(),
+        });
+    } else if (m[8]) {
       const code = m[10].replace(/\n$/, '');
       if ((m[9] || '') === 'mermaid') segments.push({ kind: 'mermaid', source: code });
       else segments.push({ kind: 'code', lang: m[9] || 'text', code });
@@ -560,8 +573,14 @@ export function convertMdx(src, { slug = 'post-slug', componentSource } = {}) {
       if (tbl) tableVariants[tbl.id] = seg.style;
     } else if (seg.kind === 'figure')
       push('svg', { code: seg.svg, caption: seg.caption, width: seg.width });
-    else if (seg.kind === 'note') push('note', {}, inline(seg.text));
-    else if (seg.kind === 'image')
+    else if (seg.kind === 'note') {
+      if (seg.body) {
+        const before = blocks.length;
+        emitMd(seg.body);
+        const children = blocks.splice(before);
+        push('note', {}, inline(seg.text), children);
+      } else push('note', {}, inline(seg.text));
+    } else if (seg.kind === 'image')
       push('figure', {
         fileName: '',
         src: seg.src,
