@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "build": "astro build && pagefind --site dist --output-subdir _pagefind",
+    "build": "astro build && pagefind --site dist --output-subdir _pagefind && node scripts/ping-indexnow.mjs",
     "index:dev": "astro build && pagefind --site dist --output-path public/_pagefind",
     "preview": "astro preview",
     "astro": "astro",

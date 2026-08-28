@@ -2,4 +2,41 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
+# AI answer-engine crawlers, explicitly allowed. Training and search/
+# retrieval bots are separate agents per vendor (blocking one does not block
+# the other), and this is a public teaching site — being cited/surfaced by
+# AI answer engines for ML systems topics is a goal, not a risk.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
 Sitemap: https://mlsystems.dev/sitemap-index.xml
