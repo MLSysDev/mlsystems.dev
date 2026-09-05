@@ -1,20 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createReactBlockSpec } from '@blocknote/react';
-import mermaid from 'mermaid';
+import { renderMermaid } from '../../../lib/mermaidRender';
 import { sanitizeSvg } from '../../lib/sanitizeSvg';
-
-mermaid.initialize({
-  startOnLoad: false,
-  securityLevel: 'strict',
-  theme: 'neutral',
-  fontFamily: "'JetBrains Mono', ui-monospace, monospace",
-  // Top-level htmlLabels is required: the flowchart-scoped flag alone still
-  // emits foreignObject labels, which the SVG sanitizer strips.
-  htmlLabels: false,
-  flowchart: { htmlLabels: false },
-});
-
-let renderSeq = 0;
 
 export const createMermaidBlock = createReactBlockSpec(
   {
@@ -45,7 +32,7 @@ export const createMermaidBlock = createReactBlockSpec(
         const ticket = ++latest.current;
         const timer = setTimeout(async () => {
           try {
-            const { svg } = await mermaid.render(`mmd-${++renderSeq}`, src);
+            const svg = await renderMermaid(src);
             if (latest.current !== ticket) return;
             setError('');
             if (svg !== block.props.svg) setProps({ svg });

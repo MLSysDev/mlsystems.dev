@@ -247,9 +247,17 @@ const breadcrumbJsonLd = {
     if (articleBody) {
       initReaderHighlights(articleBody);
       initTocRail(articleBody);
-      if (articleBody.querySelector('svg.mermaid-diagram')) {
-        import('@/lib/diagramZoom').then(({ initDiagramZoom }) => initDiagramZoom(articleBody));
-      }
+      // Only pages carrying an unbaked ```mermaid fence pay for the renderer.
+      const drawn = articleBody.querySelector('pre[data-language="mermaid"]')
+        ? import('@/lib/mermaidFences').then(({ initMermaidFences }) =>
+            initMermaidFences(articleBody),
+          )
+        : Promise.resolve(false);
+      drawn.then((drew) => {
+        if (drew || articleBody.querySelector('svg.mermaid-diagram')) {
+          import('@/lib/diagramZoom').then(({ initDiagramZoom }) => initDiagramZoom(articleBody));
+        }
+      });
     }
 
     const anchors = document.querySelectorAll<HTMLAnchorElement>(
