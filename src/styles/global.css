@@ -1965,14 +1965,18 @@ a.hashtag:hover {
   height: auto;
   margin: 0 auto;
 }
+/* Shrink-to-fit box: a short caption hugs its text and reads centered; a long
+   one fills to max-width and stays flush-left (a centered multi-line block
+   gives the eye a ragged left edge to hunt for on each return sweep). */
 .article-body .inline-figure-caption {
+  display: table;
+  margin: 10px auto 0;
+  max-width: 78ch;
   font-family: var(--font-read);
   font-size: 14px;
   line-height: 1.55;
   color: var(--ink-2);
-  margin-top: 10px;
   text-align: left;
-  max-width: 78ch;
 }
 
 .article-body .table-wrap {
