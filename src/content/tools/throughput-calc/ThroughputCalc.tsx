@@ -4,10 +4,10 @@ import { useState } from 'react';
 import { Field, Stat, StatRow } from '@/components/playground/primitives';
 
 const GPU_SPECS = {
-  h100: { name: 'H100 SXM', mem: 80, bw: 3350, tflops: { bf16: 989, fp8: 1979, fp4: 1979 } },
-  h200: { name: 'H200', mem: 141, bw: 4800, tflops: { bf16: 989, fp8: 1979, fp4: 1979 } },
-  b200: { name: 'B200', mem: 192, bw: 8000, tflops: { bf16: 2250, fp8: 4500, fp4: 9000 } },
-  a100: { name: 'A100 80GB', mem: 80, bw: 2039, tflops: { bf16: 312, fp8: 0, fp4: 0 } },
+  h100: { name: 'H100 SXM', mem: 80, bw: 3350 },
+  h200: { name: 'H200', mem: 141, bw: 4800 },
+  b200: { name: 'B200', mem: 192, bw: 8000 },
+  a100: { name: 'A100 80GB', mem: 80, bw: 2039 },
 };
 const PREC_BYTES = { bf16: 2, fp8: 1, fp4: 0.5 };
 type GPU = keyof typeof GPU_SPECS;
@@ -26,7 +26,7 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
   const totalMem = (paramBytes + kvBytes) / 1e9;
   const fits = totalMem < spec.mem * 0.85;
   const memBoundTps = (spec.bw * 1e9) / paramBytes;
-  const tps = memBoundTps * batchSize * (precision === 'fp4' ? 1.5 : 1);
+  const tps = memBoundTps * batchSize;
 
   return (
     <div>
@@ -56,8 +56,9 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
             </span>
           </div>
           <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: '0 0 32px' }}>
-            Back-of-envelope tokens/sec for a given model, precision, and hardware. Memory-bound
-            regime only; assumes batched serving with a healthy KV cache headroom.
+            A weight-bandwidth ceiling, not measured throughput. KV memory uses a fixed example: 80
+            layers, 64 KV heads, head dimension 128, and BF16 cache. Model size changes weights
+            only.
           </p>
         </>
       )}
@@ -72,6 +73,7 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
       >
         <Field label="Model size" value={`${model}B params`}>
           <input
+            aria-label="Model size"
             type="range"
             min={1}
             max={405}
@@ -82,6 +84,7 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
         </Field>
         <Field label="Batch size" value={`${batchSize}`}>
           <input
+            aria-label="Batch size"
             type="range"
             min={1}
             max={64}
@@ -92,6 +95,7 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
         </Field>
         <Field label="Sequence length" value={`${seqLen} tokens`}>
           <input
+            aria-label="Sequence length"
             type="range"
             min={512}
             max={32768}
@@ -140,10 +144,24 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
         <div className="eyebrow" style={{ marginBottom: 16 }}>
           Estimate
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-          <Stat label="Tokens / sec / GPU" value={Math.round(tps).toLocaleString()} accent />
-          <Stat label="Memory required" value={`${totalMem.toFixed(1)} GB`} warn={!fits} />
-          <Stat label="Fits on 1 GPU?" value={fits ? 'yes' : 'needs sharding'} warn={!fits} />
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+            gap: 16,
+          }}
+        >
+          <Stat
+            label="Weight-read ceiling (tokens/sec)"
+            value={Math.round(tps).toLocaleString()}
+            accent
+          />
+          <Stat label="Example memory" value={`${totalMem.toFixed(1)} GB`} warn={!fits} />
+          <Stat
+            label="Example fits on 1 GPU?"
+            value={fits ? 'yes' : 'needs sharding'}
+            warn={!fits}
+          />
         </div>
         <div style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid var(--line)' }}>
           <StatRow
@@ -155,7 +173,6 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
             value={`${(kvBytes / 1e9).toFixed(1)} GB`}
           />
           <StatRow label={`HBM bandwidth (${spec.name})`} value={`${spec.bw} GB/s`} />
-          <StatRow label={`Compute @ ${precision}`} value={`${spec.tflops[precision]} TFLOPS`} />
         </div>
         <div
           style={{
@@ -166,9 +183,9 @@ export default function ThroughputCalc({ compact = false }: { compact?: boolean 
             lineHeight: 1.5,
           }}
         >
-          ⚠ Estimate is memory-bound roofline only. Actual numbers depend on kernel quality,
-          continuous batching, speculative decoding, and a dozen other things this tool doesn&apos;t
-          model.
+          ⚠ The ceiling ignores KV-cache traffic and compute limits. Precision describes weight
+          storage, not native GPU support. Actual numbers depend on kernel quality, continuous
+          batching, speculative decoding, and a dozen other things this tool doesn&apos;t model.
         </div>
       </div>
     </div>

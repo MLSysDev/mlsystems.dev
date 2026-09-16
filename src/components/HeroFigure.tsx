@@ -587,7 +587,7 @@ function AnimatedScene({
   reducedMotion: boolean;
 }) {
   const t = useAnimationFrame(active);
-  return <Comp t={reducedMotion ? 5 : t} />;
+  return <Comp t={reducedMotion || (!active && t === 0) ? 5 : t} />;
 }
 
 export default function HeroFigure() {

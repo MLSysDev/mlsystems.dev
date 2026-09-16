@@ -15,7 +15,7 @@ const coreTools = pickCoreTools(allTools).map((t) => ({
   name: t.data.name,
   desc: t.data.summary,
   tag: t.data.tag,
-  available: t.data.tag === 'Live',
+  available: t.data.tag !== 'Soon',
 }));
 
 const catalogTools = rankTools(allTools);

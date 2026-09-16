@@ -1,128 +1,58 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Field } from '@/components/playground/primitives';
 import { AttentionFig } from '@/components/HeroFigure';
 
-function useAnimationFrame() {
-  const [t, setT] = useState(0);
+export default function AttentionViz() {
+  const [t, setT] = useState(5);
+  const [paused, setPaused] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(true);
   useEffect(() => {
-    let raf: number;
-    const start = performance.now();
-    const tick = (now: number) => {
-      setT((now - start) / 1000);
-      raf = requestAnimationFrame(tick);
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0;
+    const update = () => {
+      cancelAnimationFrame(frame);
+      setReducedMotion(query.matches);
+      if (query.matches || paused) return;
+      const start = performance.now();
+      const tick = (now: number) => {
+        setT((now - start) / 1000);
+        frame = requestAnimationFrame(tick);
+      };
+      frame = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, []);
-  return t;
-}
-
-export default function AttentionViz({ compact = false }: { compact?: boolean }) {
-  const [model, setModel] = useState('llama-7b');
-  const [layer, setLayer] = useState(14);
-  const [head, setHead] = useState(3);
-  const [prompt, setPrompt] = useState('The cat sat on the mat and the dog ran past him.');
-  const t = useAnimationFrame();
+    update();
+    query.addEventListener('change', update);
+    return () => {
+      cancelAnimationFrame(frame);
+      query.removeEventListener('change', update);
+    };
+  }, [paused]);
 
   return (
     <div>
-      {!compact && (
-        <>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'baseline',
-              gap: 12,
-              marginBottom: 8,
-              flexWrap: 'wrap',
-            }}
-          >
-            <h2
-              style={{
-                fontFamily: 'var(--font-display)',
-                fontSize: 28,
-                margin: 0,
-                fontWeight: 400,
-              }}
-            >
-              Attention Visualizer
-            </h2>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)' }}>
-              · LIVE
-            </span>
-          </div>
-          <p style={{ fontSize: 13, color: 'var(--ink-3)', margin: '0 0 24px' }}>
-            Inspect attention patterns for any model. Drag prompts in, scrub layers and heads.
-          </p>
-        </>
+      <p style={{ color: 'var(--ink-2)', fontSize: 15, lineHeight: 1.65 }}>
+        An illustrative attention map for a fixed sentence. These patterns are synthetic; no model
+        is loaded and no prompt is sent to a server.
+      </p>
+      {!reducedMotion && (
+        <button className="filter-chip" onClick={() => setPaused(!paused)} aria-pressed={paused}>
+          {paused ? 'Play animation' : 'Pause animation'}
+        </button>
       )}
-      <Field label="Model">
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {['llama-7b', 'llama-70b', 'mistral-7b', 'qwen-72b'].map((m) => (
-            <button
-              key={m}
-              className={`filter-chip ${model === m ? 'active' : ''}`}
-              onClick={() => setModel(m)}
-            >
-              {m}
-            </button>
-          ))}
-        </div>
-      </Field>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 16 }}>
-        <Field label="Layer" value={`${layer} / 32`}>
-          <input
-            type="range"
-            min={0}
-            max={31}
-            value={layer}
-            onChange={(e) => setLayer(+e.target.value)}
-            style={{ width: '100%' }}
-          />
-        </Field>
-        <Field label="Head" value={`${head} / 32`}>
-          <input
-            type="range"
-            min={0}
-            max={31}
-            value={head}
-            onChange={(e) => setHead(+e.target.value)}
-            style={{ width: '100%' }}
-          />
-        </Field>
-      </div>
-      <div style={{ marginTop: 16 }}>
-        <Field label="Prompt">
-          <input
-            type="text"
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '10px 12px',
-              background: 'var(--paper)',
-              border: '1px solid var(--line-2)',
-              borderRadius: 6,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 13,
-              color: 'var(--ink)',
-            }}
-          />
-        </Field>
-      </div>
       <div
+        role="img"
+        aria-label="Synthetic causal attention map, with earlier tokens visible to later tokens"
         style={{
           marginTop: 24,
           border: '1px solid var(--line-2)',
           borderRadius: 8,
           padding: 20,
           background: 'var(--paper)',
-          height: 320,
+          height: 360,
         }}
       >
-        <AttentionFig t={t + layer * 0.5 + head * 0.3} />
+        <AttentionFig t={t} />
       </div>
     </div>
   );

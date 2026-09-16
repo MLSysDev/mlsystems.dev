@@ -1,6 +1,6 @@
 ---
 name: Throughput Calculator
-summary: Estimate memory-bound token throughput and KV-cache size across models, precisions, batch sizes, and GPUs.
+summary: Explore a weight-bandwidth ceiling and a fixed KV-cache memory example across precisions, batch sizes, and GPUs.
 tag: Live
 icon: ◐
 authors:
@@ -18,14 +18,15 @@ import ThroughputCalc from './ThroughputCalc';
 
 ## What it does
 
-Back-of-the-envelope throughput estimation that's accurate enough to inform real architecture decisions. Plug in a model, precision, batch size, and GPU. Get tokens/sec, KV-cache size, and a verdict on whether you'll fit on one card.
+Shows an ideal weight-read ceiling: GPU memory bandwidth divided by weight bytes, multiplied by batch size. It is an upper bound for a simplified decode step, not a throughput prediction.
 
-## Why it's useful
-
-Most "how fast will this run" questions can be answered without standing up infrastructure. This tool encodes the memory-bound roofline that governs LLM inference, so you can compare options at the cost of one keystroke instead of one cluster-hour.
+The memory example assumes 80 layers, 64 KV heads, a head dimension of 128, and a BF16 cache. These dimensions stay fixed when you change the parameter count. Use the Training Memory Calculator for architecture-specific memory estimates.
 
 ## Limitations
 
-- Memory-bound regime only. Doesn't model the compute-bound prefill ceiling.
-- Doesn't account for continuous batching, speculative decoding, or prefix sharing — those are explicit knobs in real serving stacks.
-- Use the result as a rule of thumb, not a procurement quote.
+- The ceiling omits KV-cache traffic, compute limits, communication, and kernel overhead. Longer sequences increase the displayed memory but do not change this weight-only ceiling.
+- Precision sets weight storage size. It does not establish that a GPU supports native arithmetic at that precision or that suitable kernels exist.
+- Memory fit reserves 15% headroom. A configuration that needs sharding cannot achieve the displayed ceiling on a single GPU; multi-GPU performance is not modeled.
+- Use measured benchmarks for deployment decisions.
+
+See [How To Scale Your Model: Transformer Inference](https://jax-ml.github.io/scaling-book/inference/) for the full bandwidth and compute model.

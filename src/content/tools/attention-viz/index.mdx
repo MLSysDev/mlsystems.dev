@@ -1,7 +1,7 @@
 ---
 name: Attention Visualizer
-summary: Explore a token-by-token attention map, from causal masking to recurring attention patterns.
-tag: Live
+summary: Explore a synthetic attention map illustrating causal masking and recurring patterns.
+tag: Beta
 icon: ◎
 authors:
   - lchen
@@ -18,23 +18,10 @@ import AttentionViz from './AttentionViz';
 
 <AttentionViz client:visible />
 
-## What it does
+## What it shows
 
-Loads any model from Hugging Face and renders the attention weights produced for a prompt you control. Built for the moment when you're trying to convince yourself that a specific head is doing what you think it's doing.
-
-## Why it's useful
-
-Reading the attention matrix as raw numbers is hopeless. Reading it as a heatmap with the tokens labeled along both axes makes patterns jump out — causal triangles, sink tokens absorbing residual mass, induction heads aligning along the off-diagonal. A few minutes here often saves hours of grepping through paper figures.
-
-## How to use it
-
-1. Paste a model ID from Hugging Face (e.g. `meta-llama/Llama-3.1-8B`).
-2. Type a prompt — short ones make the visualization legible.
-3. Pick a layer and head from the sidebar.
-4. Watch the matrix render. Hover any cell to see the query/key tokens.
+A synthetic, animated attention matrix for a fixed sentence. Rows represent query positions and columns represent key positions. The triangular shape illustrates causal masking: a token cannot attend to future tokens.
 
 ## Limitations
 
-- Currently runs on a backend GPU, so very large models may queue.
-- Multi-query and grouped-query attention are visualized per query head; KV-shared heads appear repeated.
-- This tool is for understanding, not for high-throughput batch analysis.
+This is a visual demonstration, not measured attention from a trained model. Model loading, custom prompts, layer selection, and head inspection are not implemented. The colors should not be interpreted as evidence about any specific model.

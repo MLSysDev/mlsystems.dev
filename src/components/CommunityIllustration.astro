@@ -1,0 +1,151 @@
+---
+const nodes = [
+  { x: 98, y: 108, delay: 0.8 },
+  { x: 314, y: 90, delay: 1.2 },
+  { x: 350, y: 245, delay: 1.6 },
+  { x: 270, y: 355, delay: 2 },
+  { x: 88, y: 320, delay: 2.4 },
+  { x: 48, y: 208, delay: 2.8 },
+];
+---
+
+<div class="community-illustration" aria-hidden="true">
+  <svg viewBox="0 0 420 440" fill="none">
+    <defs>
+      <pattern id="community-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+        <circle cx="12" cy="12" r="0.7" fill="var(--ink-3)" opacity="0.2"></circle>
+      </pattern>
+      <radialGradient id="community-fade">
+        <stop offset="0" stop-color="white"></stop>
+        <stop offset="1" stop-color="black"></stop>
+      </radialGradient>
+      <mask id="community-mask">
+        <rect width="420" height="440" fill="url(#community-fade)"></rect>
+      </mask>
+    </defs>
+    <rect width="420" height="440" fill="url(#community-grid)" mask="url(#community-mask)"></rect>
+    <circle cx="210" cy="218" r="150" stroke="var(--line)" stroke-dasharray="2 8"></circle>
+    <path d="M98 108L314 90L350 245L270 355L88 320L48 208Z" stroke="var(--line)"></path>
+    {
+      nodes.map(({ x, y, delay }) => (
+        <g style={`--delay: ${delay}s`}>
+          <path
+            d={`M210 218 Q${(210 + x) / 2 + 20} ${(218 + y) / 2 - 20} ${x} ${y}`}
+            stroke="var(--line-2)"
+          />
+          <path
+            class="signal"
+            pathLength="100"
+            d={`M210 218 Q${(210 + x) / 2 + 20} ${(218 + y) / 2 - 20} ${x} ${y}`}
+            stroke="var(--accent)"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+          <circle class="ripple" cx={x} cy={y} r="18" stroke="var(--accent)" />
+          <circle cx={x} cy={y} r="14" fill="var(--paper)" stroke="var(--line-2)" />
+          <circle class="node" cx={x} cy={y} r="4" fill="var(--accent)" />
+        </g>
+      ))
+    }
+    <g class="shared-note">
+      <rect
+        x="174"
+        y="173"
+        width="72"
+        height="90"
+        rx="5"
+        fill="var(--paper)"
+        stroke="var(--accent)"
+        stroke-width="1.2"></rect>
+      <path d="M188 192H222M188 203H232M188 214H224" stroke="var(--ink-3)" stroke-linecap="round"
+      ></path>
+      <path d="M189 242L199 230L209 237L231 220" stroke="var(--accent)" stroke-width="1.5"></path>
+      <circle cx="231" cy="220" r="2.5" fill="var(--accent)"></circle>
+    </g>
+  </svg>
+</div>
+
+<style>
+  .community-illustration {
+    width: 100%;
+    max-width: 420px;
+    margin: 20px auto 0;
+  }
+  svg {
+    display: block;
+    width: 100%;
+    overflow: visible;
+  }
+  .signal {
+    stroke-dasharray: 7 93;
+    stroke-dashoffset: 8;
+    opacity: 0;
+    animation: share 5s linear infinite;
+    animation-delay: var(--delay);
+  }
+  .node {
+    animation: receive 5s ease-in-out infinite;
+    animation-delay: var(--delay);
+  }
+  .ripple {
+    transform-box: fill-box;
+    transform-origin: center;
+    opacity: 0;
+    animation: ripple 5s ease-out infinite;
+    animation-delay: var(--delay);
+  }
+  @keyframes share {
+    0% {
+      opacity: 0;
+      stroke-dashoffset: 8;
+    }
+    8% {
+      opacity: 0.8;
+    }
+    42% {
+      opacity: 0.8;
+    }
+    50%,
+    100% {
+      opacity: 0;
+      stroke-dashoffset: -100;
+    }
+  }
+  @keyframes receive {
+    0%,
+    35%,
+    75%,
+    100% {
+      opacity: 0.35;
+    }
+    48%,
+    58% {
+      opacity: 1;
+    }
+  }
+  @keyframes ripple {
+    0%,
+    40% {
+      transform: scale(0.5);
+      opacity: 0;
+    }
+    48% {
+      opacity: 0.45;
+    }
+    75%,
+    100% {
+      transform: scale(1.7);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .signal,
+    .node,
+    .ripple {
+      animation: none;
+    }
+    .node {
+      opacity: 0.8;
+    }
+  }
+</style>

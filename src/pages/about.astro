@@ -2,6 +2,7 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import PageIntro from '@/components/PageIntro.astro';
 import FounderBee from '@/components/FounderBee.astro';
+import CommunityIllustration from '@/components/CommunityIllustration.astro';
 import IconLinkCard from '@/components/IconLinkCard.astro';
 import { SITE } from '@/lib/site';
 
@@ -36,49 +37,70 @@ const links = [
       </p>
     </PageIntro>
 
-    <div class="about-body">
-      <p class="about-lede">
-        <strong>{SITE.name}</strong> is an open community of engineers, researchers, students, and curious
-        learners. We share what we learn about machine learning systems so others can build on it.
-      </p>
+    <div class="about-layout">
+      <div class="about-body">
+        <p class="about-lede">
+          <strong>{SITE.name}</strong> is an open community of engineers, researchers, students, and curious
+          learners. We share what we learn about machine learning systems so others can build on it.
+        </p>
 
-      <p>
-        You'll find practical explanations and lessons from building ML systems, from kernels and
-        schedulers to training and deployment. We value clear writing, technical depth, and honest
-        accounts of what worked and what didn't.
-      </p>
+        <p>
+          You'll find practical explanations and lessons from building ML systems, from kernels and
+          schedulers to training and deployment. We value clear writing, technical depth, and honest
+          accounts of what worked and what didn't.
+        </p>
 
-      <p>
-        Whether you've built systems for years or just figured something out, your experience can
-        help someone else. <a href="/contribute">Everyone is welcome to contribute</a>.
-      </p>
+        <p>
+          Whether you've built systems for years or just figured something out, your experience can
+          help someone else. <a href="/contribute">Everyone is welcome to contribute</a>.
+        </p>
 
-      <p>
-        <a href="/write">Open the editor</a>, share an explanation or experience, and submit it for
-        review. Every article is credited to its author.
-      </p>
+        <p>
+          <a href="/write">Open the editor</a>, share an explanation or experience, and submit it
+          for review. Every article is credited to its author.
+        </p>
 
-      <p><a href="/why">Why we're building this community</a>.</p>
+        <p><a href="/why">Why we're building this community</a>.</p>
 
-      <p>Content belongs to its respective author. All rights reserved.</p>
+        <p>Content belongs to its respective author. All rights reserved.</p>
 
-      <div class="about-links">
-        {
-          links.map((c) => (
-            <IconLinkCard href={c.href} icon={c.icon} label={c.label} action={c.action} />
-          ))
-        }
+        <div class="about-links">
+          {
+            links.map((c) => (
+              <IconLinkCard href={c.href} icon={c.icon} label={c.label} action={c.action} />
+            ))
+          }
+        </div>
+
+        <p class="founder-credit">
+          <span>Created and maintained by <a href={GITHUB_URL}>Humble Bee</a>.</span>
+          <span class="founder-mark"><FounderBee /></span>
+        </p>
       </div>
-
-      <p class="founder-credit">
-        <span>Created and maintained by <a href={GITHUB_URL}>Humble Bee</a>.</span>
-        <span class="founder-mark"><FounderBee /></span>
-      </p>
+      <div class="about-art"><CommunityIllustration /></div>
     </div>
   </div>
 </BaseLayout>
 
 <style>
+  .about-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 680px) minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  .about-art {
+    padding-top: 32px;
+  }
+  @media (max-width: 1050px) {
+    .about-layout {
+      display: block;
+    }
+    .about-art {
+      display: none;
+    }
+  }
+
   .about-body .founder-credit {
     display: flex;
     flex-wrap: wrap;

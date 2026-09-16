@@ -234,6 +234,7 @@ export default function GpuMemoryCalc({ compact = false }: { compact?: boolean }
       >
         <Field label="Model">
           <select
+            aria-label="Model"
             value={modelKey}
             onChange={(e) => setModelKey(e.target.value as ModelKey)}
             style={{
@@ -258,6 +259,7 @@ export default function GpuMemoryCalc({ compact = false }: { compact?: boolean }
         {modelKey === 'custom' && (
           <Field label="Params (B)" value={`${customParamsB}B`}>
             <input
+              aria-label="Params (B)"
               type="range"
               min={0.5}
               max={500}
@@ -285,6 +287,7 @@ export default function GpuMemoryCalc({ compact = false }: { compact?: boolean }
 
         <Field label="Batch size" value={`${batch}`}>
           <input
+            aria-label="Batch size"
             type="range"
             min={1}
             max={64}
@@ -296,6 +299,7 @@ export default function GpuMemoryCalc({ compact = false }: { compact?: boolean }
 
         <Field label="Sequence length" value={`${seqLen} tokens`}>
           <input
+            aria-label="Sequence length"
             type="range"
             min={512}
             max={32768}
@@ -353,6 +357,7 @@ export default function GpuMemoryCalc({ compact = false }: { compact?: boolean }
             {zero !== 'none' && (
               <Field label="World size (GPUs)" value={`${worldSize}`}>
                 <input
+                  aria-label="World size (GPUs)"
                   type="range"
                   min={2}
                   max={512}

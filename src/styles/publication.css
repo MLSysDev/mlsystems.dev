@@ -131,6 +131,9 @@ main {
   padding-top: 56px;
 }
 .footer-tagline {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 400;
   max-width: 320px;
   font-size: 15px;
   line-height: 1.7;
@@ -899,4 +902,13 @@ input[type='radio'] {
   .hero-scene-controls {
     transition: none;
   }
+}
+
+/* Keep schematic frames legible against the dark hero without changing data colors. */
+[data-theme='dark'] .hero-scenes {
+  --line: color-mix(in srgb, var(--ink-3) 48%, var(--paper));
+  --line-2: color-mix(in srgb, var(--ink-3) 68%, var(--paper));
+}
+[data-theme='dark'] .hero-scenes line[stroke='var(--ink-3)'][stroke-width='0.5'] {
+  stroke-width: 0.85;
 }
