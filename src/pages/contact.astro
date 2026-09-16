@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import IconLinkCard from '@/components/IconLinkCard.astro';
 import { SITE, SOCIALS } from '@/lib/site';
 
@@ -49,10 +50,12 @@ const channels = [
   image="/og/page/contact.png"
 >
   <div class="container blog-shell">
-    <div class="contact-head">
-      <div class="eyebrow page-eyebrow">Get in touch</div>
-      <h1 class="blog-h1">Contact<span class="contact-cursor">_</span></h1>
-    </div>
+    <PageIntro label="Get in touch" title="Start a conversation">
+      <p>
+        A question, an idea for an article, or something we could do better. We would like to hear
+        from you.
+      </p>
+    </PageIntro>
 
     <div class="contact-grid">
       {
@@ -65,28 +68,6 @@ const channels = [
 </BaseLayout>
 
 <style>
-  .contact-head {
-    padding-top: 32px;
-    padding-bottom: 8px;
-  }
-  .contact-cursor {
-    display: inline-block;
-    color: var(--accent);
-    font-weight: 300;
-    animation: blink 1.1s steps(1) infinite;
-    margin-left: 4px;
-  }
-  @keyframes blink {
-    0%,
-    50% {
-      opacity: 1;
-    }
-    51%,
-    100% {
-      opacity: 0;
-    }
-  }
-
   .contact-grid {
     margin: 40px 0 0;
     display: grid;

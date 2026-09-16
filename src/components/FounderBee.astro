@@ -1,0 +1,101 @@
+<span class="founder-signature" aria-hidden="true">
+  <span class="founder-cursor">_</span>
+  <svg class="founder-bee" viewBox="0 0 64 64" width="52" height="52" fill="none">
+    <g class="bee-wing bee-wing-left">
+      <ellipse
+        cx="23"
+        cy="23"
+        rx="10"
+        ry="7"
+        fill="var(--accent-soft)"
+        stroke="currentColor"
+        stroke-width="1.5"></ellipse>
+    </g>
+    <g class="bee-wing bee-wing-right">
+      <ellipse
+        cx="42"
+        cy="23"
+        rx="10"
+        ry="7"
+        fill="var(--accent-soft)"
+        stroke="currentColor"
+        stroke-width="1.5"></ellipse>
+    </g>
+    <ellipse cx="32" cy="38" rx="15" ry="11" fill="#c99d4c"></ellipse>
+    <path d="M28 28c-2 6-2 14 0 20M36 28c2 6 2 14 0 20" stroke="#302b22" stroke-width="3"></path>
+    <circle cx="21" cy="36" r="1.7" fill="#302b22"></circle>
+    <path
+      d="M23 28c-3-3-4-6-2-8M28 27c-1-4 0-6 3-7M47 38h4"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"></path>
+  </svg>
+</span>
+
+<style>
+  .founder-signature {
+    display: inline-flex;
+    align-items: baseline;
+    white-space: nowrap;
+    margin-left: 0.04em;
+    color: var(--accent);
+  }
+  .founder-cursor {
+    font-family: var(--font-mono);
+    font-size: 0.65em;
+    font-weight: 400;
+    animation: cursor-blink 1.3s steps(1) infinite;
+  }
+  .founder-bee {
+    width: 0.72em;
+    height: 0.72em;
+    margin-left: 0.12em;
+    overflow: visible;
+    animation: bee-hover 4s ease-in-out infinite;
+  }
+  .bee-wing {
+    transform-box: fill-box;
+    transform-origin: center bottom;
+    animation: wing-beat 0.3s ease-in-out infinite alternate;
+  }
+  .bee-wing-right {
+    animation-delay: -0.15s;
+  }
+  .founder-signature:hover .bee-wing {
+    animation-duration: 0.12s;
+  }
+  @keyframes cursor-blink {
+    0%,
+    65% {
+      opacity: 1;
+    }
+    66%,
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes bee-hover {
+    0%,
+    100% {
+      transform: translateY(0) rotate(-5deg);
+    }
+    50% {
+      transform: translateY(-4px) rotate(4deg);
+    }
+  }
+  @keyframes wing-beat {
+    from {
+      transform: scaleY(1);
+    }
+    to {
+      transform: scaleY(0.45);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .founder-cursor,
+    .founder-bee,
+    .bee-wing {
+      animation: none;
+    }
+  }
+</style>

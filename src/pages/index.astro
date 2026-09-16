@@ -1,546 +1,708 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
-import HeroFigure from '@/components/HeroFigure.tsx';
+import HeroFigure from '@/components/HeroFigure';
 import ToolGlyph from '@/components/ToolGlyph.tsx';
-import Stat from '@/components/Stat.astro';
-import ConceptBand from '@/components/ConceptBand.astro';
 import { formatDate, sortPostsByDate } from '@/lib/data';
 import { TOPICS, countPostsByTopic, topicName } from '@/lib/topics';
 import { resolvePostAuthors } from '@/lib/posts';
-import { pickCoreTools } from '@/lib/tools';
-import { SOCIALS } from '@/lib/site';
-import { SOCIAL_ICONS } from '@/lib/socialIcons';
+import { pickCoreTools, rankTools } from '@/lib/tools';
 
-const allPostsRaw = (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate);
-const allPosts = await resolvePostAuthors(allPostsRaw);
-
-const authors = await getCollection('authors');
-
-const featured = allPosts.filter((p) => p.data.featured).slice(0, 3);
-const featuredIds = new Set(featured.map((p) => p.id));
-const recent = allPosts.filter((p) => !featuredIds.has(p.id)).slice(0, 6);
-
-const topicCounts = countPostsByTopic(allPosts);
-const articleCount = allPosts.length;
-const contributorCount = authors.length;
-
-const TOPIC_PREVIEW_LIMIT = 5;
-const topicsWithPosts = TOPICS.map((t) => ({
-  ...t,
-  posts: allPosts.filter((p) => p.data.topicId === t.id).slice(0, TOPIC_PREVIEW_LIMIT),
-  totalCount: topicCounts[t.id] ?? 0,
-})).filter((t) => t.totalCount > 0);
-const defaultTopicId = topicsWithPosts[0]?.id ?? '';
-
-const allTools = await getCollection('tools', ({ data }) => !data.draft);
-const featuredTools = pickCoreTools(allTools);
+const allPosts = await resolvePostAuthors(
+  (await getCollection('posts', ({ data }) => !data.draft)).sort(sortPostsByDate),
+);
+const lead = allPosts.find((post) => post.data.featured) ?? allPosts[0];
+const reading = allPosts.filter((post) => post.id !== lead?.id).slice(0, 3);
+const counts = countPostsByTopic(allPosts);
+const topics = TOPICS.filter((topic) => counts[topic.id] > 0).slice(0, 3);
+const moreTopics = TOPICS.filter((topic) => !topics.some((featured) => featured.id === topic.id));
+const liveTools = rankTools(
+  await getCollection('tools', ({ data }) => !data.draft && data.tag === 'Live'),
+);
+const tools = pickCoreTools(liveTools, 2);
+const moreTools = liveTools.filter((tool) => !tools.some((featured) => featured.id === tool.id));
+const toolDescriptions: Record<string, string> = {
+  'attention-viz':
+    'Explore a token-by-token attention map, from causal masking to recurring attention patterns.',
+  'throughput-calc':
+    'Estimate memory-bound token throughput and KV-cache size across models, precisions, batch sizes, and GPUs.',
+};
 ---
 
 <BaseLayout
-  title="Machine Learning Systems — an open community for builders"
-  description="ML Systems — an open archive on machine learning systems: inference, training infrastructure, GPU memory, quantization, transformers, and LLMs."
+  title="ML Systems — Inside machine learning"
+  description="An open community for learning, writing, and tinkering on the infrastructure behind modern AI, from kernels to clusters."
 >
-  <!-- HERO -->
-  <section class="hero">
-    <div class="container">
-      <div class="hero-grid">
-        <div>
-          <h1 class="hero-h1">
-            Machine learning,<br />
-            from{' '}
-            <button
-              type="button"
-              class="kernel-toggle"
+  <div class="publication container">
+    <section class="publication-hero" aria-labelledby="home-title">
+      <div class="hero-copy">
+        <p class="publication-label">
+          <span class="publication-dot" aria-hidden="true"></span> A community publication
+        </p>
+        <h1 id="home-title">
+          Inside machine<br /><em
+            ><button
+              class="accent-cycle"
               data-accent-cycle
-              aria-label="Cycle site accent color"
-              title="Click to change accent color"
-            >
-              <em>kernels</em>
-            </button>
-            {' '}to clusters.
-          </h1>
-          <p class="hero-sub">
-            An open community for learning, writing, and tinkering on the infrastructure behind
-            modern AI — inference engines, training systems, ml stacks, and everything in between.
-          </p>
-          <div class="hero-cta">
-            <a href="/blog" class="btn btn-primary">
-              Read the archive <span class="btn-arrow">→</span>
-            </a>
-            <a href="/contribute" class="btn">Write with us</a>
-          </div>
-          <div style="margin-top: 56px; display: flex; gap: 40px; flex-wrap: wrap;">
-            <Stat value={articleCount} label="articles" />
-            <Stat value={contributorCount} label="contributors" />
-          </div>
-        </div>
-        <div>
-          <HeroFigure client:visible />
+              aria-label="learning. Change theme color"
+              title="Change theme color">learning.</button
+            ></em
+          >
+        </h1>
+        <p class="publication-deck">From kernels to clusters.</p>
+        <p class="publication-intro">
+          An open community for learning, writing, and tinkering on the infrastructure behind modern
+          AI: inference engines, training systems, ML stacks, and everything in between.
+        </p>
+        <div class="publication-hero-actions">
+          <a class="hero-button hero-button-primary" href="/blog">
+            Read the archive <span aria-hidden="true">→</span>
+          </a>
+          <a class="hero-button" href="/contribute">Write with us</a>
         </div>
       </div>
-    </div>
-  </section>
+      <HeroFigure client:load />
+    </section>
 
-  <ConceptBand hero items={['kernel', 'attention', 'cluster', 'network']} />
-
-  {
-    featured.length > 0 && (
-      <section class="section" style="padding-top: 0;">
-        <div class="container">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Featured</div>
-              <h2 class="section-title">Editors' picks.</h2>
-            </div>
-            <a href="/blog" class="section-link">
-              All articles →
+    {
+      lead && (
+        <section class="publication-section reading-section" aria-labelledby="writing-title">
+          <div class="publication-section-head">
+            <h2 id="writing-title">The reading room</h2>
+            <a class="publication-small-link" href="/blog">
+              All articles <span aria-hidden="true">↗</span>
             </a>
           </div>
-          <div class="latest-grid">
-            {featured.map((p) => (
-              <a class="article-card" href={`/blog/${p.id}`}>
-                <div class="article-meta">
-                  {p.data.topicId && <span class="chip chip--sm">{topicName(p.data.topicId)}</span>}
-                </div>
-                <h3 class="article-title">{p.data.title}</h3>
-                <p class="article-summary">{p.data.summary}</p>
-                <div class="article-foot">
-                  <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
-                  <span>
-                    {formatDate(p.data.date)} · {p.data.readMin} min
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  {
-    recent.length > 0 && (
-      <section class="section" style={featured.length > 0 ? undefined : 'padding-top: 0;'}>
-        <div class="container">
-          <div class="section-head">
-            <div>
-              <div class="eyebrow">Latest</div>
-              <h2 class="section-title">Recently published.</h2>
-            </div>
-            <a href="/blog" class="section-link">
-              All articles →
-            </a>
-          </div>
-          <div class="latest-grid">
-            {recent.map((p) => (
-              <a class="article-card" href={`/blog/${p.id}`}>
-                <div class="article-meta">
-                  {p.data.topicId && <span class="chip chip--sm">{topicName(p.data.topicId)}</span>}
-                </div>
-                <h3 class="article-title">{p.data.title}</h3>
-                <p class="article-summary">{p.data.summary}</p>
-                <div class="article-foot">
-                  <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
-                  <span>
-                    {formatDate(p.data.date)} · {p.data.readMin} min
-                  </span>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  <ConceptBand items={['tokenize', 'train', 'serve', 'scale']} />
-
-  <!-- TOPICS -->
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Index</div>
-          <h2 class="section-title">Browse by topic.</h2>
-        </div>
-        <a href="/topics" class="section-link">Full index →</a>
-      </div>
-      {
-        topicsWithPosts.length === 0 ? (
-          <p style="color: var(--ink-3); padding: 32px 0;">No published articles yet.</p>
-        ) : (
-          <div class="topic-explorer" data-topic-explorer data-active-topic={defaultTopicId}>
-            <div class="topic-tabs" role="tablist" aria-label="Topics">
-              {topicsWithPosts.map((t) => (
-                <button
-                  type="button"
-                  class:list={[
-                    'chip',
-                    'chip--interactive',
-                    { 'is-active': t.id === defaultTopicId },
-                  ]}
-                  role="tab"
-                  aria-selected={t.id === defaultTopicId}
-                  aria-controls={`topic-panel-${t.id}`}
-                  data-topic={t.id}
-                >
-                  {t.name}
-                  <span class="chip__count">{t.totalCount}</span>
-                </button>
-              ))}
-            </div>
-
-            <div class="topic-panels">
-              {topicsWithPosts.map((t) => (
-                <div
-                  class="topic-panel"
-                  id={`topic-panel-${t.id}`}
-                  role="tabpanel"
-                  data-topic={t.id}
-                  hidden={t.id !== defaultTopicId}
-                >
-                  <ul class="topic-post-list">
-                    {t.posts.map((p) => (
-                      <li>
-                        <a href={`/blog/${p.id}`} class="topic-post">
-                          <div class="topic-post-body">
-                            <h3 class="topic-post-title">{p.data.title}</h3>
-                            <p class="topic-post-summary">{p.data.summary}</p>
-                          </div>
-                          <div class="topic-post-meta">
-                            <span>{p.authors.map((a) => a.data.name).join(', ')}</span>
-                            <span>{formatDate(p.data.date)}</span>
-                          </div>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {t.totalCount > TOPIC_PREVIEW_LIMIT && (
-                    <a href={`/topics/${t.id}`} class="topic-more-link">
-                      All {t.totalCount} articles in {t.name} →
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      }
-    </div>
-  </section>
-
-  <!-- PLAYGROUND -->
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Tools</div>
-          <h2 class="section-title">Run the math yourself.</h2>
-        </div>
-        <a href="/playground" class="section-link">All tools →</a>
-      </div>
-      <div class="tools-grid">
-        {
-          featuredTools.map((tool) => (
-            <a href={`/playground/${tool.id}`} class="tool-card">
-              <div class="tool-visual">
-                <ToolGlyph id={tool.id} />
+          <div class:list={['reading-layout', { 'reading-layout--single': reading.length === 0 }]}>
+            <article class="lead-story">
+              <p class="publication-label">
+                {lead.data.featured ? 'Featured article' : 'Latest article'}{' '}
+                <span aria-hidden="true">/</span> {topicName(lead.data.topicId)}
+              </p>
+              <h3>
+                <a href={`/blog/${lead.id}`}>{lead.data.title}</a>
+              </h3>
+              <p class="lead-summary">{lead.data.summary}</p>
+              <div class="story-meta">
+                <>
+                  <span>{lead.authors.map((author) => author.data.name).join(', ')}</span>
+                  <span>{lead.data.readMin} min read</span>
+                </>
               </div>
-              <h3 class="tool-name">{tool.data.name}</h3>
-              <p class="tool-desc">{tool.data.summary}</p>
-              <span class="chip chip--sm chip--beta">{tool.data.tag}</span>
+              <a class="publication-link" href={`/blog/${lead.id}`}>
+                Read the article <span aria-hidden="true">↗</span>
+              </a>
+            </article>
+            {reading.length > 0 && (
+              <div class="reading-list">
+                {reading.map((post) => (
+                  <article class="reading-item">
+                    <p class="publication-label">
+                      {topicName(post.data.topicId)} <span aria-hidden="true">/</span>{' '}
+                      {post.data.readMin} min read
+                    </p>
+                    <h3>
+                      <a href={`/blog/${post.id}`}>
+                        {post.data.title}
+                        <span class="reading-arrow" aria-hidden="true">
+                          ↗
+                        </span>
+                      </a>
+                    </h3>
+                    <p class="story-meta">
+                      {post.authors.map((author) => author.data.name).join(', ')}{' '}
+                      <span aria-hidden="true">·</span>{' '}
+                      <time datetime={post.data.date.toISOString()}>
+                        {formatDate(post.data.date)}
+                      </time>
+                    </p>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+          <div class="reading-more">
+            <a href="/blog">
+              Browse all articles <span aria-hidden="true">→</span>
             </a>
-          ))
-        }
-      </div>
-    </div>
-  </section>
+          </div>
+        </section>
+      )
+    }
 
-  <!-- COMMUNITY -->
-  <section class="section">
-    <div class="container">
-      <div class="section-head">
-        <div>
-          <div class="eyebrow">Discourse</div>
-          <h2 class="section-title">The conversation.</h2>
-        </div>
-        <a href="/community" class="section-link">Where to talk →</a>
-      </div>
-      <div class="community-grid">
-        <div class="side-panel">
-          <h3 class="side-panel-title">
-            <svg
-              class="side-panel-icon"
-              viewBox="0 0 16 16"
-              width="18"
-              height="18"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                d="M1 2.5A1.5 1.5 0 0 1 2.5 1h11A1.5 1.5 0 0 1 15 2.5v7A1.5 1.5 0 0 1 13.5 11H8.62l-3.5 3.15A.5.5 0 0 1 4.3 14v-3H2.5A1.5 1.5 0 0 1 1 9.5v-7Z"
-              ></path>
-            </svg>
-            Forum Discussions
-          </h3>
-          <p>Ask questions, share what you built, run a poll, or just discuss ML systems.</p>
-          <a
-            href="/forum"
-            class="btn"
-            style="margin-top: 16px; width: 100%; justify-content: center;"
-          >
-            Open the Forum →
-          </a>
-        </div>
-        <div class="side-panel">
-          <h3 class="side-panel-title">
-            <svg
-              class="side-panel-icon"
-              viewBox="0 0 24 24"
-              width="18"
-              height="18"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d={SOCIAL_ICONS.discord.path}></path>
-            </svg>
-            Discord
-          </h3>
-          <p>
-            Real-time chat for the working day. Quick questions, debugging help, paper club, and the
-            occasional argument about whether MoE is overrated.
-          </p>
-          <a
-            href={SOCIALS.discord ?? '#'}
-            target="_blank"
-            rel="noreferrer"
-            class="btn"
-            style="margin-top: 16px; width: 100%; justify-content: center;"
-          >
-            Join the server →
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
+    {
+      topics.length > 0 && (
+        <section class="publication-section topic-section" aria-labelledby="explore-title">
+          <div class="publication-section-head">
+            <h2 id="explore-title">Find your thread</h2>
+            <a class="publication-small-link" href="/topics">
+              Topic index <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <div class="publication-topics">
+            {topics.map((topic, index) => (
+              <a class="publication-topic" href={`/topics/${topic.id}`}>
+                <span class="topic-index" aria-hidden="true">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+                <div>
+                  <h3>{topic.name}</h3>
+                  <p>{topic.desc}</p>
+                </div>
+                <span class="topic-end">
+                  <span>
+                    {counts[topic.id]} {counts[topic.id] === 1 ? 'article' : 'articles'}
+                  </span>
+                  <span aria-hidden="true">↗</span>
+                </span>
+              </a>
+            ))}
+          </div>
+          {moreTopics.length > 0 && (
+            <div class="publication-more-topics">
+              <p class="publication-label">More threads to explore</p>
+              <nav class="publication-topic-chips" aria-label="More topics">
+                {moreTopics.map((topic) => (
+                  <a href={`/topics/${topic.id}`} title={topic.desc}>
+                    {topic.name}
+                  </a>
+                ))}
+              </nav>
+            </div>
+          )}
+        </section>
+      )
+    }
 
-  <ConceptBand items={['vram', 'quantize', 'batch', 'gradient']} />
+    {
+      tools.length > 0 && (
+        <section class="publication-section tools-section" aria-labelledby="tools-title">
+          <div class="publication-section-head">
+            <h2 id="tools-title">ML systems, hands-on.</h2>
+            <a class="publication-small-link" href="/playground">
+              All tools <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <div class="publication-tools">
+            {tools.map((tool) => (
+              <a class="publication-tool" href={`/playground/${tool.id}`}>
+                <div class="publication-tool-icon" aria-hidden="true">
+                  <ToolGlyph id={tool.id} />
+                </div>
+                <div>
+                  <h3>
+                    {tool.data.name} <span aria-hidden="true">↗</span>
+                  </h3>
+                  <p>{toolDescriptions[tool.id] ?? tool.data.summary}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+          {moreTools.length > 0 && (
+            <div class="publication-more-tools">
+              <p class="publication-label">More to try</p>
+              <nav class="publication-topic-chips" aria-label="More playground tools">
+                {moreTools.map((tool) => (
+                  <a href={`/playground/${tool.id}`}>{tool.data.name}</a>
+                ))}
+              </nav>
+            </div>
+          )}
+        </section>
+      )
+    }
 
-  <!-- CONTRIBUTE CTA -->
-  <section class="section">
-    <div class="container">
-      <div class="cta-banner">
-        <div>
-          <div class="eyebrow" style="margin-bottom: 14px;">Contribute</div>
-          <h2>Share knowledge that<br />moves the field forward.</h2>
-          <p>
-            We publish articles, case studies, and primers about ML systems — from anyone learning
-            or working in the space. An open community built to share practical knowledge, lessons
-            learned, and careful writing on work that matters.
-          </p>
-        </div>
-        <div class="cta-actions">
-          <a href="/write" class="btn btn-accent"
-            >Write an article <span class="btn-arrow">→</span></a
-          >
-          <a href="/contribute" class="btn">Pitch an article</a>
-          <a href="/why" class="cta-github-link">Why this exists →</a>
-        </div>
+    <section class="publication-invitation" aria-labelledby="contribute-title">
+      <div>
+        <p class="publication-label">Knowledge grows when it's shared.</p><h2 id="contribute-title">
+          A place for<br /><em>curious minds.</em>
+        </h2>
       </div>
-    </div>
-  </section>
+      <div class="invitation-copy">
+        <p>
+          A useful explanation. A hard-won lesson. A question worth exploring. If you're learning or
+          building ML systems, there's a place for your perspective here.
+        </p><a class="publication-link" href="/contribute"
+          >Write with us <span aria-hidden="true">↗</span></a
+        ><a class="publication-small-link" href="/community"
+          >Meet the community <span aria-hidden="true">↗</span></a
+        >
+      </div>
+    </section>
+  </div>
 </BaseLayout>
 
 <style>
-  .kernel-toggle {
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
-    font: inherit;
-    color: inherit;
-    cursor: pointer;
-    position: relative;
-    transition: color 0.2s ease;
+  .publication {
+    --section-space: clamp(24px, 3vw, 32px);
+    --hero-header-height: 80px;
   }
-  .kernel-toggle em {
+  .publication-hero {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    align-items: center;
+    align-content: center;
+    /* Fill the opening screen, while keeping tall displays from stretching the hero. */
+    min-height: min(900px, calc(100svh - var(--hero-header-height)));
+    gap: 52px;
+    padding: 36px 0 var(--section-space);
+  }
+  .publication-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .hero-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    min-height: 48px;
+    padding: 12px 20px;
+    border: 1px solid var(--line-2);
+    border-radius: 6px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    transition:
+      background 180ms,
+      border-color 180ms,
+      color 180ms;
+  }
+  .hero-button-primary {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--paper);
+  }
+  .hero-button:hover {
+    border-color: var(--accent);
     color: var(--accent);
-    transition: color 0.2s ease;
   }
-  .kernel-toggle:hover em {
-    color: var(--accent-2);
+  .hero-button-primary:hover {
+    background: var(--accent);
+    color: var(--paper);
   }
-  .kernel-toggle:focus-visible {
+  .publication-label {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    line-height: 1.6;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0;
+  }
+  .publication-dot {
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .hero-copy h1 {
+    font-family: var(--font-display);
+    font-size: clamp(56px, 6.8vw, 92px);
+    font-weight: 400;
+    line-height: 1.04;
+    letter-spacing: -0.055em;
+    margin: 20px 0 22px;
+  }
+  .hero-copy h1 em,
+  .publication-invitation em {
+    color: var(--accent);
+    font-weight: 400;
+  }
+  .publication-deck {
+    font-family: var(--font-read);
+    font-size: clamp(26px, 2.5vw, 34px);
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+    margin: 0 0 12px;
+  }
+  .publication-intro {
+    max-width: 480px;
+    color: var(--ink-2);
+    font-size: 17px;
+    line-height: 1.65;
+    margin: 0 0 30px;
+  }
+  .publication-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 24px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--accent);
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .publication-link span {
+    font-size: 20px;
+    line-height: 1;
+  }
+  .publication-link:hover {
+    color: var(--ink);
+    border-color: var(--ink);
+  }
+  .publication-small-link {
+    font-size: 13px;
+    display: inline-flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 0;
+    color: var(--ink-2);
+  }
+  .publication-small-link:hover {
+    color: var(--accent);
+  }
+  .publication-section {
+    border-top: 1px solid var(--line-2);
+    padding: 28px 0 var(--section-space);
+  }
+  .publication-section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+  }
+  .publication-section-head h2 {
+    font-family: var(--font-display);
+    font-size: clamp(26px, 3vw, 34px);
+    font-weight: 400;
+    letter-spacing: -0.035em;
+    margin: 0;
+  }
+  .reading-section {
+    padding-bottom: var(--section-space);
+  }
+  .reading-more {
+    display: flex;
+    justify-content: center;
+    margin-top: clamp(28px, 3.5vw, 40px);
+  }
+  .reading-more a {
+    display: inline-flex;
+    align-items: center;
+    gap: 20px;
+    padding: 12px 22px;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .reading-more a:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .reading-more a:focus-visible {
     outline: 2px solid var(--accent);
-    outline-offset: 4px;
-    border-radius: 2px;
+    outline-offset: 3px;
   }
-
-  .topic-explorer {
+  .reading-layout {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 64px;
+  }
+  .reading-layout--single {
+    grid-template-columns: minmax(0, 760px);
+  }
+  .lead-story {
+    padding-right: 56px;
+    border-right: 1px solid var(--line);
+  }
+  .reading-layout--single .lead-story {
+    padding-right: 0;
+    border: 0;
+  }
+  .lead-story h3 {
+    font-family: var(--font-display);
+    font-size: clamp(28px, 3vw, 38px);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.035em;
+    margin: 18px 0;
+    text-wrap: pretty;
+  }
+  .lead-summary {
+    color: var(--ink-2);
+    font-size: 16px;
+    line-height: 1.7;
+    margin: 0 0 22px;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .story-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    font-size: 12px;
+    color: var(--ink-3);
+    line-height: 1.6;
+    margin: 0;
+  }
+  .lead-story .publication-link {
     margin-top: 24px;
   }
-  .topic-tabs {
+  .reading-item {
+    padding: 24px 0;
+    border-top: 1px solid var(--line);
+  }
+  .reading-item:first-child {
+    padding-top: 0;
+    border-top: 0;
+  }
+  .reading-item:last-child {
+    padding-bottom: 0;
+  }
+  .reading-item h3 {
+    font-family: var(--font-read);
+    font-weight: 400;
+    font-size: 23px;
+    letter-spacing: -0.025em;
+    line-height: 1.3;
+    margin: 10px 0 12px;
+  }
+  .reading-item h3 a {
     display: flex;
-    gap: 8px;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line-2) transparent;
-    -webkit-overflow-scrolling: touch;
-    padding: 4px 0 16px;
-    margin-bottom: 24px;
-    border-bottom: 1px solid var(--line);
-    scroll-snap-type: x proximity;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 20px;
   }
-  .topic-tabs::-webkit-scrollbar {
-    height: 6px;
+  .reading-arrow {
+    font-family: var(--font-sans);
+    color: var(--ink-3);
+    font-size: 18px;
   }
-  .topic-tabs::-webkit-scrollbar-track {
-    background: transparent;
+  .topic-section:has(.publication-more-topics),
+  .tools-section:has(.publication-more-tools) {
+    padding-bottom: calc(var(--section-space) - 22px);
   }
-  .topic-tabs::-webkit-scrollbar-thumb {
-    background: var(--line-2);
-    border-radius: var(--radius-pill);
-  }
-  .topic-tabs:hover::-webkit-scrollbar-thumb {
-    background: var(--ink-4);
-  }
-  .topic-tabs .chip {
-    flex-shrink: 0;
-    scroll-snap-align: start;
-  }
-  .tool-card .chip {
-    margin-top: auto;
-    align-self: flex-start;
-  }
-
-  .topic-post-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .topic-post {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    column-gap: 24px;
-    row-gap: 8px;
-    align-items: start;
-    padding: 18px 22px;
-    border: 1px solid var(--line);
-    border-radius: var(--radius-md);
-    background: var(--paper-2);
-    color: inherit;
-    text-decoration: none;
-    transition:
-      border-color 0.15s ease,
-      background 0.15s ease,
-      transform 0.18s ease;
-  }
-  .topic-post:hover {
-    border-color: var(--accent);
-    background: var(--paper);
-    transform: translateY(-1px);
-  }
-  .topic-post-body {
+  .topic-section .publication-more-topics,
+  .tools-section .publication-more-tools {
+    margin-top: 50px;
     min-width: 0;
   }
-  .topic-post-title {
-    font-family: var(--font-display);
-    font-size: 22px;
-    font-weight: 400;
-    line-height: 1.25;
-    color: var(--ink);
-    margin: 0 0 6px;
+  .topic-section .publication-more-topics .publication-label,
+  .tools-section .publication-more-tools .publication-label {
+    margin-bottom: 12px;
   }
-  .topic-post-summary {
-    font-size: 14px;
-    line-height: 1.55;
-    color: var(--ink-2);
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .publication-topics {
+    display: grid;
   }
-  .topic-post-meta {
+  .publication-topic {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    align-items: baseline;
+    gap: 16px;
+    padding: 24px 0;
+    border-top: 1px solid var(--line);
+  }
+  .publication-topic:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .publication-topic:last-child {
+    padding-bottom: 0;
+  }
+  .topic-index {
     font-family: var(--font-mono);
     font-size: 11px;
     color: var(--ink-3);
-    text-align: right;
+  }
+  .publication-topic h3 {
+    font-family: var(--font-read);
+    font-weight: 400;
+    font-size: 27px;
+    letter-spacing: -0.03em;
+    margin: 0 0 6px;
+  }
+  .publication-topic p {
+    font-size: 15px;
+    color: var(--ink-2);
+    margin: 0;
+    max-width: 680px;
+    line-height: 1.6;
+  }
+  .topic-end {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    white-space: nowrap;
-  }
-  .topic-more-link {
-    display: inline-block;
-    margin-top: 20px;
-    font-family: var(--font-mono);
+    gap: 30px;
+    align-items: center;
     font-size: 12px;
-    color: var(--accent);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: var(--ink-3);
   }
-  .topic-more-link:hover {
-    text-decoration: underline;
+  .topic-end > :last-child {
+    font-size: 20px;
   }
-
-  @media (max-width: 720px) {
-    .topic-post {
-      grid-template-columns: 1fr;
-      column-gap: 0;
-      padding: 16px 18px;
+  .publication-tools {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+  }
+  .publication-tool {
+    display: flex;
+    align-items: flex-start;
+    gap: 24px;
+  }
+  .publication-tool-icon {
+    flex: 0 0 56px;
+    padding-top: 4px;
+  }
+  .publication-tool h3 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0 0 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .publication-tool h3 span {
+    color: var(--ink-3);
+  }
+  .publication-tool p {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink-2);
+    margin: 0;
+  }
+  .publication-invitation {
+    border-top: 1px solid var(--line-2);
+    padding: var(--section-space) 0;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 64px;
+    align-items: center;
+  }
+  .publication-invitation h2 {
+    font-family: var(--font-display);
+    font-size: clamp(40px, 4.6vw, 60px);
+    font-weight: 400;
+    line-height: 1.12;
+    letter-spacing: -0.04em;
+    margin: 20px 0 0;
+  }
+  .invitation-copy p {
+    color: var(--ink-2);
+    font-size: 18px;
+    line-height: 1.7;
+    max-width: 420px;
+    margin: 0 0 22px;
+  }
+  .invitation-copy .publication-small-link {
+    display: flex;
+    width: fit-content;
+    margin-top: 12px;
+  }
+  @media (max-width: 1000px) {
+    .publication-hero {
+      gap: 24px;
     }
-    .topic-post-title {
+    .reading-layout,
+    .publication-tools,
+    .publication-invitation {
+      gap: 36px;
+    }
+    .lead-story {
+      padding-right: 32px;
+    }
+  }
+  @media (max-width: 900px) {
+    .publication {
+      --hero-header-height: 72px;
+    }
+  }
+  @media (max-width: 720px) {
+    .publication-hero {
+      grid-template-columns: 1fr;
+      padding: 28px 0 var(--section-space);
+      gap: 20px;
+    }
+    .hero-copy h1 {
+      font-size: clamp(52px, 10.8vw, 76px);
+    }
+    .publication-intro {
+      max-width: 440px;
+    }
+    .publication-deck {
+      font-size: 26px;
+    }
+    .publication-section-head {
+      margin-bottom: 28px;
+      gap: 12px;
+      align-items: center;
+    }
+    .publication-section-head h2 {
+      max-width: 65%;
+    }
+    .publication-small-link {
+      font-size: 12px;
+      gap: 6px;
+    }
+    .reading-layout,
+    .publication-tools,
+    .publication-invitation {
+      grid-template-columns: 1fr;
+      gap: 36px;
+    }
+    .lead-story {
+      border-right: 0;
+      padding: 0 0 32px;
+      border-bottom: 1px solid var(--line);
+    }
+    .lead-story h3 {
+      font-size: 32px;
+    }
+    .reading-item h3 {
+      font-size: 23px;
+    }
+    .topic-section:has(.publication-more-topics),
+    .tools-section:has(.publication-more-tools) {
+      padding-bottom: calc(var(--section-space) - 16px);
+    }
+    .topic-section .publication-more-topics,
+    .tools-section .publication-more-tools {
+      margin-top: 40px;
+    }
+    .publication-topic {
+      grid-template-columns: 24px 1fr auto;
+      gap: 12px;
+    }
+    .publication-topic h3 {
+      font-size: 24px;
+    }
+    .topic-end {
+      gap: 12px;
+    }
+    .topic-end > :first-child {
+      display: none;
+    }
+    .publication-tool {
+      gap: 20px;
+    }
+    .publication-tool h3 {
       font-size: 19px;
     }
-    .topic-post-meta {
-      text-align: left;
-      flex-direction: row;
-      gap: 8px;
-      flex-wrap: wrap;
+    .invitation-copy p {
+      font-size: 17px;
     }
   }
 </style>
 
 <script>
   import { ACCENTS, writePrefs, type Accent } from '@/lib/prefs';
-  import { neuralBurst } from '@/lib/neuralBurst';
-
-  document.querySelectorAll<HTMLButtonElement>('[data-accent-cycle]').forEach((btn) => {
-    btn.addEventListener('click', () => {
+  document.querySelectorAll<HTMLButtonElement>('[data-accent-cycle]').forEach((button) => {
+    button.addEventListener('click', () => {
       const root = document.documentElement;
-      const current = (root.getAttribute('data-accent') as Accent) || 'oxide';
-      const idx = ACCENTS.indexOf(current);
-      const next = ACCENTS[(idx + 1) % ACCENTS.length];
+      const current = root.getAttribute('data-accent') as Accent;
+      const next = ACCENTS[(ACCENTS.indexOf(current) + 1) % ACCENTS.length];
       root.setAttribute('data-accent', next);
       writePrefs({ accent: next });
-      const hero = btn.closest<HTMLElement>('.hero');
-      if (hero) neuralBurst(hero);
-    });
-  });
-
-  document.querySelectorAll<HTMLElement>('[data-topic-explorer]').forEach((root) => {
-    const tabs = root.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    const panels = root.querySelectorAll<HTMLElement>('.topic-panel');
-    tabs.forEach((tab) => {
-      tab.addEventListener('click', () => {
-        const topic = tab.dataset.topic ?? '';
-        root.dataset.activeTopic = topic;
-        tabs.forEach((t) => {
-          const isActive = t.dataset.topic === topic;
-          t.classList.toggle('is-active', isActive);
-          t.setAttribute('aria-selected', String(isActive));
-        });
-        panels.forEach((p) => {
-          p.hidden = p.dataset.topic !== topic;
-        });
-      });
     });
   });
 </script>

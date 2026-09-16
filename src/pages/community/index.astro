@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import { SITE, SOCIALS } from '@/lib/site';
 
 const channels = [
@@ -41,15 +42,13 @@ const channels = [
   image="/og/page/community.png"
 >
   <div class="container">
-    <div class="page-head">
-      <div class="eyebrow page-eyebrow">Discourse</div>
-      <h1 class="page-h1">Community.</h1>
-      <p class="page-lede">
+    <PageIntro label="Discourse" title="Community">
+      <p>
         We're trying to build the comments section the field deserves — technical, kind,
         signal-rich. The discussion lives in the forum and on Discord. No karma, no algorithm, no
         ads.
       </p>
-    </div>
+    </PageIntro>
 
     <div class="community-channels">
       {

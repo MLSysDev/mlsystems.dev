@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import SystemsFlow from './SystemsFlow';
+import { useState, useEffect, useMemo, useRef, type ComponentType } from 'react';
 
 function useAnimationFrame(active: boolean) {
   const [t, setT] = useState(0);
@@ -58,6 +59,10 @@ export function AttentionFig({ t }: { t: number }) {
   ];
   const cell = 22;
   const size = N * cell;
+  // Build the causal triangle in under two seconds, then scan the completed rows.
+  const reveal = t / 0.14;
+  const scan = t < 1.96 ? reveal : ((t - 1.96) % 2.8) / 0.2;
+  const activeRow = Math.min(N - 1, Math.floor(scan));
 
   return (
     <svg
@@ -87,7 +92,8 @@ export function AttentionFig({ t }: { t: number }) {
           y={i * cell + cell / 2 + 3}
           fontSize="9"
           fontFamily="var(--font-mono)"
-          fill="var(--ink-2)"
+          fill={i === activeRow ? 'var(--accent)' : 'var(--ink-2)'}
+          fontWeight={i === activeRow ? 700 : 400}
           textAnchor="end"
         >
           {tok}
@@ -95,8 +101,9 @@ export function AttentionFig({ t }: { t: number }) {
       ))}
       {pattern.map((row, i) =>
         row.map((v, j) => {
-          const phase = Math.sin(t * 1.2 + i * 0.3 + j * 0.15) * 0.5 + 0.5;
-          const opacity = v * (0.55 + 0.45 * phase);
+          const entrance = Math.max(0, Math.min(1, (reveal - i) * 2));
+          const highlight = Math.max(0, 1 - Math.abs(i - scan));
+          const opacity = entrance * Math.min(1, v * 0.65 + (v > 0 ? highlight * 0.5 : 0));
           return (
             <rect
               key={`${i}-${j}`}
@@ -111,6 +118,17 @@ export function AttentionFig({ t }: { t: number }) {
           );
         }),
       )}
+      <rect
+        x={0}
+        y={activeRow * cell}
+        width={(activeRow + 1) * cell - 1}
+        height={cell - 1}
+        fill="none"
+        stroke="var(--accent)"
+        strokeWidth="1"
+        opacity="0.7"
+        rx="1"
+      />
       <rect
         x={-0.5}
         y={-0.5}
@@ -172,7 +190,7 @@ function LossFig({ t }: { t: number }) {
     minY = 0.15;
   const sx = (i: number) => margin.l + (i / 79) * innerW;
   const sy = (y: number) => margin.t + ((maxY - y) / (maxY - minY)) * innerH;
-  const progress = Math.min(1, (t % 12) / 8);
+  const progress = Math.min(1, t / 5);
   const visibleN = Math.floor(80 * progress);
   const linePath = (arr: number[]) =>
     arr
@@ -292,15 +310,15 @@ function LossFig({ t }: { t: number }) {
         />
         <line x1="8" y1="13" x2="22" y2="13" stroke="var(--accent)" strokeWidth="2" />
         <text x="26" y="16" fontSize="9" fontFamily="var(--font-mono)" fill="var(--ink-2)">
-          ours (FP4)
+          FP4 example
         </text>
         <line x1="8" y1="28" x2="22" y2="28" stroke="var(--ink-2)" strokeWidth="1.5" />
         <text x="26" y="31" fontSize="9" fontFamily="var(--font-mono)" fill="var(--ink-2)">
-          FP8 baseline
+          FP8 example
         </text>
         <line x1="8" y1="43" x2="22" y2="43" stroke="var(--ink-3)" strokeWidth="1.5" />
         <text x="26" y="46" fontSize="9" fontFamily="var(--font-mono)" fill="var(--ink-2)">
-          BF16 ref.
+          BF16 example
         </text>
       </g>
       <text
@@ -526,110 +544,218 @@ function EmbeddingFig({ t }: { t: number }) {
   );
 }
 
-export default function HeroFigure() {
-  const FIGS = [
-    {
-      id: 'attn',
-      label: 'Attention',
-      Comp: AttentionFig,
-      caption:
-        'Per-head attention pattern at layer 14. Causal mask + induction circuit + sink token, visualized over one sentence.',
-    },
-    {
-      id: 'loss',
-      label: 'Loss',
-      Comp: LossFig,
-      caption:
-        'Train loss across three precision regimes on a 7B run. FP4 closes the gap with BF16 once calibration is right.',
-    },
-    {
-      id: 'tput',
-      label: 'Throughput',
-      Comp: ThroughputFig,
-      caption:
-        'Tokens per second per GPU for Llama-70B, by precision and serving strategy. Continuous batching is doing most of the work.',
-    },
-    {
-      id: 'embed',
-      label: 'Embeddings',
-      Comp: EmbeddingFig,
-      caption:
-        "UMAP projection of an instruction-tuned model's final-layer embeddings, colored by prompt type. Clusters emerge without supervision.",
-    },
-  ];
+const FIGS = [
+  {
+    label: 'Layers',
+    caption:
+      'A schematic inference step: model operations become scheduled kernels, the GPU executes them, and the resulting scores are used to sample the next token.',
+    Comp: SystemsFlow,
+  },
+  {
+    label: 'Attention',
+    caption:
+      'A single attention head over one sentence, showing a causal mask, a repeated-token pattern, and attention concentrated on the first token.',
+    Comp: AttentionFig,
+  },
+  {
+    label: 'Training',
+    caption:
+      'Example training-loss curves for FP4, FP8, and BF16, showing how different precision settings can affect convergence over a training run.',
+    Comp: LossFig,
+  },
+  {
+    label: 'Throughput',
+    caption:
+      'An example comparison of tokens per second across precision and serving strategies, from a BF16 baseline to batching and speculative decoding.',
+    Comp: ThroughputFig,
+  },
+  {
+    label: 'Embeddings',
+    caption:
+      'A schematic embedding map, colored by prompt type. Nearby points represent similar inputs across code, math, prose, and dialogue.',
+    Comp: EmbeddingFig,
+  },
+];
 
-  const [idx, setIdx] = useState(0);
+function AnimatedScene({
+  Comp,
+  active,
+  reducedMotion,
+}: {
+  Comp: ComponentType<{ t: number }>;
+  active: boolean;
+  reducedMotion: boolean;
+}) {
+  const t = useAnimationFrame(active);
+  return <Comp t={reducedMotion ? 5 : t} />;
+}
+
+export default function HeroFigure() {
+  const [{ idx, previous }, setScene] = useState<{ idx: number; previous: number | null }>({
+    idx: 0,
+    previous: null,
+  });
   const rootRef = useRef<HTMLDivElement>(null);
-  const [reducedMotion] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-  );
+  const [reducedMotion, setReducedMotion] = useState(true);
+  const [paused, setPaused] = useState(false);
+  const [hintOpen, setHintOpen] = useState(false);
+  const [touchControls, setTouchControls] = useState(false);
   const [pageVisible, setPageVisible] = useState(true);
   const [onScreen, setOnScreen] = useState(true);
 
   useEffect(() => {
-    const onVisibility = () => setPageVisible(!document.hidden);
-    onVisibility();
-    document.addEventListener('visibilitychange', onVisibility);
-    return () => document.removeEventListener('visibilitychange', onVisibility);
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
   }, []);
-
   useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
+    const update = () => setPageVisible(!document.hidden);
+    update();
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+  useEffect(() => {
+    if (!rootRef.current) return;
     const observer = new IntersectionObserver(([entry]) => setOnScreen(entry.isIntersecting));
-    observer.observe(el);
+    observer.observe(rootRef.current);
     return () => observer.disconnect();
   }, []);
-
-  const active = !reducedMotion && pageVisible && onScreen;
-
+  const active = !reducedMotion && !paused && !hintOpen && pageVisible && onScreen;
   useEffect(() => {
     if (!active) return;
-    const cycleMs = 9000;
-    const interval = setInterval(() => setIdx((i) => (i + 1) % FIGS.length), cycleMs);
+    const interval = setInterval(
+      () => setScene(({ idx }) => ({ idx: (idx + 1) % FIGS.length, previous: idx })),
+      6000,
+    );
     return () => clearInterval(interval);
-  }, [active, FIGS.length]);
-
-  const t = useAnimationFrame(active);
-  const current = FIGS[idx];
-  const Comp = current.Comp;
-
+  }, [active, idx]);
+  useEffect(() => {
+    if (previous === null) return;
+    const timeout = setTimeout(() => setScene((scene) => ({ ...scene, previous: null })), 750);
+    return () => clearTimeout(timeout);
+  }, [previous]);
+  useEffect(() => {
+    if (!touchControls) return;
+    const timer = setTimeout(() => setTouchControls(false), 5000);
+    return () => clearTimeout(timer);
+  }, [touchControls]);
+  const moveScene = (direction: number) => {
+    setHintOpen(false);
+    setScene(({ idx }) => ({ idx: (idx + direction + FIGS.length) % FIGS.length, previous: idx }));
+  };
   return (
-    <div className="figure" ref={rootRef}>
-      <div className="figure-head">
-        <div className="figure-head-tabs">
-          {FIGS.map((f, i) => (
-            <button key={f.id} className={i === idx ? 'active' : ''} onClick={() => setIdx(i)}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-      </div>
-      <div className="figure-body" key={current.id}>
-        <div style={{ width: '100%', height: '100%', animation: 'figureFade 0.5s ease-out' }}>
-          <Comp t={t} />
-        </div>
-      </div>
-      <div className="figure-caption">
-        <span className="fig-label">
-          FIG. {idx + 1}.{idx + 1}
-        </span>
-        {current.caption}
-      </div>
-      <div style={{ position: 'absolute', top: 20, right: 20, display: 'flex', gap: 4 }}>
-        {FIGS.map((_, i) => (
+    <div
+      className="hero-showcase"
+      data-motion={active ? 'running' : 'paused'}
+      data-controls={touchControls ? 'visible' : undefined}
+      tabIndex={0}
+      onPointerDown={(event) => {
+        if (event.pointerType === 'touch') setTouchControls(true);
+      }}
+      ref={rootRef}
+      role="group"
+      aria-label="Machine learning systems illustrations"
+    >
+      <div className="hero-scenes">
+        {FIGS.map(({ label, Comp }, i) => (
           <div
-            key={i}
-            style={{
-              width: 14,
-              height: 2,
-              background: i === idx ? 'var(--accent)' : 'var(--line-2)',
-              transition: 'background 0.3s',
-            }}
-          />
+            key={label}
+            className={`hero-scene${i === idx ? ' is-current' : ''}`}
+            aria-hidden={i !== idx}
+          >
+            {(i === idx || i === previous) && (
+              <div role="img" aria-label={FIGS[i].caption}>
+                <AnimatedScene Comp={Comp} active={active} reducedMotion={reducedMotion} />
+              </div>
+            )}
+          </div>
         ))}
+      </div>
+      <div className="hero-scene-controls">
+        <button type="button" aria-label="Previous illustration" onClick={() => moveScene(-1)}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            aria-hidden="true"
+          >
+            <path d="M15 10H5m5-5-5 5 5 5" />
+          </svg>
+        </button>
+        <div
+          className="hero-scene-info"
+          onPointerEnter={(event) => {
+            if (event.pointerType === 'mouse') setHintOpen(true);
+          }}
+          onPointerLeave={(event) => {
+            if (event.pointerType === 'mouse') setHintOpen(false);
+          }}
+          onBlur={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setHintOpen(false);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === 'Escape') {
+              event.preventDefault();
+              setHintOpen(false);
+            }
+          }}
+        >
+          <button
+            type="button"
+            aria-label="About this illustration"
+            aria-expanded={hintOpen}
+            aria-controls="hero-illustration-hint"
+            onClick={() => setHintOpen((open) => !open)}
+            onFocus={(event) => {
+              if (event.currentTarget.matches(':focus-visible')) setHintOpen(true);
+            }}
+          >
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 20 20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.3"
+              aria-hidden="true"
+            >
+              <circle cx="10" cy="10" r="7.5" />
+              <path d="M10 9v5" />
+              <circle cx="10" cy="6" r=".7" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
+          <p id="hero-illustration-hint" className="hero-illustration-hint" hidden={!hintOpen}>
+            {FIGS[idx].caption}
+          </p>
+        </div>
+        {!reducedMotion && (
+          <button
+            type="button"
+            onClick={() => setPaused((value) => !value)}
+            aria-label={paused ? 'Resume illustrations' : 'Pause illustrations'}
+            title={paused ? 'Resume illustrations' : 'Pause illustrations'}
+          >
+            {paused ? '▷' : 'Ⅱ'}
+          </button>
+        )}
+        <button type="button" aria-label="Next illustration" onClick={() => moveScene(1)}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 20 20"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.4"
+            aria-hidden="true"
+          >
+            <path d="M5 10h10m-5-5 5 5-5 5" />
+          </svg>
+        </button>
       </div>
     </div>
   );
