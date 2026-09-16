@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import SearchInline from '@/components/SearchInline.tsx';
 import { TOPICS } from '@/lib/topics';
 ---
@@ -11,11 +12,11 @@ import { TOPICS } from '@/lib/topics';
   noindex
 >
   <div class="container search-page">
-    <div class="page-head">
-      <div class="eyebrow page-eyebrow">Search</div>
-      <h1 class="page-h1">Find anything.</h1>
-      <p class="page-lede">Articles, topics, tools, and authors — one box.</p>
-    </div>
+    <PageIntro label="Search" title="Find your next idea"
+      ><p>
+        Articles, topics, tools, and authors. Follow the question that brought you here.
+      </p></PageIntro
+    >
 
     <SearchInline topics={TOPICS} client:load />
 

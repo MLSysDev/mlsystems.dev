@@ -1,5 +1,5 @@
 ---
-// Top navigation — static markup; mobile menu + theme toggle use ~30 lines of inline JS.
+import { TOPICS } from '@/lib/topics';
 
 interface Props {
   currentPath: string;
@@ -7,7 +7,7 @@ interface Props {
 const { currentPath } = Astro.props;
 
 const LINKS = [
-  { id: 'blog', label: 'Blog', path: '/blog' },
+  { id: 'blog', label: 'Articles', path: '/blog' },
   { id: 'topics', label: 'Topics', path: '/topics' },
   { id: 'playground', label: 'Playground', path: '/playground' },
   { id: 'forum', label: 'Forum', path: '/forum' },
@@ -16,7 +16,7 @@ const LINKS = [
 const isActive = (path: string) => currentPath === path || currentPath.startsWith(path + '/');
 ---
 
-<nav class="nav" id="site-nav">
+<nav class="nav" id="site-nav" aria-label="Main navigation">
   <div class="nav-inner">
     <a href="/" class="brand">
       <span class="brand-mark"></span>
@@ -26,16 +26,66 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
     <div class="nav-right">
       <div class="nav-links" id="nav-menu">
         {
-          LINKS.map((l) => (
-            <a
-              href={l.path}
-              class={isActive(l.path) ? 'active' : ''}
-              aria-current={isActive(l.path) ? 'page' : undefined}
-            >
-              {l.label}
-            </a>
-          ))
+          LINKS.map((l) =>
+            l.id === 'topics' ? (
+              <div class="nav-topics" data-topics-disclosure>
+                <div class="nav-topics-heading">
+                  <a
+                    href={l.path}
+                    class={isActive(l.path) ? 'active' : ''}
+                    aria-current={currentPath === l.path ? 'page' : undefined}
+                  >
+                    {l.label}
+                  </a>
+                  <button
+                    type="button"
+                    class="nav-topics-toggle"
+                    aria-label="Browse topics"
+                    aria-expanded="false"
+                    aria-controls="nav-topic-list"
+                    data-topics-toggle
+                  >
+                    <svg
+                      width="12"
+                      height="12"
+                      viewBox="0 0 16 16"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      aria-hidden="true"
+                    >
+                      <path d="m4 6 4 4 4-4" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="nav-topic-list" id="nav-topic-list" hidden>
+                  <a class="nav-topics-overview" href="/topics">
+                    Explore all topics <span aria-hidden="true">↗</span>
+                  </a>
+                  <div class="nav-topic-grid">
+                    {TOPICS.map((topic) => (
+                      <a
+                        href={`/topics/${topic.id}`}
+                        aria-current={isActive(`/topics/${topic.id}`) ? 'page' : undefined}
+                      >
+                        <span class="nav-topic-name">{topic.name}</span>
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <a
+                href={l.path}
+                class={isActive(l.path) ? 'active' : ''}
+                aria-current={isActive(l.path) ? 'page' : undefined}
+              >
+                {l.label}
+              </a>
+            ),
+          )
         }
+        <a href="/write" class="nav-mobile-write">Write an article</a>
       </div>
 
       <a href="/write" class="nav-write">
@@ -138,12 +188,63 @@ const isActive = (path: string) => currentPath === path || currentPath.startsWit
 
   const nav = document.getElementById('site-nav');
   const toggle = nav?.querySelector<HTMLButtonElement>('[data-nav-toggle]');
+  const topics = nav?.querySelector<HTMLElement>('[data-topics-disclosure]');
+  const topicsToggle = nav?.querySelector<HTMLButtonElement>('[data-topics-toggle]');
+  const topicsList = nav?.querySelector<HTMLElement>('#nav-topic-list');
+  let topicCloseTimer: ReturnType<typeof setTimeout> | undefined;
+  const desktopHover = window.matchMedia(
+    '(min-width: 901px) and (hover: hover) and (pointer: fine)',
+  );
+  const setTopicsOpen = (open: boolean) => {
+    clearTimeout(topicCloseTimer);
+    if (!topicsToggle || !topicsList) return;
+    topicsToggle.setAttribute('aria-expanded', String(open));
+    topicsList.hidden = !open;
+  };
+  topics?.addEventListener('pointerenter', (event) => {
+    if (event.pointerType === 'mouse' && desktopHover.matches) setTopicsOpen(true);
+  });
+  topics?.addEventListener('pointerleave', (event) => {
+    if (event.pointerType !== 'mouse' || !desktopHover.matches) return;
+    topicCloseTimer = setTimeout(() => {
+      if (
+        !topics.contains(document.activeElement) ||
+        !document.activeElement?.matches(':focus-visible')
+      )
+        setTopicsOpen(false);
+    }, 180);
+  });
+  desktopHover.addEventListener('change', () => setTopicsOpen(false));
+  topicsToggle?.addEventListener('click', () => setTopicsOpen(topicsList?.hidden ?? true));
+  topicsToggle?.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setTopicsOpen(true);
+      topicsList?.querySelector<HTMLAnchorElement>('a')?.focus();
+    }
+  });
+  topics?.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !topicsList?.hidden) {
+      event.preventDefault();
+      setTopicsOpen(false);
+      topicsToggle?.focus();
+    }
+  });
+  topics?.addEventListener('focusout', (event) => {
+    if (!topics.contains(event.relatedTarget as Node | null)) setTopicsOpen(false);
+  });
+  document.addEventListener('click', (event) => {
+    if (!topics?.contains(event.target as Node)) setTopicsOpen(false);
+  });
+
   toggle?.addEventListener('click', () => {
+    setTopicsOpen(false);
     const open = nav!.classList.toggle('nav-open');
     toggle.setAttribute('aria-expanded', String(open));
   });
   nav?.querySelectorAll('.nav-links a').forEach((a) => {
     a.addEventListener('click', () => {
+      setTopicsOpen(false);
       nav.classList.remove('nav-open');
       toggle?.setAttribute('aria-expanded', 'false');
     });

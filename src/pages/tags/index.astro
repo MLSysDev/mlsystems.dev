@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import { SITE } from '@/lib/site';
 import { tagSlug } from '@/lib/data';
 
@@ -29,11 +30,9 @@ const canonical = `${SITE.url}/tags`;
   image="/og/page/topics.png"
 >
   <div class="container">
-    <div class="page-head">
-      <div class="eyebrow page-eyebrow">Browse</div>
-      <h1 class="page-h1">Tags.</h1>
-      <p class="page-lede">Every topic tag across the archive, most-used first.</p>
-    </div>
+    <PageIntro label="Browse" title="Tags">
+      <p>Every topic tag across the archive, most-used first.</p>
+    </PageIntro>
 
     <div class="tag-cloud">
       {

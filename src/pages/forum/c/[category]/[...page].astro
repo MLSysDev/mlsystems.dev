@@ -1,6 +1,7 @@
 ---
 import type { GetStaticPaths, Page } from 'astro';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import Pager from '@/components/Pager.astro';
 import ForumThreadRow from '@/components/ForumThreadRow.astro';
 import { getForum, threadsByCategory, type ForumCategory, type ForumThread } from '@/lib/forum';
@@ -30,20 +31,18 @@ const suffix = page.currentPage > 1 ? ` — page ${page.currentPage}` : '';
   description={`${category.name} — community discussion on machine learning systems.`}
 >
   <div class="container forum-shell">
-    <div class="forum-head">
-      <div>
-        <div class="eyebrow page-eyebrow">
-          <a href="/forum" style="color: var(--ink-3);">Forum</a> / {category.name}
-        </div>
-        <h1 class="forum-h1">{category.emoji} {category.name}</h1>
-      </div>
+    <PageIntro label="Community forum" title={category.name}>
+      <p>Questions, ideas, and experience shared by the ML Systems community.</p>
+    </PageIntro>
+    <div class="forum-toolbar">
+      <a class="forum-back" href="/forum">← All discussions</a>
       <a
-        class="btn btn-accent forum-new"
+        class="forum-new"
         href={`${SITE.repoUrl}/discussions/new?category=${category.slug}`}
         target="_blank"
         rel="noreferrer"
       >
-        Start a discussion <span class="btn-arrow">→</span>
+        Start a discussion <span aria-hidden="true">↗</span>
       </a>
     </div>
 

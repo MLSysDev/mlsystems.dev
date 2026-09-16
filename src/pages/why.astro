@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import { SITE } from '@/lib/site';
 
 const canonical = `${SITE.url}/why`;
@@ -22,10 +23,7 @@ const pageJsonLd = {
   jsonLd={pageJsonLd}
 >
   <div class="container why-shell">
-    <header class="page-head">
-      <div class="eyebrow page-eyebrow">Why</div>
-      <h1 class="page-h1">Why this exists.</h1>
-    </header>
+    <PageIntro label="Our purpose" title="Why this exists" />
 
     <div class="why-layout">
       <div class="why-body">

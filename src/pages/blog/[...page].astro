@@ -2,6 +2,7 @@
 import type { GetStaticPaths, Page } from 'astro';
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import BlogFilter from '@/components/BlogFilter.astro';
 import Pager from '@/components/Pager.astro';
 import PostRow from '@/components/PostRow.astro';
@@ -39,12 +40,12 @@ page.data.forEach((a) => {
   image="/og/page/blog.png"
 >
   <div class="container blog-shell">
-    <div class="blog-head">
-      <div>
-        <div class="eyebrow page-eyebrow">The Archive</div>
-        <h1 class="blog-h1">All articles.</h1>
-      </div>
-    </div>
+    <PageIntro label="From the community" title="Articles">
+      <p>
+        Ideas, explanations, and lessons from people learning and building machine learning systems.
+        Open to every curious mind.
+      </p>
+    </PageIntro>
 
     <BlogFilter allCount={page.total} topicCounts={topicCounts} />
 

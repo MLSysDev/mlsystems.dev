@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 
 const FILTER_THRESHOLD = 12;
 
@@ -38,14 +39,12 @@ const contributors = authors
   image="/og/page/authors.png"
 >
   <div class="container">
-    <div class="page-head">
-      <div class="eyebrow page-eyebrow">The People</div>
-      <h1 class="page-h1">Contributors.</h1>
-      <p class="page-lede">
+    <PageIntro label="The People" title="Contributors">
+      <p>
         Engineers, researchers, and students writing about ML systems in the open — anyone learning
         is welcome to join them.
       </p>
-    </div>
+    </PageIntro>
 
     {
       contributors.length > FILTER_THRESHOLD && (

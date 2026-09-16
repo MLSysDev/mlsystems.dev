@@ -49,9 +49,9 @@ export default function Playground({ tools }: { tools: PlaygroundTool[] }) {
       <div
         style={{
           border: '1px solid var(--line)',
-          borderRadius: 12,
-          background: 'var(--paper-2)',
-          padding: 32,
+          borderRadius: 'var(--radius-md)',
+          background: 'var(--paper)',
+          padding: 'clamp(16px, 3vw, 32px)',
           minHeight: 540,
           display: 'flex',
           flexDirection: 'column',

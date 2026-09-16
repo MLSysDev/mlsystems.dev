@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import Step from '@/components/Step.astro';
 import { SITE } from '@/lib/site';
 
@@ -33,15 +34,13 @@ const STEPS = [
   image="/og/page/contribute.png"
 >
   <div class="container">
-    <div class="page-head">
-      <div class="eyebrow page-eyebrow">Write with us</div>
-      <h1 class="page-h1">Contribute.</h1>
-      <p class="page-lede">
+    <PageIntro label="Write with us" title="Contribute">
+      <p>
         We publish articles, case studies, primers, and tools about ML systems — from anyone
         learning or working in the space. If you've figured something out and want to share it with
         the world, you should write about it here.
       </p>
-    </div>
+    </PageIntro>
 
     <div
       class="contribute-grid"

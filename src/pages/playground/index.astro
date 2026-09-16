@@ -1,7 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
-import { Image } from 'astro:assets';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import Playground from '@/components/Playground.tsx';
 import { pickCoreTools, rankTools } from '@/lib/tools';
 const allTools = await getCollection('tools', ({ data }) => !data.draft);
@@ -27,11 +27,9 @@ const catalogTools = rankTools(allTools);
   image="/og/page/playground.png"
 >
   <div class="container">
-    <div class="page-head">
-      <div class="eyebrow page-eyebrow">Playground</div>
-      <h1 class="page-h1">Tools.</h1>
-      <p class="page-lede">Explore ML systems in real-time with live, interactive tools</p>
-    </div>
+    <PageIntro label="Playground" title="Tools">
+      <p>Explore ML systems in real-time with live, interactive tools</p>
+    </PageIntro>
 
     <Playground tools={coreTools} client:visible />
 
@@ -79,15 +77,6 @@ const catalogTools = rankTools(allTools);
                     href={`/playground/${t.id}`}
                     class={`card card--interactive tool-card tool-card-${t.data.tag.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    {t.data.thumbnail && (
-                      <div class="tool-card-thumb" aria-hidden="true">
-                        {typeof t.data.thumbnail === 'string' ? (
-                          <img src={t.data.thumbnail} alt="" loading="lazy" decoding="async" />
-                        ) : (
-                          <Image src={t.data.thumbnail} alt="" loading="lazy" />
-                        )}
-                      </div>
-                    )}
                     <h3 class="tool-card-name">{t.data.name}</h3>
                     <p class="tool-card-summary">{t.data.summary}</p>
                     <div class="tool-card-footer">
@@ -394,28 +383,6 @@ const catalogTools = rankTools(allTools);
     font-size: 14px;
   }
 
-  .tool-card-thumb {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
-    overflow: hidden;
-    border-radius: inherit;
-  }
-  .tool-card-thumb img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    opacity: 0.12;
-    transition: opacity 0.18s ease;
-  }
-  .tool-card:hover .tool-card-thumb img {
-    opacity: 0.2;
-  }
-  .tool-card-thumb ~ * {
-    position: relative;
-    z-index: 1;
-  }
   .tool-card-footer {
     margin-top: auto;
     padding-top: 16px;
@@ -449,19 +416,5 @@ const catalogTools = rankTools(allTools);
       });
       if (empty) empty.hidden = visible > 0;
     });
-  });
-
-  // Hand wheel scrolling off to the page when the catalog box hits an edge,
-  // so the pointer resting inside it never traps the user (macOS scroll latching).
-  document.querySelectorAll<HTMLElement>('.tools-catalog-scroll').forEach((box) => {
-    box.addEventListener(
-      'wheel',
-      (e) => {
-        const atTop = e.deltaY < 0 && box.scrollTop <= 0;
-        const atBottom = e.deltaY > 0 && box.scrollTop + box.clientHeight >= box.scrollHeight - 1;
-        if (atTop || atBottom) window.scrollBy(0, e.deltaY);
-      },
-      { passive: true },
-    );
   });
 </script>

@@ -1,0 +1,79 @@
+---
+interface Props {
+  label: string;
+  title: string;
+}
+const { label, title } = Astro.props;
+const hasDescription = Astro.slots.has('default');
+---
+
+<header class:list={['page-intro', { 'page-intro--split': hasDescription }]}>
+  <div class="page-intro-heading">
+    <p class="eyebrow">{label}</p>
+    <h1><slot name="title">{title}</slot></h1>
+  </div>
+  {
+    hasDescription && (
+      <div class="page-intro-description">
+        <slot />
+      </div>
+    )
+  }
+</header>
+
+<style>
+  .page-intro {
+    padding: clamp(48px, 6vw, 80px) 0 52px;
+    margin-bottom: 40px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .page-intro--split {
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    align-items: end;
+    gap: 64px;
+  }
+  .eyebrow {
+    margin: 0 0 20px;
+    font-size: 10px;
+    color: var(--ink-3);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(44px, 5.5vw, 72px);
+    line-height: 1.08;
+    font-weight: 400;
+    letter-spacing: -0.045em;
+    margin: 0;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+  .page-intro-description {
+    max-width: 470px;
+    font-family: var(--font-read);
+    font-size: 22px;
+    line-height: 1.55;
+    letter-spacing: -0.015em;
+    color: var(--ink-2);
+    padding-bottom: 3px;
+  }
+  .page-intro-description :global(p) {
+    margin: 0;
+  }
+  @media (max-width: 760px) {
+    .page-intro {
+      padding-block: 48px 32px;
+      margin-bottom: 32px;
+    }
+    .page-intro--split {
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    .page-intro-description {
+      font-size: 20px;
+    }
+    .eyebrow {
+      margin-bottom: 16px;
+    }
+  }
+</style>

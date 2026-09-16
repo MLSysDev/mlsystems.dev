@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import { TOPICS, countPostsByTopic } from '@/lib/topics';
 
 const posts = await getCollection('posts', ({ data }) => !data.draft);
@@ -14,13 +15,9 @@ const visibleTopics = TOPICS.filter((t) => (topicCounts[t.id] ?? 0) > 0);
   image="/og/page/topics.png"
 >
   <div class="container">
-    <div class="page-head">
-      <div class="eyebrow page-eyebrow">The Index</div>
-      <h1 class="page-h1">Topics.</h1>
-      <p class="page-lede">
-        Explore the ideas, systems, and engineering problems behind modern ML infrastructure.
-      </p>
-    </div>
+    <PageIntro label="The Index" title="Topics">
+      <p>Explore the ideas, systems, and engineering problems behind modern ML infrastructure.</p>
+    </PageIntro>
 
     <div class="topics-list" style="margin-top: 16px;">
       {

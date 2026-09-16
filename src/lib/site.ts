@@ -51,8 +51,8 @@ export const SITE = {
 
 export const APPEARANCE = {
   theme: 'light',
-  accent: 'oxide',
-  typeset: 'modern',
+  accent: 'emerald',
+  typeset: 'editorial',
   background: 'plain',
   density: 'comfortable',
 } as const;
