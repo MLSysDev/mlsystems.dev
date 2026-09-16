@@ -4,6 +4,7 @@ import { useState } from 'react';
 import ThroughputCalc from '@/content/tools/throughput-calc/ThroughputCalc';
 import GpuMemoryCalc from '@/content/tools/gpu-mem-calc/GpuMemoryCalc';
 import AttentionViz from '@/content/tools/attention-viz/AttentionViz';
+import TrainingComputeCalc from '@/content/tools/training-compute-calc/TrainingComputeCalc';
 
 export type PlaygroundTool = {
   id: string;
@@ -17,6 +18,7 @@ const TOOL_COMPONENTS: Record<string, React.ComponentType> = {
   'throughput-calc': ThroughputCalc,
   'gpu-mem-calc': GpuMemoryCalc,
   'attention-viz': AttentionViz,
+  'training-compute-calc': TrainingComputeCalc,
 };
 
 export default function Playground({ tools }: { tools: PlaygroundTool[] }) {

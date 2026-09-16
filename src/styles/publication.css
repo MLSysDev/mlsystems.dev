@@ -131,6 +131,9 @@ main {
   padding-top: 56px;
 }
 .footer-tagline {
+  font-family: var(--font-sans);
+  font-style: normal;
+  font-weight: 400;
   max-width: 320px;
   font-size: 15px;
   line-height: 1.7;
@@ -597,32 +600,66 @@ input[type='radio'] {
 }
 .publication-topic-chips {
   display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 3px 3px 6px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-2) transparent;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-family: var(--font-read);
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
 }
 .publication-topic-chips a {
-  flex: 0 0 auto;
-  padding: 9px 16px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--ink-2);
-  font-size: 14px;
-  line-height: 1.4;
+  position: relative;
+  color: inherit;
+  padding: 2px 0;
   text-decoration: none;
-  transition:
-    border-color 150ms,
-    color 150ms;
+  transition: color 150ms;
+}
+.publication-topic-chips a::before {
+  content: '';
+  position: absolute;
+  inset: -4px -7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+.publication-topic-chips a:not(:last-child) {
+  margin-right: 32px;
+}
+.publication-topic-chips a:not(:last-child)::after {
+  content: '·';
+  position: absolute;
+  right: -18px;
+  color: var(--ink-4);
+}
+.publication-topic-chips a:hover::before,
+.publication-topic-chips a:focus-visible::before {
+  opacity: 1;
 }
 .publication-topic-chips a:hover {
-  border-color: var(--accent);
   color: var(--accent);
 }
 .publication-topic-chips a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: none;
+  color: var(--accent);
+}
+.publication-topic-chips a:focus-visible::before {
+  border-color: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .publication-topic-chips a,
+  .publication-topic-chips a::before {
+    transition: none;
+  }
+}
+.publication-chip-tag {
+  margin-left: 8px;
+  font: 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  vertical-align: middle;
 }
 
 .nav-topics {
@@ -865,4 +902,13 @@ input[type='radio'] {
   .hero-scene-controls {
     transition: none;
   }
+}
+
+/* Keep schematic frames legible against the dark hero without changing data colors. */
+[data-theme='dark'] .hero-scenes {
+  --line: color-mix(in srgb, var(--ink-3) 48%, var(--paper));
+  --line-2: color-mix(in srgb, var(--ink-3) 68%, var(--paper));
+}
+[data-theme='dark'] .hero-scenes line[stroke='var(--ink-3)'][stroke-width='0.5'] {
+  stroke-width: 0.85;
 }

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import { SITE } from '@/lib/site';
 
 const canonical = `${SITE.url}/content-policy`;
@@ -11,11 +12,8 @@ const canonical = `${SITE.url}/content-policy`;
   canonical={canonical}
 >
   <div class="container policy-page">
-    <header class="page-head">
-      <div class="eyebrow">Policy</div>
-      <h1 class="page-h1">Content policy.</h1>
-      <p class="page-lede">Last updated July 2026</p>
-    </header>
+    <PageIntro label="Policy" title="Content policy" />
+    <p class="policy-updated">Last updated July 2026</p>
 
     <div class="article-body">
       <p>
@@ -114,28 +112,17 @@ const canonical = `${SITE.url}/content-policy`;
 
 <style>
   .policy-page {
-    padding-top: 24px;
     padding-bottom: 80px;
   }
-  .page-head {
-    padding: 20px 0 12px;
-  }
-  .page-h1 {
-    font-family: var(--font-display);
-    font-size: clamp(40px, 7vw, 72px);
-    font-weight: 400;
-    letter-spacing: -0.015em;
-    line-height: 1.02;
-    margin: 6px 0 0;
-  }
-  .page-lede {
+  .policy-updated {
     font-family: var(--font-mono);
     font-size: 12px;
     color: var(--ink-3);
-    margin-top: 14px;
+    margin: 0 0 24px;
   }
   .policy-page .article-body {
     max-width: 680px;
+    margin-inline: 0;
   }
   .policy-page .article-body ul {
     padding-left: 1.2em;

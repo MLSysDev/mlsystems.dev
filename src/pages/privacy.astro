@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import { SITE } from '@/lib/site';
 
 const canonical = `${SITE.url}/privacy`;
@@ -11,11 +12,8 @@ const canonical = `${SITE.url}/privacy`;
   canonical={canonical}
 >
   <div class="container privacy-page">
-    <header class="page-head">
-      <div class="eyebrow">Policy</div>
-      <h1 class="page-h1">Privacy.</h1>
-      <p class="page-lede">Last updated July 2026</p>
-    </header>
+    <PageIntro label="Policy" title="Privacy" />
+    <p class="policy-updated">Last updated September 2026</p>
 
     <div class="article-body">
       <p>
@@ -25,10 +23,11 @@ const canonical = `${SITE.url}/privacy`;
 
       <h2>No accounts, no logins</h2>
       <p>
-        You can read everything without signing in. The in-browser writing tool at <code
-          >/write</code
-        > runs entirely in your browser — what you type stays on your device, and nothing is sent to us
-        until you choose to download it and submit it by pull request, issue, or email.
+        You can read everything without signing in. Drafts in the writing tool at <code>/write</code
+        >
+        are saved on your device. When you submit an article for review, its content, attached files,
+        and author details are sent to our publishing service to create a public pull request on GitHub.
+        You can also download your draft and submit it yourself by pull request, issue, or email.
       </p>
 
       <h2>Analytics</h2>
@@ -82,27 +81,16 @@ const canonical = `${SITE.url}/privacy`;
 
 <style>
   .privacy-page {
-    padding-top: 24px;
     padding-bottom: 80px;
   }
-  .page-head {
-    padding: 20px 0 12px;
-  }
-  .page-h1 {
-    font-family: var(--font-display);
-    font-size: clamp(40px, 7vw, 72px);
-    font-weight: 400;
-    letter-spacing: -0.015em;
-    line-height: 1.02;
-    margin: 6px 0 0;
-  }
-  .page-lede {
+  .policy-updated {
     font-family: var(--font-mono);
     font-size: 12px;
     color: var(--ink-3);
-    margin-top: 14px;
+    margin: 0 0 24px;
   }
   .privacy-page .article-body {
     max-width: 680px;
+    margin-inline: 0;
   }
 </style>

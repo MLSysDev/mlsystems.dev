@@ -3,6 +3,7 @@ import type { GetStaticPaths, Page } from 'astro';
 import { getCollection } from 'astro:content';
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Pager from '@/components/Pager.astro';
+import PageIntro from '@/components/PageIntro.astro';
 import PostRow from '@/components/PostRow.astro';
 import { sortPostsByDate, tagSlug } from '@/lib/data';
 import { resolvePostAuthors, type PostWithAuthors } from '@/lib/posts';
@@ -79,16 +80,12 @@ const title =
   jsonLd={[collectionJsonLd, breadcrumbJsonLd]}
 >
   <div class="container blog-shell">
-    <div class="blog-head">
-      <div>
-        <div class="eyebrow page-eyebrow">Tag</div>
-        <h1 class="page-h1">#{label}</h1>
-        <p class="page-lede" style="max-width: 680px;">
-          {page.total}
-          {page.total === 1 ? 'article' : 'articles'} tagged <strong>{label}</strong>.
-        </p>
-      </div>
-    </div>
+    <PageIntro label="Tag" title={`#${label}`}>
+      <p>
+        {page.total}
+        {page.total === 1 ? 'article' : 'articles'} tagged <strong>{label}</strong>.
+      </p>
+    </PageIntro>
 
     <div class="blog-list">
       {page.data.map((a) => <PostRow post={a} heading="h2" />)}

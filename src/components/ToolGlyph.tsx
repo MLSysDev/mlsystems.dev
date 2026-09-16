@@ -47,6 +47,22 @@ export default function ToolGlyph({ id }: { id: string }) {
           <rect x="20" y="46" width="16" height="3" fill="var(--ink-3)" opacity="0.5" rx="1" />
         </svg>
       );
+    case 'training-compute-calc':
+      return (
+        <svg width={size} height={size} viewBox="0 0 56 56">
+          <path
+            d="M6 46 L18 34 L28 40 L50 10"
+            fill="none"
+            stroke="var(--accent)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <line x1="6" y1="50" x2="50" y2="50" stroke="var(--ink-3)" strokeWidth="1.5" />
+          <line x1="6" y1="6" x2="6" y2="50" stroke="var(--ink-3)" strokeWidth="1.5" />
+          <circle cx="50" cy="10" r="3" fill="var(--accent)" />
+        </svg>
+      );
     case 'model-card':
       return (
         <svg width={size} height={size} viewBox="0 0 56 56">

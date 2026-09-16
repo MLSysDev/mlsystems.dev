@@ -1,0 +1,55 @@
+---
+name: Training Compute Calculator
+summary: Turn a model size and token budget into training FLOPs, GPU-hours, wall-clock days, and cost, using the 6ND rule and real GPU peak numbers.
+tag: Live
+icon: ∑
+authors:
+  - dinesh
+topics:
+  - training
+  - distributed
+tags: [training, flops, scaling-laws, chinchilla, mfu]
+core: true
+featured: true
+---
+
+import TrainingComputeCalc from './TrainingComputeCalc';
+
+<TrainingComputeCalc client:visible />
+
+## What it does
+
+Pick a parameter count, a token budget, a GPU and a cluster size. The tool returns the total training compute, how many GPU-hours that is at a given utilization, how long the run takes on your cluster, and what it costs at your hourly rate.
+
+## The math
+
+- **Training FLOPs ≈ 6 × N × D**, where N is the parameter count and D is the training token count. The calculator converts billions of parameters and trillions of tokens to raw counts. This approximates the forward and backward parameter-matrix operations; it is not a complete operation count.
+- **GPU-hours = FLOPs ÷ (peak FLOPS × MFU) ÷ 3600.** TFLOPS are multiplied by 10¹². MFU is entered as a percentage and converted to a fraction.
+- **Days = GPU-hours ÷ GPU count ÷ 24.** This assumes the chosen MFU holds at the chosen cluster size. More GPUs do not automatically preserve utilization.
+- **Cost = GPU-hours × hourly rate.** This is GPU rental cost only.
+
+The **20 tokens per parameter** button is a rough dense-model reference inspired by [Chinchilla](https://arxiv.org/abs/2203.15556), not a universal optimum. Data, architecture, and the intended inference budget change the best allocation. Applying that ratio to active MoE parameters does not establish compute optimality.
+
+[PaLM's MFU accounting](https://arxiv.org/abs/2204.02311) includes an additional attention term: approximately 12 × layers × query heads × head dimension × sequence length per token. This calculator omits it. The error depends on model size and context length; even at 8K context it can be substantial for smaller models. For example, 32 layers, 32 heads, head dimension 128, and 8,192 tokens add about 12.9 billion FLOPs per token, or 27% on top of 6N for an 8B model under that convention.
+
+## Published reference runs
+
+| Run            | Parameters × tokens | Approximate 6ND FLOPs | Reported GPU-hours            |
+| -------------- | ------------------- | --------------------- | ----------------------------- |
+| Llama 2 70B    | 70B × 2T            | 8.4 × 10²³            | 1,720,320 A100                |
+| Llama 3.1 405B | 405B × 15.6T        | 3.79 × 10²⁵           | 30.84M H100                   |
+| DeepSeek-V3    | 37B active × 14.8T  | 3.29 × 10²⁴           | 2.664M H800, pretraining only |
+
+Sources: [Llama 2 model card](https://huggingface.co/meta-llama/Llama-2-70b), [Llama 3.1 model card](https://huggingface.co/meta-llama/Llama-3.1-405B), [Llama 3 report](https://arxiv.org/abs/2407.21783), and [DeepSeek-V3 report](https://arxiv.org/abs/2412.19437).
+
+Dividing approximate 6ND compute by reported GPU-hours and BF16 peak gives about 43.5% for Llama 2 70B and 34.5% for Llama 3.1 405B. These are inferred averages, not independent validation of the estimator or directly measured in-run MFU. Reported totals can cover different training stages and operating conditions.
+
+For scale, 30.84M GPU-hours divided by a constant 16,384 GPUs is 78.4 days. Meta's 54-day reliability observation is a snapshot, not the full training duration. DeepSeek's 2.664M pretraining GPU-hours divided by 2,048 GPUs is 54.2 days. Selecting a preset keeps your chosen MFU and hourly rate, so the estimate need not equal the reported total.
+
+## Hardware and limitations
+
+- Peak values use dense BF16 throughput, without structured sparsity: A100 312 TFLOPS, H100 SXM and H200 SXM approximately 989, and B200 2,250. See [NVIDIA A100](https://www.nvidia.com/en-us/data-center/a100/), [H100](https://www.nvidia.com/en-us/data-center/h100/), [H200](https://www.nvidia.com/en-us/data-center/h200/), and [NVIDIA's non-sparse throughput table](https://github.com/NVIDIA/exemplar-performance#gpu-peak-theoretical-throughput).
+- The DeepSeek preset uses an H100 compute proxy for an H800 FP8 mixed-precision run. A BF16 denominator produces a _higher_, not lower, utilization percentage than a larger FP8 denominator for the same work and time. Mixed-precision utilization needs an explicit accounting convention, so this preset shows reported hours without an implied MFU comparison.
+- For MoE, active parameters give only a rough compute estimate. Routing, attention, auxiliary objectives, and communication add work. Memory capacity still depends on total parameters and training state.
+- Memory fit, batch size, parallelism, interconnect, failures, checkpointing, and data loading are not modeled independently. Choose an end-to-end MFU appropriate to those conditions; the calculator cannot determine whether the configuration is feasible.
+- Rental cost excludes storage, networking, and separately billed failed or experimental runs.

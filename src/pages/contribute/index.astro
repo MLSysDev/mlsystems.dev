@@ -7,38 +7,32 @@ import { SITE } from '@/lib/site';
 const STEPS = [
   {
     n: '01',
-    title: 'Share your idea',
-    body: 'Open a thread in our Blog ideas discussion on GitHub. A few sentences on what you want to write and the angle you have in mind.',
+    title: 'Write a draft',
+    body: 'Open the editor and work at your own pace. Add code, images, tables, or math where they help. Preview your article, then submit it for review.',
   },
   {
     n: '02',
-    title: 'Draft',
-    body: 'Write it visually — headings, images, tables, video, and math, all point-and-click. When you are done, hit Submit post.',
+    title: 'Review together',
+    body: "We'll review for technical accuracy, clarity, and readability, and work with you on any changes.",
   },
   {
     n: '03',
-    title: 'Review',
-    body: "We'll review for clarity, correctness, and readability. Nothing fancy, just make the work easier to learn from.",
-  },
-  {
-    n: '04',
-    title: 'Publish',
-    body: 'Once it is ready, we publish it and credit you as a contributor.',
+    title: 'Share it with the community',
+    body: 'Once the article is ready, we publish it under your name so others can learn from your work.',
   },
 ];
 ---
 
 <BaseLayout
   title="Contribute"
-  description="Pitch an article, case study, primer, or tool to ML Systems. Open to anyone — engineers, researchers, students, and first-time learners sharing what they figured out."
+  description="Pitch an article, case study, primer, or tool to ML Systems. Open to engineers, researchers, students, and anyone sharing what they have learned."
   image="/og/page/contribute.png"
 >
   <div class="container">
     <PageIntro label="Write with us" title="Contribute">
       <p>
-        We publish articles, case studies, primers, and tools about ML systems — from anyone
-        learning or working in the space. If you've figured something out and want to share it with
-        the world, you should write about it here.
+        Share something you've learned about ML systems. A clear explanation, a useful tool, or a
+        lesson from a project can help someone else take their next step.
       </p>
     </PageIntro>
 
@@ -53,7 +47,7 @@ const STEPS = [
           <div></div>
           <div class="process-cta-actions">
             <a href="/write" class="btn btn-accent">
-              Draft a post <span class="btn-arrow">→</span>
+              Start writing <span class="btn-arrow">→</span>
             </a>
             <a
               href={`${SITE.orgDiscussionsUrl}/categories/blog-ideas`}
@@ -61,7 +55,7 @@ const STEPS = [
               rel="noreferrer"
               class="btn"
             >
-              Pitch on Discussions
+              Discuss an idea
             </a>
             <a href={`mailto:${SITE.pitchEmail}`} class="btn"> Email an idea </a>
           </div>
@@ -70,10 +64,12 @@ const STEPS = [
 
       <div>
         <div class="side-panel" style="border-color: var(--accent);">
-          <h3 style="font-size: 20px; margin-bottom: 12px;">Write your post</h3>
+          <h3 style="font-size: 20px; margin-bottom: 12px;">Have an idea first?</h3>
           <p style="font-size: 14px; color: var(--ink-2); line-height: 1.6; margin: 0 0 12px;">
-            Write your post in the <a href="/write" style="color: var(--accent);">editor</a>,
-            preview it as it will appear, and submit when you are ready.
+            You can start a draft directly. If you'd like feedback on an idea first, <a
+              href={`${SITE.orgDiscussionsUrl}/categories/blog-ideas`}
+              style="color: var(--accent);">share it in Discussions</a
+            > or email us.
           </p>
         </div>
 
@@ -83,17 +79,16 @@ const STEPS = [
             style="padding-left: 18px; font-size: 14px; color: var(--ink-2); line-height: 1.7; margin: 0;"
           >
             <li>
-              <strong>Articles</strong> — opinionated, well-argued takes on a real problem (~1,500–3,000
-              words).
+              <strong>Articles:</strong> well-supported explanations and perspectives on real problems.
             </li>
             <li>
-              <strong>Case studies</strong> — what happened when you actually shipped the thing.
+              <strong>Case studies:</strong> what you built, what happened, and what you learned.
             </li>
             <li>
-              <strong>Primers</strong> — careful explainers of techniques that deserve more careful treatment.
+              <strong>Primers:</strong> clear introductions that build from the fundamentals.
             </li>
-            <li><strong>Tools</strong> — working calculators or visualizers, with a writeup.</li>
-            <li><strong>Reading lists</strong> — annotated bibliographies on narrow topics.</li>
+            <li><strong>Tools:</strong> working calculators or visualizers, with a writeup.</li>
+            <li><strong>Reading lists:</strong> annotated bibliographies on narrow topics.</li>
           </ul>
         </div>
 
@@ -104,8 +99,8 @@ const STEPS = [
           >
             <li>Promotional content for products.</li>
             <li>Recycled paper summaries.</li>
-            <li>"X is dead, long live Y" hot takes without evidence.</li>
-            <li>Listicles. Especially listicles.</li>
+            <li>Claims without evidence or supporting examples.</li>
+            <li>Lists without context or useful commentary.</li>
           </ul>
         </div>
 
@@ -116,8 +111,7 @@ const STEPS = [
             including the parts that didn't.
           </p>
           <p style="font-size: 13px; color: var(--ink-2); line-height: 1.6; margin: 0;">
-            We're trying to make a publication that you'd want to send to your future self. Write
-            accordingly.
+            Link your sources, explain assumptions, and make examples easy to follow.
           </p>
         </div>
       </div>
@@ -126,6 +120,10 @@ const STEPS = [
 </BaseLayout>
 
 <style>
+  .contribute-grid :global(.process-step) {
+    grid-template-columns: 48px 1fr;
+  }
+
   .process-h2 {
     font-family: var(--font-display);
     font-size: 36px;
@@ -135,7 +133,7 @@ const STEPS = [
   }
   .process-cta {
     display: grid;
-    grid-template-columns: 80px 1fr;
+    grid-template-columns: 48px 1fr;
     gap: 24px;
     padding: 24px 0;
     border-top: 1px solid var(--line);
@@ -145,5 +143,12 @@ const STEPS = [
     display: flex;
     gap: 12px;
     flex-wrap: wrap;
+  }
+  @media (max-width: 620px) {
+    .contribute-grid :global(.process-step),
+    .process-cta {
+      grid-template-columns: 28px 1fr;
+      gap: 16px;
+    }
   }
 </style>

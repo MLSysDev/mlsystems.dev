@@ -1,27 +1,20 @@
 ---
 name: Tokenizer explorer
-summary: Paste any text and see how seven popular tokenizers split it — BPE, WordPiece, SentencePiece, tiktoken, and friends, side by side.
-tag: Experimental
+summary: Paste any text and see how popular tokenizers split it, side by side, with token counts and cost per provider.
+tag: Soon
 icon: ▤
 authors:
-  - lchen
+  - dinesh
 topics:
   - inference
 tags: [tokenizer, bpe, sentencepiece]
 featured: true
 ---
 
-## What it does
+## What we are building
 
-Tokenizers determine how language models see your text. The same prompt can produce wildly different token counts (and therefore cost, latency, and behavior) across model families. This tool runs your text through seven tokenizers in parallel and shows the splits aligned column-by-column.
-
-## What you'll see
-
-- Token-level color coding so you can spot where tokenizers diverge
-- Total token count + character compression ratio per tokenizer
-- A "rare token" view that highlights tokens that decode to multiple Unicode codepoints
-- Side-by-side cost projection across major API providers
+Tokenizers decide how a model sees your text. The same prompt can produce very different token counts, and therefore cost and latency, across model families. This tool will run your text through several tokenizers in the browser and show the splits aligned column by column, with a token count and a cost projection per provider.
 
 ## Status
 
-Experimental — currently runs entirely in-browser via WASM ports of the underlying libraries. Expect occasional Unicode edge cases.
+Coming soon. Not yet available. Until then, the external tools on the playground page cover tokenization well.
