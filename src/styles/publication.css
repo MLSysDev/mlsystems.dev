@@ -605,22 +605,50 @@ input[type='radio'] {
   color: var(--ink-2);
 }
 .publication-topic-chips a {
+  position: relative;
   color: inherit;
   padding: 2px 0;
   text-decoration: none;
   transition: color 150ms;
 }
+.publication-topic-chips a::before {
+  content: '';
+  position: absolute;
+  inset: -4px -7px;
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+  border-radius: 6px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+}
+.publication-topic-chips a:not(:last-child) {
+  margin-right: 32px;
+}
 .publication-topic-chips a:not(:last-child)::after {
   content: '·';
-  margin: 0 14px;
+  position: absolute;
+  right: -18px;
   color: var(--ink-4);
+}
+.publication-topic-chips a:hover::before,
+.publication-topic-chips a:focus-visible::before {
+  opacity: 1;
 }
 .publication-topic-chips a:hover {
   color: var(--accent);
 }
 .publication-topic-chips a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline: none;
+  color: var(--accent);
+}
+.publication-topic-chips a:focus-visible::before {
+  border-color: var(--accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .publication-topic-chips a,
+  .publication-topic-chips a::before {
+    transition: none;
+  }
 }
 .publication-chip-tag {
   margin-left: 8px;

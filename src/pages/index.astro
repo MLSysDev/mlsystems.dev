@@ -162,7 +162,7 @@ const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.i
       tools.length > 0 && (
         <section class="publication-section tools-section" aria-labelledby="tools-title">
           <div class="publication-section-head">
-            <h2 id="tools-title">ML systems, hands-on.</h2>
+            <h2 id="tools-title">ML Systems tools</h2>
             <a class="publication-small-link" href="/playground">
               All tools <span aria-hidden="true">↗</span>
             </a>
@@ -459,8 +459,7 @@ const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.i
     line-height: 1.3;
     margin: 10px 0 12px;
   }
-  .topic-section:has(.publication-more-topics),
-  .tools-section:has(.publication-more-tools) {
+  .topic-section:has(.publication-more-topics) {
     padding-bottom: calc(var(--section-space) - 22px);
   }
   .topic-section .publication-more-topics,
@@ -516,13 +515,79 @@ const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.i
   }
   .publication-tools {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 64px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 48px;
+  }
+  .tools-section {
+    position: relative;
+    isolation: isolate;
+    margin-top: 32px;
+    padding: clamp(40px, 4vw, 56px) 0 32px;
+  }
+  .tools-section::before {
+    content: '';
+    position: absolute;
+    inset: 0 -24px;
+    z-index: -1;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--accent) 3%, var(--paper));
+  }
+  .tools-section .publication-section-head {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    margin-bottom: 40px;
+  }
+  .tools-section .publication-section-head h2 {
+    grid-column: 2;
+    text-align: center;
+    max-width: none;
+  }
+  .tools-section .publication-section-head > a {
+    justify-self: end;
   }
   .publication-tool {
+    position: relative;
+    isolation: isolate;
     display: flex;
     align-items: flex-start;
     gap: 24px;
+    padding: 24px 0;
+  }
+  .publication-tool::before {
+    content: '';
+    position: absolute;
+    inset: 8px -12px;
+    z-index: -1;
+    border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line));
+    border-radius: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 160ms ease;
+  }
+  .publication-tool:hover::before,
+  .publication-tool:focus-visible::before {
+    opacity: 1;
+  }
+  .publication-tool:nth-child(-n + 2)::before {
+    top: -12px;
+  }
+  .publication-tool:nth-last-child(-n + 2)::before {
+    bottom: -12px;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .publication-tool::before {
+      transition: none;
+    }
+  }
+  .publication-tool:nth-child(-n + 2) {
+    padding-top: 0;
+  }
+  .publication-tool:nth-child(n + 3) {
+    border-top: 1px solid var(--line);
+  }
+  .publication-tool:nth-last-child(-n + 2) {
+    padding-bottom: 0;
   }
   .publication-tool-icon {
     flex: 0 0 56px;
@@ -603,8 +668,7 @@ const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.i
     .publication-hero {
       gap: 24px;
     }
-    .reading-layout,
-    .publication-tools {
+    .reading-layout {
       gap: 36px;
     }
     .lead-story {
@@ -617,6 +681,17 @@ const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.i
     }
   }
   @media (max-width: 720px) {
+    .tools-section .publication-section-head {
+      grid-template-columns: 1fr;
+      gap: 4px;
+      margin-bottom: 28px;
+    }
+    .tools-section .publication-section-head h2 {
+      grid-column: 1;
+    }
+    .tools-section .publication-section-head > a {
+      justify-self: center;
+    }
     .publication-hero {
       grid-template-columns: 1fr;
       padding: 28px 0 var(--section-space);
@@ -659,8 +734,7 @@ const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.i
     .reading-item h3 {
       font-size: 23px;
     }
-    .topic-section:has(.publication-more-topics),
-    .tools-section:has(.publication-more-tools) {
+    .topic-section:has(.publication-more-topics) {
       padding-bottom: calc(var(--section-space) - 16px);
     }
     .topic-section .publication-more-topics,
@@ -676,6 +750,22 @@ const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.i
     }
     .publication-tool {
       gap: 20px;
+    }
+    .publication-tools {
+      gap: 0;
+    }
+    .publication-tool:nth-child(n + 2) {
+      padding-top: 24px;
+      border-top: 1px solid var(--line);
+    }
+    .publication-tool:not(:last-child) {
+      padding-bottom: 24px;
+    }
+    .publication-tool:nth-child(n + 2)::before {
+      top: 8px;
+    }
+    .publication-tool:not(:last-child)::before {
+      bottom: 8px;
     }
     .publication-tool h3 {
       font-size: 19px;
