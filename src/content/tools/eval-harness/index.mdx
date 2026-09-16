@@ -1,33 +1,20 @@
 ---
 name: Eval Harness Playground
-summary: Run a small set of evaluations against any inference endpoint and get back a structured scorecard — quality, latency, cost, and refusal rate side by side.
-tag: Beta
+summary: Run a small, fixed set of evals against an OpenAI-compatible endpoint and get a scorecard for quality, latency, and cost.
+tag: Soon
 icon: ▤
 authors:
-  - lchen
+  - dinesh
 topics:
   - evaluation
 tags: [evals, benchmarks, scorecards]
 core: true
 ---
 
-## What it does
+## What we are building
 
-Points at any inference endpoint (yours or a hosted one), runs a curated set of small but informative evals, and produces a scorecard. The set is small on purpose: you get answers in minutes instead of hours, and the evals are chosen for signal-to-noise rather than headline numbers.
+Full benchmark suites such as lm-evaluation-harness take hours and real money to run. Most of the time the question is simpler: is this endpoint worth a closer look? This tool will point at any OpenAI-compatible endpoint, run a small curated set of prompts, and return a scorecard with quality, latency, and cost side by side.
 
-## Why it's useful
+## Status
 
-Full benchmark suites take hours and cost real money. Most of the time you just want a quick "is this model worth a closer look." This playground gives you a focused first read so you can decide whether to invest in a full eval pass.
-
-## How to use it
-
-1. Provide an endpoint URL and auth header (or pick a hosted preset).
-2. Select an eval pack — reasoning, code, instruction following, refusal behavior.
-3. Run. Results stream in as each prompt completes.
-4. Export the scorecard or share a permalink.
-
-## Limitations
-
-- Beta: the eval set is opinionated and will keep evolving.
-- Not a replacement for full evaluation suites when stakes are high.
-- Caches results by prompt hash, so re-running the same prompts is free.
+Coming soon. Not yet available.

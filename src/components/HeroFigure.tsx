@@ -62,7 +62,7 @@ export function AttentionFig({ t }: { t: number }) {
   // Build the causal triangle in under two seconds, then scan the completed rows.
   const reveal = t / 0.14;
   const scan = t < 1.96 ? reveal : ((t - 1.96) % 2.8) / 0.2;
-  const activeRow = Math.min(N - 1, Math.floor(scan));
+  const activeRow = Math.max(0, Math.min(N - 1, Math.floor(scan)));
 
   return (
     <svg

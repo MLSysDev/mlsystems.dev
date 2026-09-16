@@ -597,32 +597,38 @@ input[type='radio'] {
 }
 .publication-topic-chips {
   display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 3px 3px 6px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line-2) transparent;
+  flex-wrap: wrap;
+  align-items: baseline;
+  font-family: var(--font-read);
+  font-size: 17px;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
 }
 .publication-topic-chips a {
-  flex: 0 0 auto;
-  padding: 9px 16px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  color: var(--ink-2);
-  font-size: 14px;
-  line-height: 1.4;
+  color: inherit;
+  padding: 2px 0;
   text-decoration: none;
-  transition:
-    border-color 150ms,
-    color 150ms;
+  transition: color 150ms;
+}
+.publication-topic-chips a:not(:last-child)::after {
+  content: '·';
+  margin: 0 14px;
+  color: var(--ink-4);
 }
 .publication-topic-chips a:hover {
-  border-color: var(--accent);
   color: var(--accent);
 }
 .publication-topic-chips a:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 3px;
+}
+.publication-chip-tag {
+  margin-left: 8px;
+  font: 10px/1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  vertical-align: middle;
 }
 
 .nav-topics {

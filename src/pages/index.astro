@@ -16,22 +16,14 @@ const reading = allPosts.filter((post) => post.id !== lead?.id).slice(0, 3);
 const counts = countPostsByTopic(allPosts);
 const topics = TOPICS.filter((topic) => counts[topic.id] > 0).slice(0, 3);
 const moreTopics = TOPICS.filter((topic) => !topics.some((featured) => featured.id === topic.id));
-const liveTools = rankTools(
-  await getCollection('tools', ({ data }) => !data.draft && data.tag === 'Live'),
-);
-const tools = pickCoreTools(liveTools, 2);
-const moreTools = liveTools.filter((tool) => !tools.some((featured) => featured.id === tool.id));
-const toolDescriptions: Record<string, string> = {
-  'attention-viz':
-    'Explore a token-by-token attention map, from causal masking to recurring attention patterns.',
-  'throughput-calc':
-    'Estimate memory-bound token throughput and KV-cache size across models, precisions, batch sizes, and GPUs.',
-};
+const allTools = rankTools(await getCollection('tools', ({ data }) => !data.draft));
+const tools = pickCoreTools(allTools, 4);
+const moreTools = allTools.filter((tool) => !tools.some((featured) => featured.id === tool.id));
 ---
 
 <BaseLayout
-  title="ML Systems — Inside machine learning"
-  description="An open community for learning, writing, and tinkering on the infrastructure behind modern AI, from kernels to clusters."
+  title="ML Systems — Machine learning systems, from kernels to clusters"
+  description="ML Systems is an open community publication on machine learning systems: inference engines, training infrastructure, GPU memory, and everything in between."
 >
   <div class="publication container">
     <section class="publication-hero" aria-labelledby="home-title">
@@ -102,12 +94,7 @@ const toolDescriptions: Record<string, string> = {
                       {post.data.readMin} min read
                     </p>
                     <h3>
-                      <a href={`/blog/${post.id}`}>
-                        {post.data.title}
-                        <span class="reading-arrow" aria-hidden="true">
-                          ↗
-                        </span>
-                      </a>
+                      <a href={`/blog/${post.id}`}>{post.data.title}</a>
                     </h3>
                     <p class="story-meta">
                       {post.authors.map((author) => author.data.name).join(', ')}{' '}
@@ -150,10 +137,7 @@ const toolDescriptions: Record<string, string> = {
                   <p>{topic.desc}</p>
                 </div>
                 <span class="topic-end">
-                  <span>
-                    {counts[topic.id]} {counts[topic.id] === 1 ? 'article' : 'articles'}
-                  </span>
-                  <span aria-hidden="true">↗</span>
+                  {counts[topic.id]} {counts[topic.id] === 1 ? 'article' : 'articles'}
                 </span>
               </a>
             ))}
@@ -193,7 +177,7 @@ const toolDescriptions: Record<string, string> = {
                   <h3>
                     {tool.data.name} <span aria-hidden="true">↗</span>
                   </h3>
-                  <p>{toolDescriptions[tool.id] ?? tool.data.summary}</p>
+                  <p>{tool.data.summary}</p>
                 </div>
               </a>
             ))}
@@ -203,7 +187,12 @@ const toolDescriptions: Record<string, string> = {
               <p class="publication-label">More to try</p>
               <nav class="publication-topic-chips" aria-label="More playground tools">
                 {moreTools.map((tool) => (
-                  <a href={`/playground/${tool.id}`}>{tool.data.name}</a>
+                  <a href={`/playground/${tool.id}`}>
+                    {tool.data.name}
+                    {tool.data.tag !== 'Live' && (
+                      <span class="publication-chip-tag">{tool.data.tag}</span>
+                    )}
+                  </a>
                 ))}
               </nav>
             </div>
@@ -222,11 +211,13 @@ const toolDescriptions: Record<string, string> = {
         <p>
           A useful explanation. A hard-won lesson. A question worth exploring. If you're learning or
           building ML systems, there's a place for your perspective here.
-        </p><a class="publication-link" href="/contribute"
-          >Write with us <span aria-hidden="true">↗</span></a
-        ><a class="publication-small-link" href="/community"
-          >Meet the community <span aria-hidden="true">↗</span></a
-        >
+        </p><div class="invitation-actions">
+          <a class="publication-link" href="/contribute"
+            >Write with us <span aria-hidden="true">↗</span></a
+          ><a class="publication-small-link" href="/community"
+            >Meet the community <span aria-hidden="true">↗</span></a
+          >
+        </div>
       </div>
     </section>
   </div>
@@ -468,17 +459,6 @@ const toolDescriptions: Record<string, string> = {
     line-height: 1.3;
     margin: 10px 0 12px;
   }
-  .reading-item h3 a {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 20px;
-  }
-  .reading-arrow {
-    font-family: var(--font-sans);
-    color: var(--ink-3);
-    font-size: 18px;
-  }
   .topic-section:has(.publication-more-topics),
   .tools-section:has(.publication-more-tools) {
     padding-bottom: calc(var(--section-space) - 22px);
@@ -530,14 +510,9 @@ const toolDescriptions: Record<string, string> = {
     line-height: 1.6;
   }
   .topic-end {
-    display: flex;
-    gap: 30px;
-    align-items: center;
     font-size: 12px;
     color: var(--ink-3);
-  }
-  .topic-end > :last-child {
-    font-size: 20px;
+    white-space: nowrap;
   }
   .publication-tools {
     display: grid;
@@ -573,11 +548,29 @@ const toolDescriptions: Record<string, string> = {
   }
   .publication-invitation {
     border-top: 1px solid var(--line-2);
-    padding: var(--section-space) 0;
+    position: relative;
+    isolation: isolate;
+    padding: clamp(64px, 7vw, 96px) 24px;
     display: grid;
-    grid-template-columns: 1.15fr 1fr;
-    gap: 64px;
-    align-items: center;
+    justify-items: center;
+    gap: 24px;
+    text-align: center;
+  }
+  .publication-invitation::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at 50% 48%,
+      color-mix(in srgb, var(--accent) 9%, transparent),
+      color-mix(in srgb, var(--accent) 3%, transparent) 45%,
+      transparent 75%
+    );
+  }
+  .publication-invitation .publication-label {
+    justify-content: center;
   }
   .publication-invitation h2 {
     font-family: var(--font-display);
@@ -589,23 +582,29 @@ const toolDescriptions: Record<string, string> = {
   }
   .invitation-copy p {
     color: var(--ink-2);
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.7;
-    max-width: 420px;
-    margin: 0 0 22px;
+    max-width: 540px;
+    margin: 0 auto 24px;
+  }
+  .invitation-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px 28px;
   }
   .invitation-copy .publication-small-link {
     display: flex;
     width: fit-content;
-    margin-top: 12px;
+    margin-top: 0;
   }
   @media (max-width: 1000px) {
     .publication-hero {
       gap: 24px;
     }
     .reading-layout,
-    .publication-tools,
-    .publication-invitation {
+    .publication-tools {
       gap: 36px;
     }
     .lead-story {
@@ -645,8 +644,7 @@ const toolDescriptions: Record<string, string> = {
       gap: 6px;
     }
     .reading-layout,
-    .publication-tools,
-    .publication-invitation {
+    .publication-tools {
       grid-template-columns: 1fr;
       gap: 36px;
     }
@@ -675,12 +673,6 @@ const toolDescriptions: Record<string, string> = {
     }
     .publication-topic h3 {
       font-size: 24px;
-    }
-    .topic-end {
-      gap: 12px;
-    }
-    .topic-end > :first-child {
-      display: none;
     }
     .publication-tool {
       gap: 20px;
