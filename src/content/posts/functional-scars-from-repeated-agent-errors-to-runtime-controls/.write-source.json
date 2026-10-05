@@ -1,0 +1,3296 @@
+{
+  "kind": "mlsys-write-source",
+  "version": 1,
+  "meta": {
+    "title": "Functional Scars: From Repeated Agent Errors to Runtime Controls",
+    "summary": "On Windows, Claude Code's Bash tool halves runs of backslashes before bash reads the command, except runs right before a double quote. Our coding agent kept breaking Python files it patched through shell heredocs, even with the trap written into its memory. This walkthrough turns that correction into a hook, then measures what changed across 102,298 shell calls, including what the block cost.",
+    "authors": [
+      "victordelpuerto"
+    ],
+    "writerName": "Author Name",
+    "topicId": "agents",
+    "topicName": "Agents",
+    "tags": [
+      "agents",
+      "hooks",
+      "claude-code",
+      "runtime-enforcement",
+      "evaluation"
+    ],
+    "slug": "functional-scars-from-repeated-agent-errors-to-runtime-controls",
+    "coverFileName": "",
+    "ogCard": false,
+    "draft": false,
+    "proposedTopic": "",
+    "newAuthor": {
+      "handle": "victordelpuerto",
+      "name": "Victor Del Puerto",
+      "bio": "Runs DG Ingeniería, an engineering firm in Paraguay, and builds and measures the runtime controls its AI coding agents work under.",
+      "website": "https://victordelpuerto.com",
+      "github": "VDP89",
+      "twitter": "vdp2007",
+      "linkedin": "https://www.linkedin.com/in/victordelpuertog/",
+      "email": "info@dgingenieriasrl.com"
+    },
+    "featured": false,
+    "date": "2026-10-05"
+  },
+  "blocks": [
+    {
+      "id": "paragraph-1",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "On 10 September 2026, in a single working session, four patches that the coding agent in my engineering office made to Python files failed the same way. Each one went through a shell heredoc, ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "python - <<'PYEOF' ... PYEOF",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Two wrote files that no longer parsed (",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "SyntaxError: unterminated string literal",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "); the other two aborted because the text they were meant to find had changed on its way in. A note in the agent’s memory, written the day before, already described the trap. Across the transcripts from 9 to 11 September, the same error after a heredoc that wrote a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " file appeared 8 times in 6 sessions.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-2",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The shortcut kept coming back because it usually works: in that session the agent ran 43 heredoc commands that touched a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " file, and 39 did what they were meant to do. Each success is evidence for the shortcut, and a note in memory competes against that evidence every time the agent edits a file.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-3",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The mechanism",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-4",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "In Claude Code’s Bash tool on Windows 11 with Git Bash, this command:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "codeBlock-5",
+      "type": "codeBlock",
+      "props": {
+        "language": "bash"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "echo 'a\\\\b | a\\\\\\\\b | a\\nb'",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-6",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "prints ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "a\\b | a\\\\b | a\\nb",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Single quotes should keep every backslash. Runs of one, two, three and four backslashes arrive as one, one, two and two, and a run right before a double quote arrives intact. An open issue on the Claude Code repository documents the cause [1]: Claude Code builds the command line with MSVCRT quoting rules, which double backslashes only in front of a quote, and Git Bash, an MSYS2 program, halves every run when it decodes the line. I have not tested other platforms.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-7",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A patch written inside a heredoc goes through three levels of escaping, and the agent writes it for two. To put the escape ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "\\n",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " into a string of the destination file, the agent writes ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "\\\\n",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " in the patch program. After the transport the program holds ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "\\n",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", writes a real newline into the destination’s string literal, and the destination stops parsing, although the command exits cleanly. Other combinations break the patch program itself, such as ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "'\\\\'",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " arriving as ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "'\\'",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ".",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-8",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The correction as a contract",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-9",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "I call the control that came out of this a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "functional scar",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ": a versioned check, derived from a documented failure, that runs outside the model at a named event of the agent runtime [2]. NeMo Guardrails evaluates programmable rails at runtime [3], AgentSpec specifies triggers, predicates and enforcement actions [4], and TRACE compiles a user’s chat corrections into checks that run before a coding agent finishes a task [5]. The contract keeps a rule’s origin and evidence attached to the check, so the rule can be measured and retired:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-10",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Field",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "What it states",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "This correction",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Origin",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "The documented failure and its correction",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Four failed patches on 10 September; 8 in 6 sessions over three days. Correction: write ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": ".py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " files with the editor tools, never through a heredoc",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Applicability",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "When the correction applies",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "A Bash command contains a heredoc and writes a ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": ".py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " file, through a shell redirect or through Python code in the heredoc body",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Obligation",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "What must be observable when it applies",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Every ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": ".py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " file the agent writes contains the text the agent wrote, and still parses",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Intervention",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Host event and response",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "PreToolUse",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " on Bash: deny, with the reason and the alternative. ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "PostToolUse",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " on Bash: parse the ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": ".py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " files the command touched and report any that fail",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Evidence",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "What each firing records",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Event, rule, decision, hash of the command, session",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Review",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Who changes or retires the rule, and on what evidence",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "A test suite built from real commands; false activations; retirement when the transport bug is fixed upstream",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-11",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The intervention has two arms because the predicate can miss: the first acts on the command before the transport touches it, the second looks at what reached the disk.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "mermaid-12",
+      "type": "mermaid",
+      "props": {
+        "source": "flowchart TD\n  A[\"Agent proposes a Bash command\"] --> P{\"PreToolUse: heredoc that writes a .py?\"}\n  P -->|\"yes\"| D[\"Deny, with the reason and the alternative\"]\n  D --> W[\"Agent writes the file with the editor tool\"]\n  P -->|\"no\"| T[\"Transport to Git Bash halves backslash runs\"]\n  T --> S[\"bash runs the command\"]\n  S --> Q{\"PostToolUse: do the .py files it named still parse?\"}\n  Q -->|\"no\"| C[\"Context to the agent: file, line, error\"]\n  Q -->|\"yes\"| N[\"Silent\"]",
+        "svg": "<svg id=\"mmd-1\" width=\"100%\" xmlns=\"http://www.w3.org/2000/svg\" class=\"flowchart\" style=\"max-width: 581.8359375px;\" viewBox=\"0 0 581.8359375 1162.84375\" role=\"graphics-document document\" aria-roledescription=\"flowchart-v2\"><style>#mmd-1{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mmd-1 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mmd-1 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mmd-1 .error-icon{fill:#552222;}#mmd-1 .error-text{fill:#552222;stroke:#552222;}#mmd-1 .edge-thickness-normal{stroke-width:1px;}#mmd-1 .edge-thickness-thick{stroke-width:3.5px;}#mmd-1 .edge-pattern-solid{stroke-dasharray:0;}#mmd-1 .edge-thickness-invisible{stroke-width:0;fill:none;}#mmd-1 .edge-pattern-dashed{stroke-dasharray:3;}#mmd-1 .edge-pattern-dotted{stroke-dasharray:2;}#mmd-1 .marker{fill:#666;stroke:#666;}#mmd-1 .marker.cross{stroke:#666;}#mmd-1 svg{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:16px;}#mmd-1 p{margin:0;}#mmd-1 .label{font-family:'JetBrains Mono',ui-monospace,monospace;color:#000000;}#mmd-1 .cluster-label text{fill:#333;}#mmd-1 .cluster-label span{color:#333;}#mmd-1 .cluster-label span p{background-color:transparent;}#mmd-1 .label text,#mmd-1 span{fill:#000000;color:#000000;}#mmd-1 .node rect,#mmd-1 .node circle,#mmd-1 .node ellipse,#mmd-1 .node polygon,#mmd-1 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mmd-1 .rough-node .label text,#mmd-1 .node .label text,#mmd-1 .image-shape .label,#mmd-1 .icon-shape .label{text-anchor:middle;}#mmd-1 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mmd-1 .rough-node .label,#mmd-1 .node .label,#mmd-1 .image-shape .label,#mmd-1 .icon-shape .label{text-align:center;}#mmd-1 .node.clickable{cursor:pointer;}#mmd-1 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#mmd-1 .arrowheadPath{fill:#333333;}#mmd-1 .edgePath .path{stroke:#666;stroke-width:1px;}#mmd-1 .flowchart-link{stroke:#666;fill:none;}#mmd-1 .edgeLabel{background-color:white;text-align:center;}#mmd-1 .edgeLabel p{background-color:white;}#mmd-1 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mmd-1 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#mmd-1 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#mmd-1 .cluster text{fill:#333;}#mmd-1 .cluster span{color:#333;}#mmd-1 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#mmd-1 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#mmd-1 rect.text{fill:none;stroke-width:0;}#mmd-1 .icon-shape,#mmd-1 .image-shape{background-color:white;text-align:center;}#mmd-1 .icon-shape p,#mmd-1 .image-shape p{background-color:white;padding:2px;}#mmd-1 .icon-shape .label rect,#mmd-1 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#mmd-1 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mmd-1 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mmd-1 .node .neo-node{stroke:#999;}#mmd-1 [data-look=\"neo\"].node rect,#mmd-1 [data-look=\"neo\"].cluster rect,#mmd-1 [data-look=\"neo\"].node polygon{stroke:url(#mmd-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd-1 [data-look=\"neo\"].swimlane.cluster rect{filter:none;}#mmd-1 [data-look=\"neo\"].node path{stroke:url(#mmd-1-gradient);stroke-width:1px;}#mmd-1 [data-look=\"neo\"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd-1 [data-look=\"neo\"].node .neo-line path{stroke:#999;filter:none;}#mmd-1 [data-look=\"neo\"].node circle{stroke:url(#mmd-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd-1 [data-look=\"neo\"].node circle .state-start{fill:#000000;}#mmd-1 [data-look=\"neo\"].icon-shape .icon{fill:url(#mmd-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd-1 [data-look=\"neo\"].icon-shape .icon-neo path{stroke:url(#mmd-1-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mmd-1 :root{--mermaid-font-family:'JetBrains Mono',ui-monospace,monospace;}</style><g><marker id=\"mmd-1_flowchart-v2-pointEnd\" class=\"marker flowchart-v2\" viewBox=\"0 0 10 10\" refX=\"5\" refY=\"5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"8\" markerHeight=\"8\" orient=\"auto\"><path d=\"M 0 0 L 10 5 L 0 10 z\" class=\"arrowMarkerPath\" style=\"stroke-width: 1; stroke-dasharray: 1, 0;\"></path></marker><marker id=\"mmd-1_flowchart-v2-pointStart\" class=\"marker flowchart-v2\" viewBox=\"0 0 10 10\" refX=\"4.5\" refY=\"5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"8\" markerHeight=\"8\" orient=\"auto\"><path d=\"M 0 5 L 10 10 L 10 0 z\" class=\"arrowMarkerPath\" style=\"stroke-width: 1; stroke-dasharray: 1, 0;\"></path></marker><marker id=\"mmd-1_flowchart-v2-pointEnd-margin\" class=\"marker flowchart-v2\" viewBox=\"0 0 11.5 14\" refX=\"11.5\" refY=\"7\" markerUnits=\"userSpaceOnUse\" markerWidth=\"10.5\" markerHeight=\"14\" orient=\"auto\"><path d=\"M 0 0 L 11.5 7 L 0 14 z\" class=\"arrowMarkerPath\" style=\"stroke-width: 0; stroke-dasharray: 1, 0;\"></path></marker><marker id=\"mmd-1_flowchart-v2-pointStart-margin\" class=\"marker flowchart-v2\" viewBox=\"0 0 11.5 14\" refX=\"1\" refY=\"7\" markerUnits=\"userSpaceOnUse\" markerWidth=\"11.5\" markerHeight=\"14\" orient=\"auto\"><polygon points=\"0,7 11.5,14 11.5,0\" class=\"arrowMarkerPath\" style=\"stroke-width: 0; stroke-dasharray: 1, 0;\"></polygon></marker><marker id=\"mmd-1_flowchart-v2-circleEnd\" class=\"marker flowchart-v2\" viewBox=\"0 0 10 10\" refX=\"11\" refY=\"5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"11\" markerHeight=\"11\" orient=\"auto\"><circle cx=\"5\" cy=\"5\" r=\"5\" class=\"arrowMarkerPath\" style=\"stroke-width: 1; stroke-dasharray: 1, 0;\"></circle></marker><marker id=\"mmd-1_flowchart-v2-circleStart\" class=\"marker flowchart-v2\" viewBox=\"0 0 10 10\" refX=\"-1\" refY=\"5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"11\" markerHeight=\"11\" orient=\"auto\"><circle cx=\"5\" cy=\"5\" r=\"5\" class=\"arrowMarkerPath\" style=\"stroke-width: 1; stroke-dasharray: 1, 0;\"></circle></marker><marker id=\"mmd-1_flowchart-v2-circleEnd-margin\" class=\"marker flowchart-v2\" viewBox=\"0 0 10 10\" refY=\"5\" refX=\"12.25\" markerUnits=\"userSpaceOnUse\" markerWidth=\"14\" markerHeight=\"14\" orient=\"auto\"><circle cx=\"5\" cy=\"5\" r=\"5\" class=\"arrowMarkerPath\" style=\"stroke-width: 0; stroke-dasharray: 1, 0;\"></circle></marker><marker id=\"mmd-1_flowchart-v2-circleStart-margin\" class=\"marker flowchart-v2\" viewBox=\"0 0 10 10\" refX=\"-2\" refY=\"5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"14\" markerHeight=\"14\" orient=\"auto\"><circle cx=\"5\" cy=\"5\" r=\"5\" class=\"arrowMarkerPath\" style=\"stroke-width: 0; stroke-dasharray: 1, 0;\"></circle></marker><marker id=\"mmd-1_flowchart-v2-crossEnd\" class=\"marker cross flowchart-v2\" viewBox=\"0 0 11 11\" refX=\"12\" refY=\"5.2\" markerUnits=\"userSpaceOnUse\" markerWidth=\"11\" markerHeight=\"11\" orient=\"auto\"><path d=\"M 1,1 l 9,9 M 10,1 l -9,9\" class=\"arrowMarkerPath\" style=\"stroke-width: 2; stroke-dasharray: 1, 0;\"></path></marker><marker id=\"mmd-1_flowchart-v2-crossStart\" class=\"marker cross flowchart-v2\" viewBox=\"0 0 11 11\" refX=\"-1\" refY=\"5.2\" markerUnits=\"userSpaceOnUse\" markerWidth=\"11\" markerHeight=\"11\" orient=\"auto\"><path d=\"M 1,1 l 9,9 M 10,1 l -9,9\" class=\"arrowMarkerPath\" style=\"stroke-width: 2; stroke-dasharray: 1, 0;\"></path></marker><marker id=\"mmd-1_flowchart-v2-crossEnd-margin\" class=\"marker cross flowchart-v2\" viewBox=\"0 0 15 15\" refX=\"17.7\" refY=\"7.5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"12\" markerHeight=\"12\" orient=\"auto\"><path d=\"M 1,1 L 14,14 M 1,14 L 14,1\" class=\"arrowMarkerPath\" style=\"stroke-width: 2.5;\"></path></marker><marker id=\"mmd-1_flowchart-v2-crossStart-margin\" class=\"marker cross flowchart-v2\" viewBox=\"0 0 15 15\" refX=\"-3.5\" refY=\"7.5\" markerUnits=\"userSpaceOnUse\" markerWidth=\"12\" markerHeight=\"12\" orient=\"auto\"><path d=\"M 1,1 L 14,14 M 1,14 L 14,1\" class=\"arrowMarkerPath\" style=\"stroke-width: 2.5; stroke-dasharray: 1, 0;\"></path></marker><g class=\"root\"><g class=\"clusters\"></g><g class=\"edgePaths\"><path d=\"M268.215,76.6L268.215,80.767C268.215,84.933,268.215,93.267,268.215,100.933C268.215,108.6,268.215,115.6,268.215,119.1L268.215,122.6\" id=\"mmd-1-L_A_P_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_A_P_0\" data-points=\"W3sieCI6MjY4LjIxNDg0Mzc1LCJ5Ijo3Ni41OTk5OTg0NzQxMjExfSx7IngiOjI2OC4yMTQ4NDM3NSwieSI6MTAxLjU5OTk5ODQ3NDEyMTF9LHsieCI6MjY4LjIxNDg0Mzc1LCJ5IjoxMjYuNTk5OTk4NDc0MTIxMDh9XQ==\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path><path d=\"M211.541,320.948L198.619,336.644C185.697,352.339,159.852,383.731,146.93,405.01C134.008,426.289,134.008,437.455,134.008,443.039L134.008,448.622\" id=\"mmd-1-L_P_D_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_P_D_0\" data-points=\"W3sieCI6MjExLjU0MTExNDk3NTM0MjM3LCJ5IjozMjAuOTQ4MTUwODAyOTc5MX0seyJ4IjoxMzQuMDA3ODEyNSwieSI6NDE1LjEyMTg3OTU3NzYzNjd9LHsieCI6MTM0LjAwNzgxMjUsInkiOjQ1Mi42MjE4Nzk1Nzc2MzY3fV0=\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path><path d=\"M134.008,538.822L134.008,542.989C134.008,547.155,134.008,555.489,134.008,563.155C134.008,570.822,134.008,577.822,134.008,581.322L134.008,584.822\" id=\"mmd-1-L_D_W_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_D_W_0\" data-points=\"W3sieCI6MTM0LjAwNzgxMjUsInkiOjUzOC44MjE4NzY1MjU4Nzg5fSx7IngiOjEzNC4wMDc4MTI1LCJ5Ijo1NjMuODIxODc2NTI1ODc4OX0seyJ4IjoxMzQuMDA3ODEyNSwieSI6NTg4LjgyMTg3NjUyNTg3ODl9XQ==\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path><path d=\"M324.889,320.948L337.811,336.644C350.733,352.339,376.577,383.731,389.5,405.01C402.422,426.289,402.422,437.455,402.422,443.039L402.422,448.622\" id=\"mmd-1-L_P_T_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_P_T_0\" data-points=\"W3sieCI6MzI0Ljg4ODU3MjUyNDY1NzYsInkiOjMyMC45NDgxNTA4MDI5NzkxfSx7IngiOjQwMi40MjE4NzUsInkiOjQxNS4xMjE4Nzk1Nzc2MzY3fSx7IngiOjQwMi40MjE4NzUsInkiOjQ1Mi42MjE4Nzk1Nzc2MzY3fV0=\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path><path d=\"M402.422,538.822L402.422,542.989C402.422,547.155,402.422,555.489,402.422,564.622C402.422,573.755,402.422,583.689,402.422,588.655L402.422,593.622\" id=\"mmd-1-L_T_S_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_T_S_0\" data-points=\"W3sieCI6NDAyLjQyMTg3NSwieSI6NTM4LjgyMTg3NjUyNTg3ODl9LHsieCI6NDAyLjQyMTg3NSwieSI6NTYzLjgyMTg3NjUyNTg3ODl9LHsieCI6NDAyLjQyMTg3NSwieSI6NTk3LjYyMTg3NTc2MjkzOTV9XQ==\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path><path d=\"M402.422,666.222L402.422,671.855C402.422,677.489,402.422,688.755,402.422,697.889C402.422,707.022,402.422,714.022,402.422,717.522L402.422,721.022\" id=\"mmd-1-L_S_Q_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_S_Q_0\" data-points=\"W3sieCI6NDAyLjQyMTg3NSwieSI6NjY2LjIyMTg3NDIzNzA2MDV9LHsieCI6NDAyLjQyMTg3NSwieSI6NzAwLjAyMTg3MzQ3NDEyMTF9LHsieCI6NDAyLjQyMTg3NSwieSI6NzI1LjAyMTg3MzQ3NDEyMTF9XQ==\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path><path d=\"M349.245,940.467L339.339,955.579C329.434,970.692,309.623,1000.918,299.718,1021.614C289.813,1042.31,289.813,1053.477,289.813,1059.06L289.813,1064.644\" id=\"mmd-1-L_Q_C_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_Q_C_0\" data-points=\"W3sieCI6MzQ5LjI0NDY5MTcwNjIyODE0LCJ5Ijo5NDAuNDY2NTc3Mzg3MzgwNX0seyJ4IjoyODkuODEyNSwieSI6MTAzMS4xNDM3NjA2ODExNTIzfSx7IngiOjI4OS44MTI1LCJ5IjoxMDY4LjY0Mzc2MDY4MTE1MjN9XQ==\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path><path d=\"M455.599,940.467L465.504,955.579C475.41,970.692,495.221,1000.918,505.126,1024.548C515.031,1048.177,515.031,1065.21,515.031,1073.727L515.031,1082.244\" id=\"mmd-1-L_Q_N_0\" class=\"edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link\" style=\";\" data-edge=\"true\" data-et=\"edge\" data-id=\"L_Q_N_0\" data-points=\"W3sieCI6NDU1LjU5OTA1ODI5Mzc3MTg2LCJ5Ijo5NDAuNDY2NTc3Mzg3MzgwNX0seyJ4Ijo1MTUuMDMxMjUsInkiOjEwMzEuMTQzNzYwNjgxMTUyM30seyJ4Ijo1MTUuMDMxMjUsInkiOjEwODYuMjQzNzU5MTU1MjczNH1d\" data-look=\"classic\" marker-end=\"url(#mmd-1_flowchart-v2-pointEnd)\"></path></g><g class=\"edgeLabels\"><g class=\"edgeLabel\"><g class=\"label\" data-id=\"L_A_P_0\" transform=\"translate(0, 0)\"><text y=\"-10.1\" text-anchor=\"middle\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"></tspan></text></g></g><g><rect class=\"background\" style=\"stroke: none\"></rect></g><g class=\"edgeLabel\" transform=\"translate(134.0078125, 415.1218795776367)\"><g class=\"label\" data-id=\"L_P_D_0\" transform=\"translate(0, -10.5)\"><g><rect class=\"background\" style=\"\" x=\"-16.40625\" y=\"-2\" width=\"32.8125\" height=\"25\"></rect><text y=\"-10.1\" text-anchor=\"middle\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">yes</tspan></tspan></text></g></g></g><g class=\"edgeLabel\"><g class=\"label\" data-id=\"L_D_W_0\" transform=\"translate(0, 0)\"><text y=\"-10.1\" text-anchor=\"middle\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"></tspan></text></g></g><g><rect class=\"background\" style=\"stroke: none\"></rect></g><g class=\"edgeLabel\" transform=\"translate(402.421875, 415.1218795776367)\"><g class=\"label\" data-id=\"L_P_T_0\" transform=\"translate(0, -10.5)\"><g><rect class=\"background\" style=\"\" x=\"-11.6015625\" y=\"-2\" width=\"23.203125\" height=\"25\"></rect><text y=\"-10.1\" text-anchor=\"middle\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">no</tspan></tspan></text></g></g></g><g class=\"edgeLabel\"><g class=\"label\" data-id=\"L_T_S_0\" transform=\"translate(0, 0)\"><text y=\"-10.1\" text-anchor=\"middle\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"></tspan></text></g></g><g><rect class=\"background\" style=\"stroke: none\"></rect></g><g class=\"edgeLabel\"><g class=\"label\" data-id=\"L_S_Q_0\" transform=\"translate(0, 0)\"><text y=\"-10.1\" text-anchor=\"middle\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"></tspan></text></g></g><g><rect class=\"background\" style=\"stroke: none\"></rect></g><g class=\"edgeLabel\" transform=\"translate(289.8125, 1031.1437606811523)\"><g class=\"label\" data-id=\"L_Q_C_0\" transform=\"translate(0, -10.5)\"><g><rect class=\"background\" style=\"\" x=\"-11.6015625\" y=\"-2\" width=\"23.203125\" height=\"25\"></rect><text y=\"-10.1\" text-anchor=\"middle\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">no</tspan></tspan></text></g></g></g><g class=\"edgeLabel\" transform=\"translate(515.03125, 1031.1437606811523)\"><g class=\"label\" data-id=\"L_Q_N_0\" transform=\"translate(0, -10.5)\"><g><rect class=\"background\" style=\"\" x=\"-16.40625\" y=\"-2\" width=\"32.8125\" height=\"25\"></rect><text y=\"-10.1\" text-anchor=\"middle\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\" text-anchor=\"middle\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">yes</tspan></tspan></text></g></g></g></g><g class=\"nodes\"><g class=\"node default\" id=\"mmd-1-flowchart-A-0\" data-look=\"classic\" transform=\"translate(268.21484375, 42.29999923706055)\"><rect class=\"basic label-container\" style=\"\" x=\"-106.8046875\" y=\"-34.29999923706055\" width=\"213.609375\" height=\"68.5999984741211\"></rect><g class=\"label\" style=\"\" transform=\"translate(0, -19.299999237060547)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Agent</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> proposes</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> a</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Bash</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> command</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-P-1\" data-look=\"classic\" transform=\"translate(268.21484375, 252.1109390258789)\"><polygon points=\"125.51093673706055,0 251.0218734741211,-125.51093673706055 125.51093673706055,-251.0218734741211 0,-125.51093673706055\" class=\"label-container\" transform=\"translate(-125.01093673706055, 125.51093673706055)\"></polygon><g class=\"label\" style=\"\" transform=\"translate(0, -19.299999237060547)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">PreToolUse:</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> heredoc</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">that</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> writes</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> a</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> .py?</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-D-3\" data-look=\"classic\" transform=\"translate(134.0078125, 495.7218780517578)\"><rect class=\"basic label-container\" style=\"\" x=\"-97.2109375\" y=\"-43.099998474121094\" width=\"194.421875\" height=\"86.19999694824219\"></rect><g class=\"label\" style=\"\" transform=\"translate(0, -28.099998474121094)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Deny,</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> with</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> the</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">reason</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> and</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> the</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"2.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">alternative</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-W-5\" data-look=\"classic\" transform=\"translate(134.0078125, 631.921875)\"><rect class=\"basic label-container\" style=\"\" x=\"-126.0078125\" y=\"-43.099998474121094\" width=\"252.015625\" height=\"86.19999694824219\"></rect><g class=\"label\" style=\"\" transform=\"translate(0, -28.099998474121094)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Agent</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> writes</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> the</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">file</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> with</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> the</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> editor</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"2.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">tool</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-T-7\" data-look=\"classic\" transform=\"translate(402.421875, 495.7218780517578)\"><rect class=\"basic label-container\" style=\"\" x=\"-106.8125\" y=\"-43.099998474121094\" width=\"213.625\" height=\"86.19999694824219\"></rect><g class=\"label\" style=\"\" transform=\"translate(0, -28.099998474121094)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Transport</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> to</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> Git</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Bash</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> halves</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"2.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">backslash</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> runs</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-S-9\" data-look=\"classic\" transform=\"translate(402.421875, 631.921875)\"><rect class=\"basic label-container\" style=\"\" x=\"-92.40625\" y=\"-34.29999923706055\" width=\"184.8125\" height=\"68.5999984741211\"></rect><g class=\"label\" style=\"\" transform=\"translate(0, -19.299999237060547)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">bash</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> runs</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> the</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">command</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-Q-11\" data-look=\"classic\" transform=\"translate(402.421875, 859.3328170776367)\"><polygon points=\"134.3109359741211,0 268.6218719482422,-134.3109359741211 134.3109359741211,-268.6218719482422 0,-134.3109359741211\" class=\"label-container\" transform=\"translate(-133.8109359741211, 134.3109359741211)\"></polygon><g class=\"label\" style=\"\" transform=\"translate(0, -28.099998474121094)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">PostToolUse:</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> do</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> the</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">.py</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> files</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> it</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> named</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"2.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">still</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> parse?</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-C-13\" data-look=\"classic\" transform=\"translate(289.8125, 1111.7437591552734)\"><rect class=\"basic label-container\" style=\"\" x=\"-116.4140625\" y=\"-43.099998474121094\" width=\"232.828125\" height=\"86.19999694824219\"></rect><g class=\"label\" style=\"\" transform=\"translate(0, -28.099998474121094)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Context</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> to</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> the</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">agent:</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> file,</tspan><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\"> line,</tspan></tspan><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"2.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">error</tspan></tspan></text></g></g></g><g class=\"node default\" id=\"mmd-1-flowchart-N-15\" data-look=\"classic\" transform=\"translate(515.03125, 1111.7437591552734)\"><rect class=\"basic label-container\" style=\"\" x=\"-58.8046875\" y=\"-25.5\" width=\"117.609375\" height=\"51\"></rect><g class=\"label\" style=\"\" transform=\"translate(0, -10.5)\"><rect></rect><g><rect class=\"background\" style=\"stroke: none\"></rect><text y=\"-10.1\" style=\"\"><tspan class=\"text-outer-tspan row\" x=\"0\" y=\"-0.1em\" dy=\"1.1em\"><tspan font-style=\"normal\" class=\"text-inner-tspan\" font-weight=\"normal\">Silent</tspan></tspan></text></g></g></g></g></g></g><defs><filter id=\"mmd-1-drop-shadow\" height=\"130%\" width=\"130%\"><feDropShadow dx=\"4\" dy=\"4\" stdDeviation=\"0\" flood-opacity=\"0.06\" flood-color=\"#000000\"></feDropShadow></filter></defs><defs><filter id=\"mmd-1-drop-shadow-small\" height=\"150%\" width=\"150%\"><feDropShadow dx=\"2\" dy=\"2\" stdDeviation=\"0\" flood-opacity=\"0.06\" flood-color=\"#000000\"></feDropShadow></filter></defs><linearGradient id=\"mmd-1-gradient\" gradientUnits=\"objectBoundingBox\" x1=\"0%\" y1=\"0%\" x2=\"100%\" y2=\"0%\"><stop offset=\"0%\" stop-color=\"hsl(0, 0%, 83.3333333333%)\" stop-opacity=\"1\"></stop><stop offset=\"100%\" stop-color=\"hsl(0, 0%, 88.9215686275%)\" stop-opacity=\"1\"></stop></linearGradient></svg>",
+        "caption": "",
+        "width": ""
+      },
+      "children": []
+    },
+    {
+      "id": "heading-13",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A minimal version with plain hooks",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-14",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Claude Code runs hooks on ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "PreToolUse",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " and ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "PostToolUse",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " for tool calls that match a pattern, and passes the event as JSON on standard input [6]. A ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "PreToolUse",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " hook denies a call by printing ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "permissionDecision: \"deny\"",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": "; a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "PostToolUse",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " hook adds context for the model with ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "additionalContext",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Registration in ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".claude/settings.json",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ":",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "codeBlock-15",
+      "type": "codeBlock",
+      "props": {
+        "language": "json"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"hooks\": {\n    \"PreToolUse\": [\n      { \"matcher\": \"Bash\",\n        \"hooks\": [ { \"type\": \"command\", \"command\": \"python3 \\\"${CLAUDE_PROJECT_DIR}/.claude/hooks/heredoc_guard.py\\\"\" } ] }\n    ],\n    \"PostToolUse\": [\n      { \"matcher\": \"Bash\",\n        \"hooks\": [ { \"type\": \"command\", \"command\": \"python3 \\\"${CLAUDE_PROJECT_DIR}/.claude/hooks/heredoc_guard.py\\\"\" } ] }\n    ]\n  }\n}",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-16",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The script keeps shell text and heredoc bodies apart, so a body that only mentions ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "app.py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is not a write. Before a call it denies a redirect into a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " file or a Python heredoc that opens one for writing; after any call it parses the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " files the command named that changed in the last two minutes. Standard library only, tested with Python 3.13:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "codeBlock-17",
+      "type": "codeBlock",
+      "props": {
+        "language": "python"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "#!/usr/bin/env python3\n\"\"\"Claude Code Bash hook. PreToolUse: deny a heredoc that writes a .py file.\nPostToolUse: parse every .py file the command named and that changed in the last two minutes.\"\"\"\nimport ast\nimport json\nimport re\nimport sys\nimport time\nfrom pathlib import Path\n\nHEREDOC = re.compile(r\"<<-?\\s*['\\\"]?(\\w+)['\\\"]?\")\nREDIRECT_PY = re.compile(r\"(?:>>?|\\btee(?:\\s+-a)?)\\s*['\\\"]?[^\\s'\\\"<>|;&]+\\.py\\b\")\nPY_WRITE = re.compile(r\"open\\(\\s*['\\\"][^'\\\"]+\\.py['\\\"]\\s*,\\s*['\\\"][wax]\"\n                      r\"|Path\\(\\s*['\\\"][^'\\\"]+\\.py['\\\"]\\s*\\)\\.write_text\")\nPY_NAME = re.compile(r\"[\\w./\\\\-]+\\.py\\b\")\n\n\ndef split(cmd):\n    \"\"\"Shell text and heredoc bodies, kept apart: a body that mentions x.py is not a redirect.\"\"\"\n    shell, bodies, lines, i = [], [], cmd.split(\"\\n\"), 0\n    while i < len(lines):\n        shell.append(lines[i])\n        opener = HEREDOC.search(lines[i])\n        i += 1\n        if opener:\n            body = []\n            while i < len(lines) and lines[i].strip() != opener.group(1):\n                body.append(lines[i])\n                i += 1\n            bodies.append(\"\\n\".join(body))\n            i += 1\n    return \"\\n\".join(shell), bodies\n\n\ndef writes_py_by_heredoc(cmd):\n    shell, bodies = split(cmd)\n    if not bodies:\n        return False\n    if REDIRECT_PY.search(shell):\n        return True\n    return \"python\" in shell and any(PY_WRITE.search(body) for body in bodies)\n\n\ndef broken_py(cmd, cwd):\n    broken = []\n    for name in sorted(set(PY_NAME.findall(cmd))):\n        path = Path(cwd, name)\n        if path.is_file() and time.time() - path.stat().st_mtime < 120:\n            try:\n                ast.parse(path.read_text(encoding=\"utf-8\"))\n            except SyntaxError as err:\n                broken.append(f\"{name} line {err.lineno}: {err.msg}\")\n    return broken\n\n\ndef main():\n    event = json.load(sys.stdin)\n    cmd = (event.get(\"tool_input\") or {}).get(\"command\") or \"\"\n    if event.get(\"hook_event_name\") == \"PreToolUse\" and writes_py_by_heredoc(cmd):\n        reason = (\"This heredoc writes a .py file. On Windows the Bash tool halves runs of backslashes \"\n                  \"(except before a double quote) before bash reads the command, so escapes in string \"\n                  \"literals can change. Use the Write tool.\")\n        print(json.dumps({\"hookSpecificOutput\": {\n            \"hookEventName\": \"PreToolUse\",\n            \"permissionDecision\": \"deny\",\n            \"permissionDecisionReason\": reason}}))\n    elif event.get(\"hook_event_name\") == \"PostToolUse\":\n        broken = broken_py(cmd, event.get(\"cwd\") or \".\")\n        if broken:\n            print(json.dumps({\"hookSpecificOutput\": {\n                \"hookEventName\": \"PostToolUse\",\n                \"additionalContext\": \"A .py file no longer parses: \" + \"; \".join(broken)}}))\n\n\nif __name__ == \"__main__\":\n    main()",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-18",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Run through standard input the way the host runs it:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-19",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Event and command",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Result",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Pre: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "cat > fix.py <<'EOF'",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " with a ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "\\\\n",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " in a string",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Denied",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Pre: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "python - <<'EOF'",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " whose body calls ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "Path('app.py').write_text(...)",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Denied",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Pre: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "python - <<'EOF'",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " whose body only reads ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "app.py",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Allowed",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Pre: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "cat > notes.md <<'EOF'",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " whose text mentions ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "open('app.py', 'w')",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Allowed",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Pre: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "python fix.py",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Allowed",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Post: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "sed -i ... app.py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " that left a string split by a real newline",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Context added: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "app.py line 1: unterminated string literal (detected at line 1)",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Post: ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "sed -i ... ok.py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " that left valid code",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Silent",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-20",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Two mutants of the hook, one without heredoc detection and one without the redirect check, both fail these cases. Codex exposes the same events with a deny response [7]; I have not tested whether its shell path has the bug. The deployed version, 253 lines, covers more write forms and is tested against 19 real commands that must be blocked and 18 that must pass.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-21",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The trigger was wrong on the first day",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-22",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The first version of the hook recognized three literal forms of writing a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " file. A cold review by a second agent found that none of the six forms in the incident transcript was among them: the hook would have passed the commands that motivated it. The fix went in 77 minutes after the first commit. Minutes before that commit it had also blocked a heredoc that wrote a Markdown index naming ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " paths, so the ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " file now has to be the target of the write.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-23",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Two sibling rules built in the following days went the same way. One, for a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "python -",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " heredoc with ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "</dev/null",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " that hung each command for 120 seconds, became a hook after the hang happened twice more with the rule already written. The other, for backticks that bash executed inside double-quoted arguments, got a hook that watched two of the five command forms its own text listed; the next failure came through a third, ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "git commit -m",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". Outside this office, a public issue describes a rule and a warning hook for the same backslash bug, both scoped to heredoc bodies, that missed a single-quoted ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "jq",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " argument [8].",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-24",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Our hook has that gap too. In 1,060 Bash calls the transport changed the command text, and the hook does not look at 730 of them. A ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "sed",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " or ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "grep",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " pattern that silently matches something else is caught by nothing here, and the upstream issue calls wrong results with exit code 0 the more serious failure mode [1].",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-25",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Before and after",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-26",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Claude Code stores each session as a JSONL transcript with every command exactly as the agent wrote it, before the transport, together with its result; I checked this on a known command. The measurement covers all 2,814 transcripts on the host for this workspace, sessions and subagents: 102,298 Bash calls between 17 July and 4 October 2026. An ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "exposure",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a command that the hook’s current detector classifies as writing a ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": ".py",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " file through a heredoc. The cut is the hook’s first commit, at 11:58 UTC on 11 September; the 77 minutes until the detector fix are left out. A script applies the transport rule to each heredoc body and parses it before and after. A ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "failure",
+          "styles": {
+            "italic": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a result line ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "SyntaxError: unterminated string literal (detected at line N)",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ", traced to the heredoc when it belongs to an exposure whose text the transport changes, or names a file that such an exposure named earlier in the same transcript, counting each file once.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-27",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A cold review by a second agent, an instance of the same model, corrected my first version over two rounds: it had modeled the transport without the double-quote exception, and counted as failures the places where the rule’s documentation quotes the error.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-28",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Before (17 Jul to 11 Sep)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "After (11 Sep to 4 Oct)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Bash calls",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "57,934",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "44,022",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Heredocs writing a ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": ".py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " file",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "3,892 (6.7% of calls)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "363 (0.8% of calls)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "...whose text the transport changes",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "295 (7.6%)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "29 (8.0%)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "...executed",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "3,885",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "4",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "...blocked",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "1",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "359",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "unterminated string literal",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " errors, all Bash calls",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "89",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "17",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "...traced to a heredoc ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": ".py",
+                    "styles": {
+                      "code": true
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "text": " write (distinct files)",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "47",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "0",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-29",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Six writes before the cut have no recorded result; the one block before it is the hook under test. The first window also checks the simulation against what happened:",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "table-30",
+      "type": "table",
+      "props": {
+        "textColor": "default"
+      },
+      "content": {
+        "type": "tableContent",
+        "columnWidths": [
+          null,
+          null,
+          null,
+          null
+        ],
+        "rows": [
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Transport effect on the heredoc text",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Executed",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Result reported ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "unterminated string literal",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Result reported any ",
+                    "styles": {}
+                  },
+                  {
+                    "type": "text",
+                    "text": "SyntaxError",
+                    "styles": {
+                      "code": true
+                    }
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "None",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "3,590",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "2",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "11",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Changes it, still parses",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "271",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "32",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "35",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          },
+          {
+            "cells": [
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "Changes it, stops parsing",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "20",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "10",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              },
+              {
+                "type": "tableCell",
+                "content": [
+                  {
+                    "type": "text",
+                    "text": "18",
+                    "styles": {}
+                  }
+                ],
+                "props": {
+                  "colspan": 1,
+                  "rowspan": 1,
+                  "backgroundColor": "default",
+                  "textColor": "default",
+                  "textAlignment": "left"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "children": []
+    },
+    {
+      "id": "paragraph-31",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Four bodies that do not parse even as written are left out. The risk sits in the 7.6% of writes whose text the transport changes.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-32",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Applying these rates class by class to the 359 blocked commands estimates what the blocks themselves prevented, assuming that a blocked command would have behaved like the executed ones of its class: about 4 ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "unterminated string literal",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " errors over 24 days, or 6 counting any ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "SyntaxError",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": ". From 14 September, the stdin-hang hook would also have blocked up to 68 of those commands, and the share left to this hook is about 2.5 and 3.8. The zero after the cut is no evidence on its own: only four exposures ran, in two worktree sessions where the hook did not fire, and the transport left all four intact.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-33",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The larger change is in how often the agent reached for the heredoc. Within claude-opus-5, which made most of the Bash calls before the cut, heredoc writes fell from 8.65% of its Bash calls to 0.99%; within claude-sonnet-5, from 1.23% to 0.31%. The share of sessions that tried at least once did not fall: 123 of 207 sessions with Bash calls before, 109 of 161 after. The repetition did, from 31.6 attempts per session that made one to 3.3. That fits a block that teaches within the session better than a rule that prevents the first attempt. The rule’s text, loaded at session start, and the stdin-hang hook act in the same window, and these data cannot separate the three. The windows also differ in length (56 days against 24), workload and models, and nothing was randomized.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-34",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "Fifteen of the 17 errors after the cut came from commands whose text the transport changed: 11 ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "python -c",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " one-liners, 2 ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "sed",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " commands and 2 heredocs outside the predicate. These counts show co-occurrence only. The rule covers one route to the bug, and ",
+          "styles": {}
+        },
+        {
+          "type": "text",
+          "text": "python -c",
+          "styles": {
+            "code": true
+          }
+        },
+        {
+          "type": "text",
+          "text": " is a route the stdin-hang rule leaves open for short scripts.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-35",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What the block costs",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-36",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "330 of the 359 blocks, 92%, stopped a command whose text would have reached the shell intact, and each cost the agent a retry with the editor tool. Among the blocks no other hook would have made, the ratio is 274 unnecessary to 17 necessary. A predicate limited to writes whose text the transport changes would have stopped 29 commands and covered nearly all of the estimated prevented failures.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-37",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "I kept the broad one because the habit behind it, pushing code and text through heredocs and shell arguments, failed in three ways within two weeks: the backslashes, the stdin hang and the backtick substitution. A rule scoped to the command shape targets the habit; one scoped to the backslash leaves it in place for the next failure. The price is in the record: about sixteen unnecessary interruptions for each necessary one, against an estimated 2.5 to 4 prevented failures in 24 days, plus whatever share of the drop in repetition belongs to the block. Imprecise warnings get suppressed in static analysis, with false positives among the main reasons [9]; a block cannot be ignored, but it can be routed around, and that ratio is the number to watch. Once the transport bug is fixed upstream, every block becomes unnecessary, and the rule retires.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-38",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "A warning for contrast",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-39",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The same system runs a hook whose obligation cannot be checked on a command: on each prompt it injects the names of the closest memory notes, for the agent to open before answering. In an earlier census of 699 firings, a single model judge of the same family found a relevant note in 471, and the agent opened that note later in the session after 111 of them (23.6%, an upper bound) [10]. Where the obligation shows up in a command and a file, a hook can act on the action and its effect can be counted. Where it lives in what the model reads, the hook can deliver the reminder and stop there.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-40",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "fscars, one implementation",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-41",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "I maintain fscars, an open-source Python package (Apache-2.0) that implements this contract with one hook entry point and adapters for Claude Code and Codex [11]. Its 368 tests at version 0.11.0 check event mapping, response shapes, installation and policy evaluation; they say nothing about whether agents repeat fewer errors. In my office, Claude Code runs a local hook system that includes the hook measured here, and Codex runs fscars [2].",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-42",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "What the evidence covers",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-43",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "The incident, the trigger’s history, the sibling rules and the external issue are practitioner observations. The tables are measurements from this workspace’s transcripts, with the limits stated above, and the tests show only that the code does what they specify. Isolating the effect of a block against the same correction delivered as text needs matched tasks per condition, with the outcome checked outside the agent.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "heading-44",
+      "type": "heading",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left",
+        "level": 1,
+        "isToggleable": false
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "References",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-45",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[1] ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://github.com/anthropics/claude-code/issues/85856",
+          "content": [
+            {
+              "type": "text",
+              "text": "Windows/Git Bash: Bash tool silently halves backslashes in commands (MSVCRT vs MSYS2 command-line encoding mismatch)",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". anthropics/claude-code, issue #85856, opened 11 August 2026.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-46",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[2] V. Del Puerto. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://doi.org/10.5281/zenodo.23106789",
+          "content": [
+            {
+              "type": "text",
+              "text": "Functional Scars: A Runtime Mechanism for Persistent Corrections in AI Agent Systems",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". Preprint v1.0, Zenodo, 2026.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-47",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[3] T. Rebedea, R. Dinu, M. N. Sreedhar, C. Parisien and J. Cohen. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://doi.org/10.18653/v1/2023.emnlp-demo.40",
+          "content": [
+            {
+              "type": "text",
+              "text": "NeMo Guardrails: A Toolkit for Controllable and Safe LLM Applications with Programmable Rails",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". EMNLP 2023 System Demonstrations, 431-445.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-48",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[4] H. Wang, C. M. Poskitt and J. Sun. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://arxiv.org/abs/2503.18666",
+          "content": [
+            {
+              "type": "text",
+              "text": "AgentSpec: Customizable Runtime Enforcement for Safe and Reliable LLM Agents",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". arXiv:2503.18666, 2025; ICSE 2026.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-49",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[5] Y. Zhou et al. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://arxiv.org/abs/2606.13174",
+          "content": [
+            {
+              "type": "text",
+              "text": "Getting Better at Working With You: Compiling User Corrections into Runtime Enforcement for Coding Agents",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". arXiv:2606.13174, 2026.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-50",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[6] Anthropic. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://code.claude.com/docs/en/hooks",
+          "content": [
+            {
+              "type": "text",
+              "text": "Hooks reference",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ", Claude Code documentation.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-51",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[7] OpenAI. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://developers.openai.com/codex/hooks",
+          "content": [
+            {
+              "type": "text",
+              "text": "Hooks",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ", Codex documentation.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-52",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[8] ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://github.com/Morrison-Lab/ai-config/issues/3835",
+          "content": [
+            {
+              "type": "text",
+              "text": "Doubled-backslash collapse is not heredoc-scoped: it hit a single-quoted jq argument, so the fragment and its hook both miss the case",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". Morrison-Lab/ai-config, issue #3835, 21 September 2026.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-53",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[9] H. Hu, Y. Wang, J. Rubin and M. Pradel. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://doi.org/10.1145/3715729",
+          "content": [
+            {
+              "type": "text",
+              "text": "An Empirical Study of Suppressed Static Analysis Warnings",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". Proc. ACM Softw. Eng. 2 (FSE), 290-311, 2025.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-54",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[10] V. Del Puerto. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://doi.org/10.5281/zenodo.22709602",
+          "content": [
+            {
+              "type": "text",
+              "text": "Injected Recommendations Are Not Enforcement: A Blind Census of Pointer Relevance and Pointer Use in a Failure-Derived Constraint System",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ". Preprint v2.2, Zenodo, 2026.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    },
+    {
+      "id": "paragraph-55",
+      "type": "paragraph",
+      "props": {
+        "backgroundColor": "default",
+        "textColor": "default",
+        "textAlignment": "left"
+      },
+      "content": [
+        {
+          "type": "text",
+          "text": "[11] V. Del Puerto. ",
+          "styles": {}
+        },
+        {
+          "type": "link",
+          "href": "https://github.com/VDP89/fscars/tree/b7667a1e968d8fa0b3d3ee43ace88a1b1f414db9",
+          "content": [
+            {
+              "type": "text",
+              "text": "fscars",
+              "styles": {
+                "italic": true
+              }
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": ", version 0.11.0, commit b7667a1. Apache-2.0.",
+          "styles": {}
+        }
+      ],
+      "children": []
+    }
+  ],
+  "tableVariants": {}
+}
